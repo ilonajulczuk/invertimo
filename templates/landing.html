@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="grid-container">
+    <div class="header">
+        <div class="logo">Invertimo</div>
+
+        <ul class="navigation">
+            <li>Features</li>
+            <li>Pricing</li>
+            <li>Login</li>
+        </ul>
+    </div>
+    <div class="sidebar"></div>
+    <div class="main">
+
+        <h1>Making managing a complex portfolio a piece of cake</h1>
+        <img src="{% static './cupcake.png' %}">
+        <p>
+            There isn't much to show here yet. But hey, have some cake.
+        </p>
+    </div>
+    <div class="footer">
+        <p>Part of <a href="https://blog.nerdie-investing.com">nerdie-investing</a>.</p>
+    </div>
+</div>
+{% endblock %}
