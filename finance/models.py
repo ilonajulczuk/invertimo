@@ -8,6 +8,7 @@ class Currency(models.IntegerChoices):
     EURO = 1, _("EUR")
     GBP = 2, _("GBP")
     USD = 3, _("USD")
+    GBX = 4, _("GBX")
 
 
 class Account(models.Model):
@@ -16,19 +17,34 @@ class Account(models.Model):
     nickname = models.CharField(max_length=200)
     description = models.TextField()
 
+    def __str__(self):
+        return (
+            f"<Account user: {self.user}, nickname: '{self.nickname}', "
+            f"currency: {self.get_currency_display()}>"
+        )
+
 
 class Exchange(models.Model):
     name = models.CharField(max_length=200)
+    country = models.CharField(max_length=200)
+
+    def __str__(self):
+        codes = ""
+        for identifer in self.identifiers.all():
+            codes += str(identifer) + ", "
+        return (
+            f"<Exchange name: {self.name}, country: {self.country} "
+            f"codes: <{codes}> >"
+        )
 
 
 class ExchangeIDType(models.IntegerChoices):
     CODE = 1, _("CODE")
     # Operating MIC vs Segment MIC.
     # https://www.tradinghours.com/mic
+    # https://www.iso20022.org/market-identifier-codes
     MIC = 2, _("MIC")
     SEGMENT_MIC = 3, _("SEGMENT MIC")
-
-    # https://www.iso20022.org/market-identifier-codes
 
 
 class ExchangeIdentifier(models.Model):
@@ -40,16 +56,26 @@ class ExchangeIdentifier(models.Model):
     )
     value = models.CharField(max_length=20)
 
+    def __str__(self):
+        return (
+            f"<Exchange ID exchange: {self.exchange.name}, id_type: "
+            f"{self.get_id_type_display()}, value: {self.value}>"
+        )
+
 
 class Security(models.Model):
     isin = models.CharField(max_length=30)
     symbol = models.CharField(max_length=30)
+    name = models.CharField(max_length=200)
     exchange = models.ForeignKey(
         Exchange, on_delete=models.CASCADE, related_name="securities"
     )
     currency = models.IntegerField(choices=Currency.choices, default=Currency.USD)
     country = models.CharField(max_length=200, null=True)
     # TODO: add securites type.
+
+    class Meta:
+        unique_together = [["isin", "exchange"]]
 
 
 class Position(models.Model):
