@@ -77,6 +77,13 @@ class Security(models.Model):
     class Meta:
         unique_together = [["isin", "exchange"]]
 
+    def __str__(self):
+        return (
+            f"<Security exchange: {self.exchange.name}, isin: "
+            f"{self.isin}, symbol: {self.symbol}, name: {self.name}, "
+            f"currency: {self.get_currency_display()}, country: {self.country}>"
+        )
+
 
 class Position(models.Model):
     account = models.ForeignKey(
@@ -86,6 +93,11 @@ class Position(models.Model):
         Security, on_delete=models.CASCADE, related_name="positions"
     )
 
+    def __str__(self):
+        return (
+            f"<Position account: {self.account}, "
+            f"security: {self.security}>"
+        )
 
 class Transaction(models.Model):
     executed_at = models.DateTimeField()
@@ -94,7 +106,8 @@ class Transaction(models.Model):
     )
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     price = models.DecimalField(max_digits=12, decimal_places=5)
-    transaction_costs = models.DecimalField(max_digits=12, decimal_places=5)
+    transaction_costs = models.DecimalField(
+        max_digits=12, decimal_places=5, null=True)
 
     # The currency is stored with the security.
     local_value = models.DecimalField(max_digits=12, decimal_places=5)
@@ -106,6 +119,11 @@ class Transaction(models.Model):
     order_id = models.CharField(max_length=200, null=True)
 
     last_modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return (
+            f"<Transaction executed_at: {self.executed_at}, position: {self.position}>"
+        )
 
 
 class AccountEvent(models.Model):

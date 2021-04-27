@@ -16,6 +16,7 @@ def import_transaction(account, transaction_record):
     local_value = transaction_record["Local value"]
     value_in_account_currency = transaction_record["Value"]
     transaction_costs = transaction_record["Transaction costs"]
+    print(transaction_costs)
     order_id = transaction_record["Order ID"]
     quantity = transaction_record["Quantity"]
     price = transaction_record["Price"]
@@ -25,19 +26,23 @@ def import_transaction(account, transaction_record):
     exchange = exchanges.ExchangeRepository().get(exchange_mic, exchange_ref)
     # Find or create a position.
     position = get_or_create_position(account, isin, exchange)
+    transaction_costs = decimal.Decimal(transaction_costs)
+    if transaction_costs.is_nan():
+        transaction_costs = None
     if position:
         # TODO some sanity checking for currencies, etc.
-        transaction = models.Transaction(
+        transaction, created = models.Transaction.objects.get_or_create(
             executed_at=datetime,
             position=position,
             quantity=quantity.astype(decimal.Decimal),
-            price=decimal.Decimal(price),
-            transaction_costs=decimal.Decimal(transaction_costs),
-            local_value=decimal.Decimal(local_value),
-            value_in_account_currency=decimal.Decimal(value_in_account_currency),
+            price=price.astype(decimal.Decimal),
+            transaction_costs=transaction_costs,
+            local_value=local_value.astype(decimal.Decimal),
+            value_in_account_currency=value_in_account_currency.astype(decimal.Decimal),
             order_id=order_id,
         )
-        transaction.save()
+
+        print(transaction, created)
     else:
         raise ValueError(f"Failed to create a position from a transaction record, isin: {isin}, exchange ref: {exchange_ref}")
 
