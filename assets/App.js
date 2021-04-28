@@ -6,7 +6,7 @@ export default class App extends React.Component {
         return (
             <div>
                 <h1>Hello from React!</h1>
-                <p>Great success!</p>
+                <p className="button">Great success!</p>
             </div>
         );
     }
