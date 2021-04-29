@@ -130,7 +130,7 @@ a, a:hover {
 }
 
 .hero {
-    margin-top: 2em;
+    margin-top: 4em;
     margin-bottom: 4em;
 }
 
@@ -146,9 +146,10 @@ ul.features {
 
 .feature-card {
     padding: 2em;
-    border-radius: 10px;
+    border-radius: 1px;
+    border: 1px solid #384a5052;
     margin: 1em;
-    box-shadow: 2px 2px 20px 1px #39505042
+    box-shadow: 6px 8px 0px 2px #1b98a147;
 }
 
 @media only screen and (min-width: 350px) {
