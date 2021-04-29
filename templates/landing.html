@@ -2,10 +2,92 @@
 {% load static %}
 {% block content %}
 
-<h1>Making managing a complex portfolio a piece of cake</h1>
-<img src="{% static './cupcake.png' %}">
-<p>
-    There isn't much to show here yet. But hey, have some cake.
-</p>
+<div class="hero">
+    <h1>Managing your investment portfolio</h1>
+    <h1><span class="red-highlight">should be a piece of cake</span></h1>
+    <img src="{% static './cupcake.png' %}">
+    <p>
+        Investing can be quite intimidating and very complicated.
 
+
+    </p>
+    <p>But it doesn't have to be.</p>
+    <p>
+        There is no need to give up your control and be at the mercy of expensive advisors.
+    </p>
+    <a class="button">Get started for free</a>
+</div>
+
+<ul class="features">
+
+    <li class="feature-card">
+        <h2>Understand your portfolio</h2>
+
+        <p>Are you as diversified as you think?
+            Does your allocation match your long term plans?
+            Are certain positions underperforming?
+            See how different positions contributed to your portfolio over time.
+            Uncorrelated investments add overall stability to your portfolio.</p>
+
+    </li>
+
+    <li class="feature-card">
+        <h2>Easily compute your investment gains</h2>
+        <p>Things can get complex easily if you have sold investments you've been buying
+            in a different currency than the one you are doing the taxes in. You also need
+            to track how much each share cost you and deal with annoying things like stock splits.
+            It's easy to mess this stuff up without software to help you.
+        </p>
+    </li>
+    <li class="feature-card">
+        <h2>
+            Track your dividends, contributions and growth
+        </h2>
+        <p>
+            How much dividends did you get this year?
+            How much of your portfolio growth was due to your contributions vs dividends vs investment growth?
+            Track this easily even if you use multiple brokers.
+        </p>
+    </li>
+    <li class="feature-card">
+        <h2>Plan and execute</h2>
+        <p>Ever planned to sell a stock when it reached certain value or age? Set yourself alerts when your portfolio
+            matches certain criteria.
+            This can be helpful for rebalancing your portfolio, selling a value investment that
+            now appears overpriced
+            or optimizing your taxes.
+        </p>
+    </li>
+    <li class="feature-card">
+        <h2>Financial modeling for retirement</h2>
+        <p>
+            When will your portfolio be enough to retire on? How much could you withdraw without risking running out of
+            money?
+            Sadly, Invertimo won't predict the future for you, but can help you model various scenarios and track your
+            withdrawals.
+        </p>
+    </li>
+    <li class="feature-card">
+        <h2>Track your investing decisions</h2>
+        <p>
+            Have you ever wondered what have you been thinking making certain trades a couple of years earlier?
+            Save yourself future trouble and record the thoughts behind your investment moves, your ideas,
+            strategies and speculations, so you can be <a target="blank()"
+                href="https://www.fool.com/investing/2019/06/04/whats-the-best-way-to-keep-track-of-your-investmen.aspx">more
+                disciplined</a> and learn from your mistakes.
+        </p>
+    </li>
+</ul>
+
+<div class="hero">
+    <p>
+        The app is in Alpha. Interested in hearing more about it?
+    </p>
+
+    <a class="button">Sign up</a>
+
+    <p>
+        The code is open source and can be found on <a href="https://github.com/ilonajulczuk/invertimo">github</a>.
+    </p>
+</div>
 {% endblock %}

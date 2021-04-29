@@ -39,12 +39,33 @@ h1, h2, h3, h4, h5 {
     background: #404747;
 }
 
+.red-highlight {
+    position: relative;
+}
+
+.red-highlight::before {
+    content: "";
+    position: absolute;
+    border-top: 42px solid #e9625873;
+    width: 114%;
+    height: 2px;
+    bottom: -1px;
+    left: -7%;
+    transform: rotate(-0.8deg);
+    z-index: -1;
+}
+
 .button {
     padding: 1em;
     display: inline-block;
     background: #e96158;
     color: white;
     font-weight: bold;
+}
+
+.button:hover {
+    color: white;
+    background: #d64b41;
 }
 
 .header {
@@ -64,6 +85,7 @@ h1, h2, h3, h4, h5 {
     font-size: 1.1rem;
     font-weight: bold;
 }
+
 a, a:hover {
     color: #404747;
 }
@@ -98,13 +120,35 @@ a, a:hover {
 
 .navigation li {
     list-style-type: none;
-    padding: 20px 5px 20px 5px;
+    padding: 20px 10px 20px 10px;
     margin: 0px;
 }
 
 .navigation {
     margin: 0;
     padding: 0;
+}
+
+.hero {
+    margin-top: 2em;
+    margin-bottom: 4em;
+}
+
+ul.features {
+    list-style-type: none;
+    margin: 0;
+    margin-top: 2em;
+    margin-bottom: 2em;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.feature-card {
+    padding: 2em;
+    border-radius: 10px;
+    margin: 1em;
+    box-shadow: 2px 2px 20px 1px #39505042
 }
 
 @media only screen and (min-width: 350px) {
@@ -116,9 +160,27 @@ a, a:hover {
     }
 }
 
-@media only screen and (min-width: 1400px) {
+@media only screen and (min-width: 1200px) {
     .header-wrapper {
         width: 80%;
         margin: auto;
+    }
+    .main {
+        width: 80%;
+        margin: auto;
+    }
+    ul.features {
+        list-style-type: none;
+        margin: 0;
+        margin-top: 2em;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        column-gap: 20px;
+        align-items: stretch;
+    }
+    .feature-card {
+        margin-left: 0;
+        margin-right: 0;
     }
 }
