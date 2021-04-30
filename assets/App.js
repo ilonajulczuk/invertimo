@@ -1,12 +1,11 @@
 import React from 'react';
-
+import Portfolio from './Portfolio.js';
 
 export default class App extends React.Component {
     render() {
         return (
             <div>
-                <h1>Hello from React!</h1>
-                <p className="button">Great success!</p>
+                <Portfolio/>
             </div>
         );
     }

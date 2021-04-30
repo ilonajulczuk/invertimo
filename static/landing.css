@@ -1,0 +1,13 @@
+.main {
+    text-align: center;
+}
+
+.grid-container {
+    grid-template-rows: 120px 1fr 120px;
+}
+
+@media only screen and (min-width: 350px) {
+    .grid-container {
+        grid-template-rows: 100px 1fr 120px;
+    }
+}

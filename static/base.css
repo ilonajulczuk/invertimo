@@ -22,7 +22,7 @@ h1, h2, h3, h4, h5 {
     display: grid;
     grid-template-columns: 1fr;
     /* Side nav is hidden on mobile */
-    grid-template-rows: 120px 1fr 120px;
+    grid-template-rows: 60px 1fr 120px;
     grid-template-areas: 'header' 'main' 'footer';
     height: 100vh;
 }
@@ -61,6 +61,8 @@ h1, h2, h3, h4, h5 {
     background: #e96158;
     color: white;
     font-weight: bold;
+    margin-top: 0.5em;
+    text-align: center;
 }
 
 .button:hover {
@@ -94,7 +96,7 @@ a, a:hover {
     grid-area: 'main';
     color: #404747;
     padding: 1em;
-    text-align: center;
+    height: 100%;
 }
 
 .footer {
@@ -154,7 +156,7 @@ ul.features {
 
 @media only screen and (min-width: 350px) {
     .grid-container {
-        grid-template-rows: 100px 1fr 120px;
+        grid-template-rows: 60px 1fr 120px;
     }
     .header-wrapper {
         flex-direction: row;

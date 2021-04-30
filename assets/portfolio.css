@@ -1,0 +1,96 @@
+.portfolio-chart {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 4em;
+}
+
+.portfolio-overview {
+    display: flex;
+}
+
+.card {
+    padding: 2em;
+    border-radius: 1px;
+    border: 1px solid #384a5052;
+    display: flex;
+    flex-direction: column;
+    margin: 1em;
+    margin-left: 0;
+    box-shadow: 6px 8px 0px 2px #1b98a147;
+}
+
+.card div {
+    margin-top: 0.5em;
+}
+a {
+    color: #1b98a1;
+    font-weight: bold;
+}
+
+a.button {
+    padding: 0.5em;
+}
+.card-label {
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #52787b;
+    font-size: 0.7em;
+    margin-bottom: 0.5em;
+}
+
+.card p {
+    margin-top: 0.5em;
+}
+
+.card ul {
+    list-style-type: none;
+    margin: 0;
+    margin-top: 0.5em;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+ul.time-selectors {
+    list-style-type: none;
+    margin: 0;
+    margin-top: 0.5em;
+    padding: 0;
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 2em;
+}
+
+ul.time-selectors li {
+    padding: 0.5em;
+    border-right: 1px solid #40535371;
+}
+
+ul.time-selectors li:last-child {
+    padding: 0.5em;
+    border-right: none;
+}
+ul.time-selectors li:first-child {
+    padding-left: 0;
+}
+
+
+.active-time-selector {
+    position: relative;
+}
+
+.active-time-selector::before {
+    content: "";
+    position: absolute;
+    border-top: 4px solid #1b98a1;
+    width: 80%;
+    height: 2px;
+    bottom: 4px;
+    left: 10%;
+    z-index: -1;
+}
+
+select {
+    margin-top: 0.5em;
+    max-width: 200px;
+}
