@@ -94,10 +94,8 @@ class Position(models.Model):
     )
 
     def __str__(self):
-        return (
-            f"<Position account: {self.account}, "
-            f"security: {self.security}>"
-        )
+        return f"<Position account: {self.account}, " f"security: {self.security}>"
+
 
 class Transaction(models.Model):
     executed_at = models.DateTimeField()
@@ -106,8 +104,7 @@ class Transaction(models.Model):
     )
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     price = models.DecimalField(max_digits=12, decimal_places=5)
-    transaction_costs = models.DecimalField(
-        max_digits=12, decimal_places=5, null=True)
+    transaction_costs = models.DecimalField(max_digits=12, decimal_places=5, null=True)
 
     # The currency is stored with the security.
     local_value = models.DecimalField(max_digits=12, decimal_places=5)

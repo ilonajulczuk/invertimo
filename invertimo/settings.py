@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django_extensions",
     "debug_toolbar",
     "finance.apps.FinanceConfig",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [

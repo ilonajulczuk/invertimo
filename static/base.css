@@ -63,6 +63,18 @@ h1, h2, h3, h4, h5 {
     font-weight: bold;
     margin-top: 0.5em;
     text-align: center;
+    text-decoration: none;
+}
+
+.button-secondary {
+    padding: 1em;
+    display: inline-block;
+    background: white;
+    color: #e96158;
+    font-weight: bold;
+    margin-top: 0.5em;
+    text-align: center;
+    border: 2px solid #e96158;
 }
 
 .button:hover {

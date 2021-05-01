@@ -17,6 +17,10 @@ import debug_toolbar
 from django.contrib import admin
 from django.urls import include, path
 from invertimo import views
+from finance.views import PositionView
+from rest_framework import routers
+
+router = routers.DefaultRouter()
 
 urlpatterns = [
     path("", views.index_view, name="index"),
@@ -25,4 +29,7 @@ urlpatterns = [
     path("privacy_policy/", views.privacy_policy_view, name="privacy_policy"),
     path("logout/", views.logout_view, name="logout"),
     path("__debug__/", include(debug_toolbar.urls)),
+    path("api/", include(router.urls)),
+     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path("api/positions/", PositionView.as_view(), name="api-positions"),
 ]
