@@ -42,6 +42,12 @@ a.button {
     margin-top: 0.5em;
 }
 
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
 .card ul {
     list-style-type: none;
     margin: 0;
@@ -50,6 +56,41 @@ a.button {
     display: flex;
     flex-direction: column;
 }
+
+ul.position-list {
+    margin-top: 0.5em;
+    margin-bottom: 4em;
+    box-shadow: 6px 8px 0px 2px #1b98a147;
+    display: flex;
+    flex-direction: column;
+}
+
+.position-card {
+    padding: 0.5em;
+    border-radius: 1px;
+    border: 1px solid #384a5052;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.position-card div {
+    padding: 20px;
+    flex-basis: 200px;
+}
+
+.position-card .position-name {
+    display: flex;
+    flex-direction: column;
+    flex-basis: 250px;
+}
+
+.position-symbol {
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
 
 ul.time-selectors {
     list-style-type: none;
@@ -74,7 +115,25 @@ ul.time-selectors li:first-child {
     padding-left: 0;
 }
 
+.position-list-fields {
+    display: flex;
+    padding: 0.5em;
+    background: #1b98a1;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2em;
+    justify-content: space-around;
+}
 
+
+.position-list-fields li {
+    padding: 20px;
+    flex-basis: 200px;
+}
+
+.position-list-fields .position-list-fields-product {
+    flex-basis: 250px;
+}
 .active-time-selector {
     position: relative;
 }

@@ -1,11 +1,9 @@
 from django.shortcuts import render
 from rest_framework import generics, permissions, viewsets
-from finance.models import Position
-from finance.serializers import PositionSerializer
-
 from rest_framework.pagination import LimitOffsetPagination
 
-# Create your views here.
+from finance.models import Position
+from finance.serializers import PositionSerializer
 
 
 class PositionView(generics.ListAPIView):
