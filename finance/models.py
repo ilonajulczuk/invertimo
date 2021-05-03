@@ -22,7 +22,6 @@ class Currency(models.IntegerChoices):
     GBX = 4, _("GBX")
 
 
-
 class Account(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     currency = models.IntegerField(choices=Currency.choices, default=Currency.EURO)
@@ -37,6 +36,7 @@ class Account(models.Model):
             f"<Account user: {self.user}, nickname: '{self.nickname}', "
             f"currency: {self.get_currency_display()}>"
         )
+
 
 class Exchange(models.Model):
     name = models.CharField(max_length=200)
@@ -113,6 +113,15 @@ class Position(models.Model):
     def __str__(self):
         return f"<Position account: {self.account}, " f"security: {self.security}>"
 
+    def quantity_history(self, from_date):
+        # create dates from now to from_date
+        # find transactions between from_date and now
+        # Start with the current quantity.
+        quantity = self.quantity
+        # for each date if the transaction was done iterate over transactions
+        # track last relevant transaction
+        pass
+
 
 class Transaction(models.Model):
     executed_at = models.DateTimeField()
@@ -165,7 +174,8 @@ class CurrencyExchangeRate(models.Model):
     value = models.DecimalField(max_digits=12, decimal_places=5)
 
     class Meta:
-        ordering = ['-date']
+        ordering = ["-date"]
+
 
 class PriceHistory(models.Model):
     security = models.ForeignKey(Security, on_delete=models.CASCADE)
@@ -173,4 +183,4 @@ class PriceHistory(models.Model):
     date = models.DateField()
 
     class Meta:
-        ordering = ['-date']
+        ordering = ["-date"]

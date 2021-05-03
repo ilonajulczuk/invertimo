@@ -41,3 +41,10 @@ class TestDegiroParser(TestCase):
 
         self.assertAlmostEqual(account.balance, decimal.Decimal("-15237.26"))
         self.assertAlmostEqual(total_value, decimal.Decimal("-15232.65"))
+
+
+
+class TestPosition(TestCase):
+
+    def test_quantity_history_based_on_transactions(self):
+        pass
