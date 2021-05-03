@@ -22,6 +22,7 @@ class Currency(models.IntegerChoices):
     GBX = 4, _("GBX")
 
 
+
 class Account(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     currency = models.IntegerField(choices=Currency.choices, default=Currency.EURO)
@@ -155,3 +156,21 @@ class AccountEvent(models.Model):
         null=True,
         blank=True,
     )
+
+
+class CurrencyExchangeRate(models.Model):
+    from_currency = models.IntegerField(choices=Currency.choices)
+    to_currency = models.IntegerField(choices=Currency.choices)
+    date = models.DateField()
+    value = models.DecimalField(max_digits=12, decimal_places=5)
+
+    class Meta:
+        ordering = ['-date']
+
+class PriceHistory(models.Model):
+    security = models.ForeignKey(Security, on_delete=models.CASCADE)
+    value = models.DecimalField(max_digits=12, decimal_places=5)
+    date = models.DateField()
+
+    class Meta:
+        ordering = ['-date']
