@@ -66,3 +66,56 @@ def query_exchanges():
     URL = f"https://eodhistoricaldata.com/api/exchanges-list/?api_token={settings.EOD_APIKEY}"
     response = requests.get(URL)
     return response.json()
+
+
+class SecurityRepository:
+    def __init__(self, exchange):
+        self.exchange = exchange
+
+    def get(self, isin):
+        securities = models.Security.objects.filter(isin=isin, exchange=self.exchange)
+        if securities:
+            return securities[0]
+
+    def add(self, isin, symbol, currency, country, name):
+        security = models.Security(
+            exchange=self.exchange,
+            isin=isin,
+            symbol=symbol,
+            currency=currency,
+            country=country,
+            name=name,
+        )
+        security.save()
+        return security
+
+
+def get_or_create_security(isin, exchange):
+    repository = SecurityRepository(exchange)
+    security = repository.get(isin)
+    if security:
+        return security
+    exchange_code = exchange.identifiers.get(id_type=models.ExchangeIDType.CODE).value
+    security_records = query_security(isin)
+    for record in security_records:
+
+        if record["Exchange"] == exchange_code:
+
+            currency = models.currency_enum_from_string(record["Currency"])
+            security = repository.add(
+                isin=isin,
+                symbol=record["Code"],
+                currency=currency,
+                country=record["Country"],
+                name=record["Name"],
+            )
+            print("created security")
+            return security
+    else:
+        print(f"failed to find stock data for isin: {isin}, exchange: {exchange}")
+
+
+def query_security(isin):
+    URL = f"https://eodhistoricaldata.com/api/search/{isin}?api_token={settings.EOD_APIKEY}"
+    response = requests.get(URL)
+    return response.json()

@@ -17,9 +17,8 @@ class SecuritySerializer(serializers.ModelSerializer):
 
 
 class PositionSerializer(serializers.ModelSerializer):
-
     security = SecuritySerializer()
 
     class Meta:
         model = Position
-        fields = ["account", "security"]
+        fields = ["id", "account", "security", "quantity"]

@@ -1,0 +1,64 @@
+from finance import models
+from finance import exchanges
+import decimal
+
+
+class AccountRepository:
+    def get(self, user, id):
+        pass
+
+    def add_transaction(
+        self,
+        account,
+        isin,
+        exchange,
+        executed_at,
+        quantity,
+        price,
+        transaction_costs,
+        local_value,
+        value_in_account_currency,
+        total_in_account_currency,
+        order_id,
+    ):
+        position = self._get_or_create_position(account, isin, exchange)
+        if not position:
+            raise ValueError(
+                f"Failed to create a position from a transaction record, isin: {isin}, exchange ref: {exchange_ref}"
+            )
+
+        transaction, created = models.Transaction.objects.get_or_create(
+            executed_at=executed_at,
+            position=position,
+            quantity=quantity,
+            price=price,
+            transaction_costs=transaction_costs,
+            local_value=local_value,
+            value_in_account_currency=value_in_account_currency,
+            total_in_account_currency=total_in_account_currency,
+            order_id=order_id,
+        )
+
+        if created:
+            position.quantity += quantity
+            position.save()
+            account.balance += total_in_account_currency
+            account.save()
+
+        print(transaction, created)
+        return transaction
+
+    def add_event(self, account):
+        pass
+
+    def _get_or_create_position(self, account, isin, exchange):
+        positions = models.Position.objects.filter(
+            account=account, security__isin=isin, security__exchange=exchange
+        )
+        if positions:
+            return positions[0]
+        security = exchanges.get_or_create_security(isin, exchange)
+        if security:
+            return models.Position.objects.create(account=account, security=security)
+        else:
+            return None

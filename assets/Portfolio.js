@@ -1,7 +1,7 @@
 import React from 'react';
 import stacked_area_graph from './stacked_area_graph.png';
 import './portfolio.css';
-import Position from './Position.js';
+import PositionList from './PositionList.js';
 
 // GET /api/positions/?limit=50
 const TEST_DATA = {
@@ -10,6 +10,7 @@ const TEST_DATA = {
     "previous": null,
     "results": [
         {
+            "id": 31,
             "account": 2,
             "security": {
                 "id": 1,
@@ -22,9 +23,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "35.00"
         },
         {
+            "id": 32,
             "account": 2,
             "security": {
                 "id": 2,
@@ -37,9 +40,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "53.00"
         },
         {
+            "id": 33,
             "account": 2,
             "security": {
                 "id": 3,
@@ -52,9 +57,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "29.00"
         },
         {
+            "id": 34,
             "account": 2,
             "security": {
                 "id": 4,
@@ -67,9 +74,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "18.00"
         },
         {
+            "id": 35,
             "account": 2,
             "security": {
                 "id": 5,
@@ -82,9 +91,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "90.00"
         },
         {
+            "id": 36,
             "account": 2,
             "security": {
                 "id": 6,
@@ -97,9 +108,11 @@ const TEST_DATA = {
                 },
                 "currency": 1,
                 "country": "Germany"
-            }
+            },
+            "quantity": "2775.00"
         },
         {
+            "id": 37,
             "account": 2,
             "security": {
                 "id": 7,
@@ -112,9 +125,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "1.00"
         },
         {
+            "id": 38,
             "account": 2,
             "security": {
                 "id": 8,
@@ -127,9 +142,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "16.00"
         },
         {
+            "id": 39,
             "account": 2,
             "security": {
                 "id": 9,
@@ -142,9 +159,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "38.00"
         },
         {
+            "id": 40,
             "account": 2,
             "security": {
                 "id": 10,
@@ -157,9 +176,11 @@ const TEST_DATA = {
                 },
                 "currency": 4,
                 "country": "UK"
-            }
+            },
+            "quantity": "1552.00"
         },
         {
+            "id": 41,
             "account": 2,
             "security": {
                 "id": 11,
@@ -172,9 +193,11 @@ const TEST_DATA = {
                 },
                 "currency": 4,
                 "country": "UK"
-            }
+            },
+            "quantity": "720.00"
         },
         {
+            "id": 42,
             "account": 2,
             "security": {
                 "id": 12,
@@ -187,9 +210,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "112.00"
         },
         {
+            "id": 43,
             "account": 2,
             "security": {
                 "id": 13,
@@ -202,9 +227,11 @@ const TEST_DATA = {
                 },
                 "currency": 1,
                 "country": "Germany"
-            }
+            },
+            "quantity": "8.00"
         },
         {
+            "id": 44,
             "account": 2,
             "security": {
                 "id": 14,
@@ -217,9 +244,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "85.00"
         },
         {
+            "id": 45,
             "account": 2,
             "security": {
                 "id": 15,
@@ -232,9 +261,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "10.00"
         },
         {
+            "id": 46,
             "account": 2,
             "security": {
                 "id": 16,
@@ -247,9 +278,11 @@ const TEST_DATA = {
                 },
                 "currency": 1,
                 "country": "Germany"
-            }
+            },
+            "quantity": "11.00"
         },
         {
+            "id": 47,
             "account": 2,
             "security": {
                 "id": 17,
@@ -262,9 +295,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "30.00"
         },
         {
+            "id": 48,
             "account": 2,
             "security": {
                 "id": 18,
@@ -277,9 +312,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "43.00"
         },
         {
+            "id": 49,
             "account": 2,
             "security": {
                 "id": 19,
@@ -292,9 +329,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "123.00"
         },
         {
+            "id": 50,
             "account": 2,
             "security": {
                 "id": 20,
@@ -307,9 +346,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "21.00"
         },
         {
+            "id": 51,
             "account": 2,
             "security": {
                 "id": 21,
@@ -322,9 +363,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "16.00"
         },
         {
+            "id": 52,
             "account": 2,
             "security": {
                 "id": 22,
@@ -337,9 +380,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "4.00"
         },
         {
+            "id": 53,
             "account": 2,
             "security": {
                 "id": 23,
@@ -352,9 +397,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "31.00"
         },
         {
+            "id": 54,
             "account": 2,
             "security": {
                 "id": 24,
@@ -367,9 +414,11 @@ const TEST_DATA = {
                 },
                 "currency": 4,
                 "country": "UK"
-            }
+            },
+            "quantity": "2450.00"
         },
         {
+            "id": 55,
             "account": 2,
             "security": {
                 "id": 25,
@@ -382,9 +431,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "21.00"
         },
         {
+            "id": 56,
             "account": 2,
             "security": {
                 "id": 26,
@@ -397,9 +448,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "19.00"
         },
         {
+            "id": 57,
             "account": 2,
             "security": {
                 "id": 27,
@@ -412,9 +465,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "26.00"
         },
         {
+            "id": 58,
             "account": 2,
             "security": {
                 "id": 28,
@@ -427,9 +482,11 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "0.00"
         },
         {
+            "id": 59,
             "account": 2,
             "security": {
                 "id": 29,
@@ -442,9 +499,11 @@ const TEST_DATA = {
                 },
                 "currency": 1,
                 "country": "Germany"
-            }
+            },
+            "quantity": "32.00"
         },
         {
+            "id": 60,
             "account": 2,
             "security": {
                 "id": 30,
@@ -457,7 +516,8 @@ const TEST_DATA = {
                 },
                 "currency": 3,
                 "country": "USA"
-            }
+            },
+            "quantity": "22.00"
         }
     ]
 };
@@ -504,7 +564,7 @@ class PortfolioOverview extends React.Component {
                     <a className="button">Manage accounts</a>
                 </div>
                 <div className="card">
-                <span className="card-label">Events</span>
+                    <span className="card-label">Events</span>
                     <div>{transaction_count} <a href="">Transactions</a></div>
                     <div>{account_event_count} <a href="">Account Events</a></div>
                     <a className="button">Manage transactions</a>
@@ -562,39 +622,12 @@ class PortfolioChart extends React.Component {
 export default class Portfolio extends React.Component {
 
     render() {
-        const positionList = TEST_DATA.results.map((position) => (
-            <Position key={position["security"]["id"]} data={position}/>
-        ))
-        console.log(positionList);
         return (
             <div>
                 <h1>Portfolio</h1>
                 <PortfolioOverview />
                 <PortfolioChart />
-                <h2>Positions</h2>
-
-                <ul className="position-list">
-                <li className="position-list-header">
-                    <ul className="position-list-fields">
-                        <li className="position-list-fields-product">
-                            Product
-                        </li>
-                        <li>
-                            Exchange
-                        </li>
-                        <li>
-                            Quantity
-                        </li>
-                        <li>
-                            Price
-                        </li>
-                        <li>
-                            Value
-                        </li>
-                    </ul>
-                </li>
-                    {positionList}
-                </ul>
+                <PositionList positions={TEST_DATA.results} />
             </div>
         )
 

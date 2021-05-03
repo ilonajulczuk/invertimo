@@ -5,6 +5,7 @@ import decimal
 from finance import models
 from finance import exchanges
 from django.db import transaction
+from finance import accounts
 
 
 def import_transaction(account, transaction_record):
@@ -14,6 +15,7 @@ def import_transaction(account, transaction_record):
     datetime = f"{year}-{month}-{day} {time}Z"
     isin = transaction_record["ISIN"]
     local_value = transaction_record["Local value"]
+    total_in_account_currency = transaction_record["Total"]
     value_in_account_currency = transaction_record["Value"]
     transaction_costs = transaction_record["Transaction costs"]
     print(transaction_costs)
@@ -25,82 +27,26 @@ def import_transaction(account, transaction_record):
     exchange_ref = transaction_record["Reference"]
     exchange = exchanges.ExchangeRepository().get(exchange_mic, exchange_ref)
     # Find or create a position.
-    position = get_or_create_position(account, isin, exchange)
+
+    def to_decimal(pd_f):
+        return decimal.Decimal(pd_f.astype(decimal.Decimal))
+
     transaction_costs = decimal.Decimal(transaction_costs)
     if transaction_costs.is_nan():
         transaction_costs = None
-    if position:
-        # TODO some sanity checking for currencies, etc.
-        transaction, created = models.Transaction.objects.get_or_create(
-            executed_at=datetime,
-            position=position,
-            quantity=quantity.astype(decimal.Decimal),
-            price=price.astype(decimal.Decimal),
-            transaction_costs=transaction_costs,
-            local_value=local_value.astype(decimal.Decimal),
-            value_in_account_currency=value_in_account_currency.astype(decimal.Decimal),
-            order_id=order_id,
-        )
-
-        print(transaction, created)
-    else:
-        raise ValueError(f"Failed to create a position from a transaction record, isin: {isin}, exchange ref: {exchange_ref}")
-
-
-def currency_enum_from_string(currency):
-    if currency == "USD":
-        return models.Currency.USD
-    elif currency == "EUR":
-        return models.Currency.EURO
-    elif currency == "GBX":
-        return models.Currency.GBX
-    else:
-        raise ValueError("Unsupported currency")
-
-
-def get_or_create_security(isin, exchange):
-    securities = models.Security.objects.filter(isin=isin, exchange=exchange)
-    if securities:
-        return securities[0]
-    security_records = query_security(isin)
-    for record in security_records:
-        exchange_code = exchange.identifiers.get(
-            id_type=models.ExchangeIDType.CODE
-        ).value
-        if record["Exchange"] == exchange_code:
-
-            currency = currency_enum_from_string(record["Currency"])
-            security = models.Security(
-                exchange=exchange,
-                isin=isin,
-                symbol=record["Code"],
-                currency=currency,
-                country=record["Country"],
-                name=record["Name"],
-            )
-            security.save()
-            print("created security")
-            return security
-    else:
-        print(f"failed to find stock data for isin: {isin}, exchange: {exchange}")
-
-def query_security(isin):
-    URL = f"https://eodhistoricaldata.com/api/search/{isin}?api_token={settings.EOD_APIKEY}"
-    response = requests.get(URL)
-    return response.json()
-
-
-def get_or_create_position(account, isin, exchange):
-    positions = models.Position.objects.filter(
-        account=account, security__isin=isin, security__exchange=exchange
+    accounts.AccountRepository().add_transaction(
+        account,
+        isin=isin,
+        exchange=exchange,
+        executed_at=datetime,
+        quantity=to_decimal(quantity),
+        price=to_decimal(price),
+        transaction_costs=transaction_costs,
+        local_value=to_decimal(local_value),
+        value_in_account_currency=to_decimal(value_in_account_currency),
+        total_in_account_currency=to_decimal(total_in_account_currency),
+        order_id=order_id,
     )
-    if positions:
-        return positions[0]
-    security = get_or_create_security(isin, exchange)
-    if security:
-        return models.Position.objects.create(account=account, security=security)
-    else:
-        return None
 
 
 @transaction.atomic()
