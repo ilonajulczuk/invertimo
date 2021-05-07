@@ -1,7 +1,10 @@
+import datetime
+
 from django.contrib.auth.models import User
 from django.db import models
-
 from django.utils.translation import gettext_lazy as _
+
+from finance import utils
 
 
 def currency_enum_from_string(currency):
@@ -113,14 +116,42 @@ class Position(models.Model):
     def __str__(self):
         return f"<Position account: {self.account}, " f"security: {self.security}>"
 
-    def quantity_history(self, from_date):
-        # create dates from now to from_date
-        # find transactions between from_date and now
-        # Start with the current quantity.
+    def quantity_history(
+        self, from_date, to_date=None, output_period=datetime.timedelta(days=1)
+    ):
+        if to_date is None:
+            to_date = datetime.datetime.now()
+
+        dates = utils.generate_intervals(
+            from_date, to_date, output_period, start_with_end=True
+        )
+
         quantity = self.quantity
-        # for each date if the transaction was done iterate over transactions
-        # track last relevant transaction
-        pass
+        transactions = self.transactions.order_by("-executed_at")
+        if not transactions:
+            return [(date, quantity) for date in dates]
+
+        dates_with_quantities = []
+        if transactions[0].executed_at > to_date:
+            # TODO: add support for this if necessary.
+            raise ValueError("history ending before last transaction not supported")
+
+        last_relevant_transaction = 0
+        for date in dates:
+            relevant_transactions = transactions[last_relevant_transaction:]
+            for i, transaction in enumerate(relevant_transactions):
+                if transaction.executed_at < date:
+                    # Since we are going from later to earlier and undoing each
+                    # transaction, this transaction doesn't happen yet, so it couldn't
+                    # affect the current interval. Since transactions are sorted, we
+                    # know that all potentially relevant transactions were already applied.
+                    break
+                else:
+                    last_relevant_transaction += 1
+                    quantity -= transaction.quantity
+            dates_with_quantities.append((date, quantity))
+
+        return dates_with_quantities
 
 
 class Transaction(models.Model):

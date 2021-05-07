@@ -4,7 +4,7 @@ from finance import accounts, prices, models
 
 
 class Command(BaseCommand):
-    help = 'Import degiro transactions from a file.'
+    help = 'Fetch prices from eod historical data.'
 
     def add_arguments(self, parser):
         pass

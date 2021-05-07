@@ -5,7 +5,7 @@ import decimal
 
 class AccountRepository:
     def get(self, user, id):
-        pass
+        return models.Account.objects.get(user=user, id=id)
 
     def add_transaction(
         self,
@@ -24,7 +24,7 @@ class AccountRepository:
         position = self._get_or_create_position(account, isin, exchange)
         if not position:
             raise ValueError(
-                f"Failed to create a position from a transaction record, isin: {isin}, exchange ref: {exchange_ref}"
+                f"Failed to create a position from a transaction record, isin: {isin}, exchange ref: {exchange}"
             )
 
         transaction, created = models.Transaction.objects.get_or_create(
@@ -45,7 +45,6 @@ class AccountRepository:
             account.balance += total_in_account_currency
             account.save()
 
-        print(transaction, created)
         return transaction
 
     def add_event(self, account):
