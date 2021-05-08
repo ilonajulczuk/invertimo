@@ -1,5 +1,6 @@
 import datetime
 
+import pytz
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -14,6 +15,17 @@ def currency_enum_from_string(currency):
         return Currency.EURO
     elif currency == "GBX":
         return Currency.GBX
+    else:
+        raise ValueError("Unsupported currency")
+
+
+def currency_string_from_enum(currency):
+    if currency == Currency.USD:
+        return "USD"
+    elif currency == Currency.EURO:
+        return "EUR"
+    elif currency == Currency.GBX:
+        return "GBX"
     else:
         raise ValueError("Unsupported currency")
 
@@ -120,7 +132,7 @@ class Position(models.Model):
         self, from_date, to_date=None, output_period=datetime.timedelta(days=1)
     ):
         if to_date is None:
-            to_date = datetime.datetime.now()
+            to_date = datetime.datetime.now(tz=pytz.UTC)
 
         dates = utils.generate_intervals(
             from_date, to_date, output_period, start_with_end=True
