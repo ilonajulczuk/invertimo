@@ -1,12 +1,8 @@
-from finance.models import (
-    Position,
-    Security,
-    Exchange,
-    CurrencyExchangeRate,
-    PriceHistory,
-)
 from rest_framework import serializers
+
 from finance import models
+from finance.models import (Account, CurrencyExchangeRate, Exchange, Position,
+                            PriceHistory, Security)
 
 
 class ExchangeSerializer(serializers.ModelSerializer):
@@ -84,3 +80,14 @@ class CurrencyQuerySerializer(FromToDatesSerializer):
             return models.currency_enum_from_string(value)
         except ValueError:
             raise serializers.ValidationError(f"{value} is not a valid currency symbol")
+
+
+class AccountSerializer(serializers.ModelSerializer):
+
+    positions_count = serializers.IntegerField()
+    transactions_count = serializers.IntegerField()
+    currency = CurrencyField()
+    class Meta:
+        model = Account
+        fields = ["id", "currency", "nickname", "description",
+                  "balance", "last_modified", "positions_count", "transactions_count"]

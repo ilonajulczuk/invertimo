@@ -1,20 +1,33 @@
 import datetime
 
 import pytz
+from django.db.models import Count, Sum
 from django.shortcuts import get_object_or_404, render
 from rest_framework import exceptions, generics, permissions, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 
-from finance import models
+from finance import accounts, models
 from finance.models import CurrencyExchangeRate, Position, PriceHistory
-from finance.serializers import (
-    CurrencyExchangeRateSerializer,
-    CurrencyQuerySerializer,
-    FromToDatesSerializer,
-    PositionSerializer,
-    PositionWithQuantitiesSerializer,
-    SecurityPriceHistorySerializer,
-)
+from finance.serializers import (AccountSerializer,
+                                 CurrencyExchangeRateSerializer,
+                                 CurrencyQuerySerializer,
+                                 FromToDatesSerializer, PositionSerializer,
+                                 PositionWithQuantitiesSerializer,
+                                 SecurityPriceHistorySerializer)
+
+
+class AccountsView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = AccountSerializer
+
+    def get_queryset(self):
+
+        queryset = models.Account.objects.filter(user=self.request.user)
+        queryset = queryset.annotate(
+            positions_count=Count("positions", distinct=True),
+            transactions_count=Count("positions__transactions", distinct=True),
+        )
+        return queryset
 
 
 class PositionsView(generics.ListAPIView):
