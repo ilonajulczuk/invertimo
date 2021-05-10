@@ -1,5 +1,7 @@
 import React from 'react';
 import './position_list.css';
+import { APIClient } from './api_utils.js';
+
 
 class Position extends React.Component {
 
@@ -10,7 +12,7 @@ class Position extends React.Component {
         const value = quantity * price;
 
         return (
-            <li className="position-card">
+            <li className="position-card" onClick={this.props.handleClick}>
                 <div className="position-name">
                     <span className="card-label">{data.security.isin}</span>
                     <span className="position-symbol">{data.security.symbol}</span>
@@ -36,13 +38,38 @@ class Position extends React.Component {
 
 
 export default class PositionList extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            positionDetails: {}
+        };
+        this.apiClient = new APIClient('./api');
+        this.handlePositionClick = positionId => {
+            return event => {
+                if (positionId in this.state.positionDetails) {
+                    // Don't fetch the info again if it's already available.
+                    return;
+                }
+                this.apiClient.getPositionDetail(positionId).then(
+                    positionData => {
+                        let positionDetails = this.state.positionDetails;
+                        positionDetails[positionId] = positionData;
+                        console.log(positionData);
+                        this.setState({ "positionDetails": positionDetails });
+                    }, error => alert(error)
+                )
+            }
+        };
+    }
+
     render() {
         const positionList = this.props.positions.map((position) => (
-            <Position key={position["id"]} data={position} />
+            <Position key={position["id"]} data={position} handleClick={this.handlePositionClick(position["id"])} />
         ))
         return (
             <div>
-                <h2>Positions</h2>
+                <h2>Positions ({Object.keys(this.state.positionDetails).length})</h2>
                 <ul className="position-list">
                     <li className="position-list-header">
                         <ul className="position-list-fields">

@@ -19,6 +19,7 @@ from finance.serializers import (AccountSerializer,
 class AccountsView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AccountSerializer
+    pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
 
