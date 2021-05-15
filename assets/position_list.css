@@ -16,9 +16,21 @@ ul.position-list {
     align-items: center;
 }
 
+.position-card-expanded-content {
+    background-color: #1b98a1;
+    padding: 1em;
+    background: #1b98a114;
+    border: 1px solid #384a5052;
+    border-left: 5px solid #1b98a1;
+}
+.position-card-active {
+    border-left: 5px solid #1b98a1;
+}
 .position-card div {
     padding: 20px;
     flex-basis: 200px;
+    display: flex;
+    flex-direction: column;
 }
 
 .position-card .position-name {

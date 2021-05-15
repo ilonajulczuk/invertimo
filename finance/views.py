@@ -1,19 +1,22 @@
 import datetime
 
 import pytz
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Subquery, OuterRef
 from django.shortcuts import get_object_or_404, render
 from rest_framework import exceptions, generics, permissions, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 
 from finance import accounts, models
 from finance.models import CurrencyExchangeRate, Position, PriceHistory
-from finance.serializers import (AccountSerializer,
-                                 CurrencyExchangeRateSerializer,
-                                 CurrencyQuerySerializer,
-                                 FromToDatesSerializer, PositionSerializer,
-                                 PositionWithQuantitiesSerializer,
-                                 SecurityPriceHistorySerializer)
+from finance.serializers import (
+    AccountSerializer,
+    CurrencyExchangeRateSerializer,
+    CurrencyQuerySerializer,
+    FromToDatesSerializer,
+    PositionSerializer,
+    PositionWithQuantitiesSerializer,
+    SecurityPriceHistorySerializer,
+)
 
 
 class AccountsView(generics.ListAPIView):
@@ -43,6 +46,20 @@ class PositionsView(generics.ListAPIView):
             Position.objects.filter(account__user=user)
             .select_related("security")
             .select_related("security__exchange")
+            .annotate(
+                latest_price=Subquery(
+                    PriceHistory.objects.filter(security__positions=OuterRef("pk"))
+                    .order_by("-date")
+                    .values("value")[:1]
+                )
+            )
+            .annotate(
+                latest_price_date=Subquery(
+                    PriceHistory.objects.filter(security__positions=OuterRef("pk"))
+                    .order_by("-date")
+                    .values("date")[:1]
+                )
+            )
         )
 
 

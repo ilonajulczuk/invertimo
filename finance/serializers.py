@@ -27,10 +27,12 @@ class SecuritySerializer(serializers.ModelSerializer):
 
 class PositionSerializer(serializers.ModelSerializer):
     security = SecuritySerializer()
+    latest_price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    latest_price_date = serializers.DateField()
 
     class Meta:
         model = Position
-        fields = ["id", "account", "security", "quantity"]
+        fields = ["id", "account", "security", "quantity", "latest_price", "latest_price_date"]
 
 
 class PositionWithQuantitiesSerializer(serializers.ModelSerializer):
