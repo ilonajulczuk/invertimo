@@ -193,6 +193,8 @@ class Transaction(models.Model):
             f"<Transaction executed_at: {self.executed_at}, position: {self.position}>"
         )
 
+    class Meta:
+        ordering = ["-executed_at"]
 
 class AccountEvent(models.Model):
     account = models.ForeignKey(

@@ -44,7 +44,12 @@ export class APIClient {
     }
 
     async getPositionDetail(positionId) {
-        let url = this.base_url + `/positions/${positionId}/`;
-        return fetchDetailResult(url);
+        let positionsUrl = this.base_url + `/positions/${positionId}/`;
+        let positionDetails = await fetchDetailResult(positionsUrl);
+        const securityId = positionDetails.security.id;
+        let securityUrl = this.base_url + `/securities/${securityId}/prices`;
+        let securityPrices = await fetchDetailResult(securityUrl);
+        positionDetails.prices = securityPrices;
+        return positionDetails;
     }
 };

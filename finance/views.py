@@ -124,7 +124,11 @@ class PositionView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(account__user=self.request.user)
+        return (
+            queryset.filter(account__user=self.request.user)
+            .select_related("security")
+            .select_related("security__exchange")
+            .prefetch_related("transactions"))
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
