@@ -1,3 +1,7 @@
+// The import below is necessary for async/await to work.
+import regeneratorRuntime from "regenerator-runtime";
+import { APIClient } from './api_utils.js';
+
 
 // GET /api/positions/?limit=50
 const TEST_DATA = {
@@ -517,3 +521,19 @@ const TEST_DATA = {
         }
     ]
 };
+
+
+
+it("fetches positions correctly", async () => {
+    global.fetch = jest.fn(() => Promise.resolve({
+        json: () => Promise.resolve(TEST_DATA)
+    }));
+
+    let apiClient = new APIClient('./my-api');
+
+    let got = await apiClient.getPositions();
+    const expectedPositions = TEST_DATA.results;
+    expect(got).toEqual(expectedPositions);
+
+    global.fetch.mockRestore();
+});

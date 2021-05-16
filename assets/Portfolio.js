@@ -14,6 +14,7 @@ class PortfolioOverview extends React.Component {
         };
         this.apiClient = new APIClient('./api');
     }
+
     componentDidMount() {
         this.apiClient.getAccounts().then(
             accounts => this.setState({ "accounts": accounts })
@@ -31,9 +32,7 @@ class PortfolioOverview extends React.Component {
             transactions_count += account.transactions_count;
             total_value += Number(account.balance);
         }
-        this.state.accounts;
         let account_count = this.state.accounts.length;
-
 
         return (
             <div className="portfolio-overview">
@@ -85,7 +84,7 @@ class PortfolioChart extends React.Component {
         return (
             <div className="portfolio-chart">
                 <h2>Performance over time</h2>
-                <img src={stacked_area_graph} />
+                {/* <img src={stacked_area_graph} /> */}
                 <span className="card-label">
                     Time period
                 </span>
@@ -134,10 +133,9 @@ export default class Portfolio extends React.Component {
         this.apiClient = new APIClient('./api');
     }
 
-    componentDidMount() {
-        this.apiClient.getPositions().then(
-            positions => this.setState({ "positions": positions })
-        );
+    async componentDidMount() {
+        let positions = await this.apiClient.getPositions()
+        this.setState({ "positions": positions });
     }
 
     render() {

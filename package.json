@@ -4,8 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest ./assets",
     "dev": "webpack --mode development"
+  },
+  "jest": {
+    "transform": {
+      ".*": "<rootDir>/node_modules/babel-jest"
+    },
+    "moduleNameMapper": {
+      ".+\\.(css|styl|less|sass|scss|png|jpg|ttf|woff|woff2)$": "identity-obj-proxy"
+    }
   },
   "repository": {
     "type": "git",
@@ -19,18 +27,23 @@
   },
   "homepage": "https://github.com/ilonajulczuk/invertimo#readme",
   "devDependencies": {
-    "@babel/core": "^7.13.15",
+    "@babel/core": "^7.14.2",
     "@babel/plugin-transform-runtime": "^7.13.15",
-    "@babel/preset-env": "^7.13.15",
+    "@babel/preset-env": "^7.14.2",
     "@babel/preset-react": "^7.13.13",
+    "babel-jest": "^26.6.3",
     "babel-loader": "^8.2.2",
     "css-loader": "^5.2.4",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^26.6.3",
     "style-loader": "^2.0.0",
     "webpack": "^5.33.2",
     "webpack-cli": "^4.6.0"
   },
   "dependencies": {
     "@babel/runtime": "^7.14.0",
+    "@testing-library/jest-dom": "^5.12.0",
+    "@testing-library/react": "^11.2.7",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "victory": "^35.7.1"
