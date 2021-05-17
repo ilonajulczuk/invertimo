@@ -2,6 +2,10 @@
 // The import below is necessary for async/await to work.
 import regeneratorRuntime from "regenerator-runtime";
 
+
+export class APIClientError extends Error {}
+
+
 export async function fetchDetailResult(url) {
     let response = await fetch(url);
     return await response.json();
@@ -11,12 +15,19 @@ export async function fetchAllResults(url) {
     let allResults = [];
 
     while (url) {
-        let response = await fetch(url);
+        let response;
+        response = await fetch(url);
+
+        if (!response.ok) {
+            throw new APIClientError(
+                "failed at fetching data, non successful response");
+        }
+
         let data = await response.json();
         if ("results" in data) {
             allResults = allResults.concat(data["results"]);
         } else {
-            throw new Error(`unexpected API format ${data}`);
+            throw new APIClientError(`unexpected API format ${data}`);
         }
         url = data["next"];
     }

@@ -18,7 +18,6 @@ def import_transaction(account, transaction_record):
     total_in_account_currency = transaction_record["Total"]
     value_in_account_currency = transaction_record["Value"]
     transaction_costs = transaction_record["Transaction costs"]
-    print(transaction_costs)
     order_id = transaction_record["Order ID"]
     quantity = transaction_record["Quantity"]
     price = transaction_record["Price"]
@@ -26,7 +25,6 @@ def import_transaction(account, transaction_record):
     exchange_mic = transaction_record["Venue"]
     exchange_ref = transaction_record["Reference"]
     exchange = exchanges.ExchangeRepository().get(exchange_mic, exchange_ref)
-    # Find or create a position.
 
     def to_decimal(pd_f):
         return decimal.Decimal(pd_f.astype(decimal.Decimal))
