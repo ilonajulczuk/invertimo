@@ -2,6 +2,7 @@ import React from 'react';
 import stacked_area_graph from './stacked_area_graph.png';
 import './portfolio.css';
 import PositionList from './PositionList.js';
+import TimeSelector from './TimeSelector.js';
 import { APIClient } from './api_utils.js';
 
 
@@ -85,32 +86,7 @@ class PortfolioChart extends React.Component {
             <div className="portfolio-chart">
                 <h2>Performance over time</h2>
                 {/* <img src={stacked_area_graph} /> */}
-                <span className="card-label">
-                    Time period
-                </span>
-                <ul className="time-selectors">
-                    <li>
-                        1 week
-                    </li>
-                    <li>
-                        1 month
-                    </li>
-                    <li className="active-time-selector">
-                        3 months
-                    </li>
-                    <li>
-                        6 months
-                    </li>
-                    <li>
-                        1 year
-                    </li>
-                    <li>
-                        3 years
-                    </li>
-                    <li>
-                        Max
-                    </li>
-                </ul>
+                <TimeSelector />
                 <span className="card-label">
                     Breakdown type
                 </span>

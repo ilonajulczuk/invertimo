@@ -1,7 +1,7 @@
 import React from 'react';
 import './position_list.css';
 import { APIClient } from './api_utils.js';
-
+import TimeSelector from './TimeSelector.js';
 import { VictoryVoronoiContainer, VictoryLine, VictoryChart, VictoryTooltip, VictoryTheme, VictoryArea } from 'victory';
 
 
@@ -39,6 +39,11 @@ function filterPoints(points, pickEvery) {
     return selectedPoints;
 }
 
+function Transaction(props) {
+    return (
+        <li>{props.data.quantity} for {props.data.price}</li>
+    )
+}
 
 class ExpandedPositionContent extends React.Component {
 
@@ -53,51 +58,97 @@ class ExpandedPositionContent extends React.Component {
         let dataPrices = prices.map((elem) => {
             return { date: new Date(elem.date), value: Number(elem.value) };
         });
+
+        // Value in local currency.
+
+        // TODO: Value in account currency.
+
+        let transactions = this.props.data.transactions.map(
+            (transaction) => <Transaction key={transaction.id} data={transaction} />)
+
         return (
             <div className="position-card-expanded-content">
-                <div className="position-card-chart">
-                    <h3>Numbers of shares over time</h3>
-                    <VictoryChart
-                        height={400}
-                        width={800}
-                        containerComponent={<VictoryVoronoiContainer />}
-                        scale={{ x: "time" }}
-                        // domainPadding will add space to each side of VictoryBar to
-                        // prevent it from overlapping the axis
-                        domainPadding={20}
-                    >
-                        <VictoryArea
-                            style={{ data: { fill: "#e96158" } }}
-                            data={dataQuantities}
-                            x="date"
-                            y="value"
-                            labels={({ datum }) => `At ${datum.date.toLocaleDateString()}\n${datum.value}`}
-                            labelComponent={<VictoryTooltip />}
-                        />
-                    </VictoryChart>
+                <div className="position-card-charts-header">
+                    <h3>Charts</h3>
+                    <TimeSelector />
+                </div>
+                <div className="position-card-charts">
+
+
+                    <div className="position-card-chart">
+                        <h3>Price</h3>
+                        <VictoryChart
+                            height={400}
+                            width={800}
+                            containerComponent={<VictoryVoronoiContainer />}
+                            scale={{ x: "time" }}
+                            // domainPadding will add space to each side of VictoryBar to
+                            // prevent it from overlapping the axis
+                            domainPadding={20}
+                        >
+                            <VictoryLine
+                                style={{ data: { stroke: "#e96158" } }}
+                                data={dataPrices}
+                                x="date"
+                                y="value"
+                                labels={({ datum }) => `At ${datum.date.toLocaleDateString()}\n${datum.value}`}
+                                labelComponent={<VictoryTooltip />}
+                            />
+                        </VictoryChart>
+                    </div>
+
+
+                    <div className="position-card-chart">
+                        <h3>Quantity</h3>
+                        <VictoryChart
+                            height={400}
+                            width={800}
+                            containerComponent={<VictoryVoronoiContainer />}
+                            scale={{ x: "time" }}
+                            // domainPadding will add space to each side of VictoryBar to
+                            // prevent it from overlapping the axis
+                            domainPadding={20}
+                        >
+                            <VictoryArea
+                                style={{ data: { fill: "#e96158" } }}
+                                data={dataQuantities}
+                                x="date"
+                                y="value"
+                                labels={({ datum }) => `At ${datum.date.toLocaleDateString()}\n${datum.value}`}
+                                labelComponent={<VictoryTooltip />}
+                            />
+                        </VictoryChart>
+                    </div>
+                    {/* TODO: Change this graph to actually show the value. */}
+                    <div className="position-card-chart">
+                        <h3>Value</h3>
+                        <VictoryChart
+                            height={400}
+                            width={800}
+                            containerComponent={<VictoryVoronoiContainer />}
+                            scale={{ x: "time" }}
+                            // domainPadding will add space to each side of VictoryBar to
+                            // prevent it from overlapping the axis
+                            domainPadding={20}
+                        >
+                            <VictoryArea
+                                style={{ data: { fill: "#e96158" } }}
+                                data={dataQuantities}
+                                x="date"
+                                y="value"
+                                labels={({ datum }) => `At ${datum.date.toLocaleDateString()}\n${datum.value}`}
+                                labelComponent={<VictoryTooltip />}
+                            />
+                        </VictoryChart>
+                    </div>
                 </div>
 
-                <div className="position-card-chart">
-                    <h3>Price over time</h3>
-                    <VictoryChart
-                        height={400}
-                        width={800}
-                        containerComponent={<VictoryVoronoiContainer />}
-                        scale={{ x: "time" }}
-                        // domainPadding will add space to each side of VictoryBar to
-                        // prevent it from overlapping the axis
-                        domainPadding={20}
-                    >
-                        <VictoryLine
-                            style={{ data: { stroke: "#e96158" } }}
-                            data={dataPrices}
-                            x="date"
-                            y="value"
-                            labels={({ datum }) => `At ${datum.date.toLocaleDateString()}\n${datum.value}`}
-                            labelComponent={<VictoryTooltip />}
-                        />
-                    </VictoryChart>
+                <div>
+                    <h3>Transactions & Events</h3>
+                    <ul>{transactions}</ul>
                 </div>
+
+
             </div>
         );
     }
