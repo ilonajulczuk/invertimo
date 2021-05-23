@@ -13,8 +13,8 @@ function filterPointsWithNoChange(points, pickEvery) {
 
     for (let i = 1; i < points.length - 1; i++) {
         // TODO: Refactor this part to facilitate different types of comparisons.
-        if ((points[i][1] != points[i + 1][1]) ||
-            (points[i][1] != points[i - 1][1])) {
+        if ((points[i].value != points[i + 1].value) ||
+            (points[i].value != points[i - 1].value)) {
             selectedPoints.push(points[i]);
         } else if (i % pickEvery == 0) {
             selectedPoints.push(points[i]);
@@ -101,6 +101,9 @@ class AreaChartWithCursor extends React.Component {
                     data={this.props.dataset}
                     x="date"
                     y="value"
+                    domain={{
+                        x: [new Date(2020, 1, 1), new Date()],
+                    }}
                 />
             </VictoryChart>
         );
@@ -133,6 +136,9 @@ class LineChartWithCursor extends React.Component {
                     data={this.props.dataset}
                     x="date"
                     y="value"
+                    domain={{
+                        x: [new Date(2020, 1, 1), new Date()],
+                    }}
                 />
             </VictoryChart>
         );
@@ -143,17 +149,50 @@ class LineChartWithCursor extends React.Component {
 
 class ExpandedPositionContent extends React.Component {
 
+    computeValues(quantities, prices) {
+
+        let values = [];
+        const maxQ = quantities.length;
+        const maxP = prices.length;
+        let i = 0;
+        let j = 0;
+
+        while (i < maxQ && j < maxP) {
+            if (quantities[i].date > prices[j].date) {
+                i += 1;
+            } else if (quantities[i].date < prices[j].date) {
+                j += 1;
+            } else {
+                values.push(
+                    {
+                        date: quantities[i].date,
+                        value: quantities[i].value * prices[j].value
+                    });
+                j += 1;
+                i += 1;
+            }
+        }
+        return values;
+    }
+
     render() {
-        const skipFactor = 14;
-        let quantities = filterPointsWithNoChange(this.props.data.quantities, skipFactor);
-        let dataQuantities = quantities.map((elem) => {
-            return { date: new Date(elem[0]), value: elem[1] };
+        const skipFactor = 3;
+        let quantities = this.props.data.quantities.map((elem) => {
+            let exactDate = new Date(elem[0]);
+            return { date: new Date(exactDate.toDateString()), value: elem[1] };
+        })
+
+        let prices = this.props.data.prices.map((elem) => {
+            let exactDate = new Date(elem.date);
+            return { date: new Date(exactDate.toDateString()), value: Number(elem.value) };
         });
 
-        let prices = filterPoints(this.props.data.prices, skipFactor);
-        let dataPrices = prices.map((elem) => {
-            return { date: new Date(elem.date), value: Number(elem.value) };
-        });
+        let values = this.computeValues(quantities, prices);
+
+        quantities = filterPointsWithNoChange(quantities, skipFactor);
+        prices = filterPoints(prices, skipFactor);
+        values = filterPoints(values, skipFactor);
+
         // Value in local currency.
 
         // TODO: Value in account currency.
@@ -170,17 +209,17 @@ class ExpandedPositionContent extends React.Component {
                 <div className="position-card-charts">
                     <div className="position-card-chart">
                         <h3>Price</h3>
-                        <LineChartWithCursor dataset={dataPrices} />
+                        <LineChartWithCursor dataset={prices} />
                     </div>
 
                     <div className="position-card-chart">
                         <h3>Quantity</h3>
-                        <AreaChartWithCursor dataset={dataQuantities} />
+                        <AreaChartWithCursor dataset={quantities} />
                     </div>
                     {/* TODO: Change this graph to actually show the value. */}
                     <div className="position-card-chart">
                         <h3>Value</h3>
-                        <AreaChartWithCursor dataset={dataQuantities} />
+                        <AreaChartWithCursor dataset={values} />
                     </div>
                 </div>
                 <div>
