@@ -2,7 +2,7 @@ import React from 'react';
 import './position_list.css';
 import { APIClient } from './api_utils.js';
 import TimeSelector from './TimeSelector.js';
-import { VictoryVoronoiContainer, VictoryLine, VictoryChart, VictoryTooltip, VictoryTheme, VictoryArea } from 'victory';
+import { VictoryLine, VictoryChart, VictoryArea, VictoryCursorContainer } from 'victory';
 
 
 function filterPointsWithNoChange(points, pickEvery) {
@@ -45,6 +45,102 @@ function Transaction(props) {
     )
 }
 
+function findClosestValue(x, data) {
+    // Assumes the data is sorted latest to earliest.
+    let start = 0;
+    let end = data.length - 1;
+    let index;
+    if (end == -1) {
+        return 0;
+    }
+    if (end == 0) {
+        return data[0].value;
+    }
+
+    if (data[end].date > x) {
+        return 0;
+    }
+
+    while (end - start > 1) {
+        index = Math.floor((start + end) / 2);
+        if (data[index].date > x) {
+            start = index;
+        } else {
+            end = index;
+        }
+    }
+    if (Math.abs(data[start].date - x) < Math.abs(data[end].date - x)) {
+        return data[start].value;
+    } else {
+        return data[end].value;
+    }
+
+};
+
+class AreaChartWithCursor extends React.Component {
+
+    render() {
+        return (
+            <VictoryChart
+                height={300}
+                width={500}
+                padding={{ left: 70, top: 10, right: 140, bottom: 50 }}
+                containerComponent={<VictoryCursorContainer
+                    cursorLabel={({ datum }) => {
+                        let y = findClosestValue(datum.x, this.props.dataset);
+                        return `${datum.x.toLocaleDateString()}, ${y}`;
+                    }}
+                    stanadlone={true}
+                    cursorDimension="x"
+                />}
+                scale={{ x: "time" }}
+                domainPadding={20}
+            >
+                <VictoryArea
+                    style={{ data: { fill: "#e96158" }, labels: { fontSize: 20 } }}
+                    data={this.props.dataset}
+                    x="date"
+                    y="value"
+                />
+            </VictoryChart>
+        );
+    }
+
+
+}
+
+class LineChartWithCursor extends React.Component {
+
+    render() {
+        return (
+            <VictoryChart
+                height={300}
+                width={500}
+                padding={{ left: 70, top: 10, right: 140, bottom: 50 }}
+                containerComponent={<VictoryCursorContainer
+                    cursorLabel={({ datum }) => {
+                        let y = findClosestValue(datum.x, this.props.dataset);
+                        return `${datum.x.toLocaleDateString()}, ${y}`;
+                    }}
+                    stanadlone={true}
+                    cursorDimension="x"
+                />}
+                scale={{ x: "time" }}
+                domainPadding={20}
+            >
+                <VictoryLine
+                    style={{ data: { stroke: "#e96158" } }}
+                    data={this.props.dataset}
+                    x="date"
+                    y="value"
+                />
+            </VictoryChart>
+        );
+    }
+
+
+}
+
 class ExpandedPositionContent extends React.Component {
 
     render() {
@@ -58,7 +154,6 @@ class ExpandedPositionContent extends React.Component {
         let dataPrices = prices.map((elem) => {
             return { date: new Date(elem.date), value: Number(elem.value) };
         });
-
         // Value in local currency.
 
         // TODO: Value in account currency.
@@ -73,76 +168,21 @@ class ExpandedPositionContent extends React.Component {
                     <TimeSelector />
                 </div>
                 <div className="position-card-charts">
-
-
                     <div className="position-card-chart">
                         <h3>Price</h3>
-                        <VictoryChart
-                            height={400}
-                            width={800}
-                            containerComponent={<VictoryVoronoiContainer />}
-                            scale={{ x: "time" }}
-                            // domainPadding will add space to each side of VictoryBar to
-                            // prevent it from overlapping the axis
-                            domainPadding={20}
-                        >
-                            <VictoryLine
-                                style={{ data: { stroke: "#e96158" } }}
-                                data={dataPrices}
-                                x="date"
-                                y="value"
-                                labels={({ datum }) => `At ${datum.date.toLocaleDateString()}\n${datum.value}`}
-                                labelComponent={<VictoryTooltip />}
-                            />
-                        </VictoryChart>
+                        <LineChartWithCursor dataset={dataPrices} />
                     </div>
-
 
                     <div className="position-card-chart">
                         <h3>Quantity</h3>
-                        <VictoryChart
-                            height={400}
-                            width={800}
-                            containerComponent={<VictoryVoronoiContainer />}
-                            scale={{ x: "time" }}
-                            // domainPadding will add space to each side of VictoryBar to
-                            // prevent it from overlapping the axis
-                            domainPadding={20}
-                        >
-                            <VictoryArea
-                                style={{ data: { fill: "#e96158" } }}
-                                data={dataQuantities}
-                                x="date"
-                                y="value"
-                                labels={({ datum }) => `At ${datum.date.toLocaleDateString()}\n${datum.value}`}
-                                labelComponent={<VictoryTooltip />}
-                            />
-                        </VictoryChart>
+                        <AreaChartWithCursor dataset={dataQuantities} />
                     </div>
                     {/* TODO: Change this graph to actually show the value. */}
                     <div className="position-card-chart">
                         <h3>Value</h3>
-                        <VictoryChart
-                            height={400}
-                            width={800}
-                            containerComponent={<VictoryVoronoiContainer />}
-                            scale={{ x: "time" }}
-                            // domainPadding will add space to each side of VictoryBar to
-                            // prevent it from overlapping the axis
-                            domainPadding={20}
-                        >
-                            <VictoryArea
-                                style={{ data: { fill: "#e96158" } }}
-                                data={dataQuantities}
-                                x="date"
-                                y="value"
-                                labels={({ datum }) => `At ${datum.date.toLocaleDateString()}\n${datum.value}`}
-                                labelComponent={<VictoryTooltip />}
-                            />
-                        </VictoryChart>
+                        <AreaChartWithCursor dataset={dataQuantities} />
                     </div>
                 </div>
-
                 <div>
                     <h3>Transactions & Events</h3>
                     <ul>{transactions}</ul>

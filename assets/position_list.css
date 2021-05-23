@@ -61,7 +61,7 @@ ul.position-list {
 
 /* TODO: add handling for screens smaller than that. */
 .position-card-chart {
-    flex: 1 0 400px;
+    flex: 0 0 500px;
     margin-bottom: 2em;
     margin-top: 0em;
 }
