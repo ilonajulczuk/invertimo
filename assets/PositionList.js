@@ -1,43 +1,10 @@
 import React from 'react';
 import './position_list.css';
 import { APIClient } from './api_utils.js';
+import { filterPointsWithNoChange, filterPoints, findClosestValue } from './timeseries_utils.js'
 import TimeSelector from './TimeSelector.js';
 import { VictoryLine, VictoryChart, VictoryArea, VictoryCursorContainer } from 'victory';
 
-
-function filterPointsWithNoChange(points, pickEvery) {
-    if (points.length <= 2) {
-        return points;
-    }
-    let selectedPoints = [points[0]];
-
-    for (let i = 1; i < points.length - 1; i++) {
-        // TODO: Refactor this part to facilitate different types of comparisons.
-        if ((points[i].value != points[i + 1].value) ||
-            (points[i].value != points[i - 1].value)) {
-            selectedPoints.push(points[i]);
-        } else if (i % pickEvery == 0) {
-            selectedPoints.push(points[i]);
-        }
-    }
-    selectedPoints.push(points[points.length - 1]);
-    return selectedPoints;
-}
-
-function filterPoints(points, pickEvery) {
-    if (points.length <= 2) {
-        return points;
-    }
-    let selectedPoints = [points[0]];
-
-    for (let i = 1; i < points.length - 1; i++) {
-        if (i % pickEvery == 0) {
-            selectedPoints.push(points[i]);
-        }
-    }
-    selectedPoints.push(points[points.length - 1]);
-    return selectedPoints;
-}
 
 function Transaction(props) {
     return (
@@ -45,37 +12,6 @@ function Transaction(props) {
     )
 }
 
-function findClosestValue(x, data) {
-    // Assumes the data is sorted latest to earliest.
-    let start = 0;
-    let end = data.length - 1;
-    let index;
-    if (end == -1) {
-        return 0;
-    }
-    if (end == 0) {
-        return data[0].value;
-    }
-
-    if (data[end].date > x) {
-        return 0;
-    }
-
-    while (end - start > 1) {
-        index = Math.floor((start + end) / 2);
-        if (data[index].date > x) {
-            start = index;
-        } else {
-            end = index;
-        }
-    }
-    if (Math.abs(data[start].date - x) < Math.abs(data[end].date - x)) {
-        return data[start].value;
-    } else {
-        return data[end].value;
-    }
-
-};
 
 class AreaChartWithCursor extends React.Component {
 
@@ -108,8 +44,6 @@ class AreaChartWithCursor extends React.Component {
             </VictoryChart>
         );
     }
-
-
 }
 
 class LineChartWithCursor extends React.Component {
@@ -123,7 +57,7 @@ class LineChartWithCursor extends React.Component {
                 containerComponent={<VictoryCursorContainer
                     cursorLabel={({ datum }) => {
                         let y = findClosestValue(datum.x, this.props.dataset);
-                        return `${datum.x.toLocaleDateString()}, ${y}`;
+                        return `${datum.x.toLocaleDateString()}, ${Math.round(y)}`;
                     }}
                     stanadlone={true}
                     cursorDimension="x"
@@ -143,11 +77,29 @@ class LineChartWithCursor extends React.Component {
             </VictoryChart>
         );
     }
-
-
 }
 
 class ExpandedPositionContent extends React.Component {
+
+    constructor(props) {
+        super(props);
+        const skipFactor = 3;
+        this.quantities = this.props.data.quantities.map((elem) => {
+            let exactDate = new Date(elem[0]);
+            return { date: new Date(exactDate.toDateString()), value: elem[1] };
+        })
+
+        this.prices = this.props.data.prices.map((elem) => {
+            let exactDate = new Date(elem.date);
+            return { date: new Date(exactDate.toDateString()), value: Number(elem.value) };
+        });
+
+        this.values = this.computeValues(this.quantities, this.prices);
+
+        this.quantities = filterPointsWithNoChange(this.quantities, skipFactor);
+        this.prices = filterPoints(this.prices, skipFactor);
+        this.values = filterPoints(this.values, skipFactor);
+    }
 
     computeValues(quantities, prices) {
 
@@ -176,22 +128,7 @@ class ExpandedPositionContent extends React.Component {
     }
 
     render() {
-        const skipFactor = 3;
-        let quantities = this.props.data.quantities.map((elem) => {
-            let exactDate = new Date(elem[0]);
-            return { date: new Date(exactDate.toDateString()), value: elem[1] };
-        })
 
-        let prices = this.props.data.prices.map((elem) => {
-            let exactDate = new Date(elem.date);
-            return { date: new Date(exactDate.toDateString()), value: Number(elem.value) };
-        });
-
-        let values = this.computeValues(quantities, prices);
-
-        quantities = filterPointsWithNoChange(quantities, skipFactor);
-        prices = filterPoints(prices, skipFactor);
-        values = filterPoints(values, skipFactor);
 
         // Value in local currency.
 
@@ -209,17 +146,17 @@ class ExpandedPositionContent extends React.Component {
                 <div className="position-card-charts">
                     <div className="position-card-chart">
                         <h3>Price</h3>
-                        <LineChartWithCursor dataset={prices} />
+                        <LineChartWithCursor dataset={this.prices} />
                     </div>
 
                     <div className="position-card-chart">
                         <h3>Quantity</h3>
-                        <AreaChartWithCursor dataset={quantities} />
+                        <AreaChartWithCursor dataset={this.quantities} />
                     </div>
                     {/* TODO: Change this graph to actually show the value. */}
                     <div className="position-card-chart">
                         <h3>Value</h3>
-                        <AreaChartWithCursor dataset={values} />
+                        <AreaChartWithCursor dataset={this.values} />
                     </div>
                 </div>
                 <div>
@@ -227,11 +164,11 @@ class ExpandedPositionContent extends React.Component {
                     <ul>{transactions}</ul>
                 </div>
 
-
             </div>
         );
     }
 }
+
 
 class Position extends React.Component {
 
