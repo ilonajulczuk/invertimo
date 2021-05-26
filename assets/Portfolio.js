@@ -8,19 +8,6 @@ import { APIClient } from './api_utils.js';
 
 class PortfolioOverview extends React.Component {
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            "accounts": []
-        };
-        this.apiClient = new APIClient('./api');
-    }
-
-    componentDidMount() {
-        this.apiClient.getAccounts().then(
-            accounts => this.setState({ "accounts": accounts })
-        );
-    }
 
     render() {
         let positions_count = 0;
@@ -28,12 +15,12 @@ class PortfolioOverview extends React.Component {
         let account_event_count = "?";
         let total_value = 0;
 
-        for (let account of this.state.accounts) {
+        for (let account of this.props.accounts) {
             positions_count += account.positions_count;
             transactions_count += account.transactions_count;
             total_value += Number(account.balance);
         }
-        let account_count = this.state.accounts.length;
+        let account_count = this.props.accounts.length;
 
         return (
             <div className="portfolio-overview">
@@ -104,21 +91,27 @@ export default class Portfolio extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            "positions": []
+            "positions": [],
+            "accounts": [],
         };
         this.apiClient = new APIClient('./api');
     }
 
     async componentDidMount() {
-        let positions = await this.apiClient.getPositions()
-        this.setState({ "positions": positions });
+        this.apiClient.getAccounts().then(accounts =>
+            this.setState({ "accounts": accounts }));
+        this.apiClient.getPositions().then(
+            positions => {
+                return this.setState({ "positions": positions });
+            });
+
     }
 
     render() {
         return (
             <div>
                 <h1>Portfolio</h1>
-                <PortfolioOverview />
+                <PortfolioOverview accounts={this.state.accounts} />
                 <PortfolioChart />
                 <PositionList positions={this.state.positions} />
             </div>

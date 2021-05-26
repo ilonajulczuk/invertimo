@@ -41,13 +41,13 @@ export class APIClient {
     }
 
     async getAccounts() {
-        let url = this.base_url + '/accounts?limit=5';
+        let url = this.base_url + '/accounts/?limit=50';
         let accounts = await fetchAllResults(url);
         return accounts;
     }
 
     async getPositions() {
-        let url = this.base_url + '/positions?limit=20';
+        let url = this.base_url + '/positions/?limit=50';
         let positions = await fetchAllResults(url);
         return positions;
     }
@@ -56,7 +56,7 @@ export class APIClient {
         let positionsUrl = this.base_url + `/positions/${positionId}/`;
         let positionDetails = await fetchDetailResult(positionsUrl);
         const securityId = positionDetails.security.id;
-        let securityUrl = this.base_url + `/securities/${securityId}/prices`;
+        let securityUrl = this.base_url + `/securities/${securityId}/prices/`;
         let securityPrices = await fetchDetailResult(securityUrl);
         positionDetails.prices = securityPrices;
         return positionDetails;

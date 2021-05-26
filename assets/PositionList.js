@@ -24,22 +24,22 @@ class AreaChartWithCursor extends React.Component {
                 containerComponent={<VictoryCursorContainer
                     cursorLabel={({ datum }) => {
                         let y = findClosestValue(datum.x, this.props.dataset);
-                        return `${datum.x.toLocaleDateString()}, ${y}`;
+                        return `${datum.x.toLocaleDateString()}, ${Math.round(y)}`;
                     }}
                     stanadlone={true}
                     cursorDimension="x"
                 />}
                 scale={{ x: "time" }}
-                domainPadding={20}
+
+                domain={{
+                    x: [new Date(2020, 1, 1), new Date()],
+                }}
             >
                 <VictoryArea
                     style={{ data: { fill: "#e96158" }, labels: { fontSize: 20 } }}
                     data={this.props.dataset}
                     x="date"
                     y="value"
-                    domain={{
-                        x: [new Date(2020, 1, 1), new Date()],
-                    }}
                 />
             </VictoryChart>
         );
@@ -63,7 +63,6 @@ class LineChartWithCursor extends React.Component {
                     cursorDimension="x"
                 />}
                 scale={{ x: "time" }}
-                domainPadding={20}
             >
                 <VictoryLine
                     style={{ data: { stroke: "#e96158" } }}
@@ -128,10 +127,6 @@ class ExpandedPositionContent extends React.Component {
     }
 
     render() {
-
-
-        // Value in local currency.
-
         // TODO: Value in account currency.
 
         let transactions = this.props.data.transactions.map(
