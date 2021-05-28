@@ -132,9 +132,9 @@ class Position(models.Model):
         self, from_date, to_date=None, output_period=datetime.timedelta(days=1)
     ):
         if to_date is None:
-            to_date = datetime.datetime.now(tz=pytz.UTC)
+            to_date = datetime.date.today()
 
-        dates = utils.generate_intervals(
+        dates = utils.generate_date_intervals(
             from_date, to_date, output_period, start_with_end=True
         )
 
@@ -195,6 +195,7 @@ class Transaction(models.Model):
 
     class Meta:
         ordering = ["-executed_at"]
+
 
 class AccountEvent(models.Model):
     account = models.ForeignKey(

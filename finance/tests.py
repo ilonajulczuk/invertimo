@@ -18,44 +18,50 @@ class TestDegiroParser(TestCase):
 
     # This fixture provides data about 65 different exchanges,
     # and sets up a single account for testing.
-    fixtures = ["exchanges.json"]
+    fixtures = ["exchanges_postgres.json"]
 
     def test_importing_single_transaction(self):
         # TODO: mock out the API call, don't call the official API
         # every time the test runs.
-        account = models.Account.objects.all()[0]
-        degiro_parser.import_transactions_from_file(
+        account_balance = decimal.Decimal("-15237.26000")
+        base_num_of_transactions = 6
+        account = models.Account.objects.create(
+            user=User.objects.all()[0], nickname="test"
+        )
+        failed_records = degiro_parser.import_transactions_from_file(
             account, "./finance/transactions_example_short.csv"
         )
-        self.assertEqual(models.Transaction.objects.count(), 6)
-        account = models.Account.objects.all()[0]
-        self.assertAlmostEqual(account.balance, decimal.Decimal("-15237.26"))
+        self.assertEqual(len(failed_records), 0)
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        account = models.Account.objects.get(nickname="test")
+        self.assertAlmostEqual(account.balance, account_balance)
 
-        for position in models.Position.objects.all():
-            print(position.quantity)
+        # 6 in the new account, 30 from the old fixture.
+        self.assertEqual(models.Position.objects.count(), 36)
 
         total_value = models.Transaction.objects.aggregate(
-            Sum("value_in_account_currency")
-        )["value_in_account_currency__sum"]
-        self.assertAlmostEqual(total_value, decimal.Decimal("-15232.65"))
+            Sum("total_in_account_currency")
+        )["total_in_account_currency__sum"]
+        self.assertAlmostEqual(total_value, account_balance)
 
         # Import the same transactions again and make
         # sure that they aren't double recorded.
         degiro_parser.import_transactions_from_file(
             account, "./finance/transactions_example_short.csv"
         )
-        self.assertEqual(models.Transaction.objects.count(), 6)
-        account = models.Account.objects.all()[0]
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        self.assertEqual(models.Position.objects.count(), 36)
+        account = models.Account.objects.get(nickname="test")
         total_value = models.Transaction.objects.aggregate(
-            Sum("value_in_account_currency")
-        )["value_in_account_currency__sum"]
+            Sum("total_in_account_currency")
+        )["total_in_account_currency__sum"]
 
-        self.assertAlmostEqual(account.balance, decimal.Decimal("-15237.26"))
-        self.assertAlmostEqual(total_value, decimal.Decimal("-15232.65"))
+        self.assertAlmostEqual(account.balance, account_balance)
+        self.assertAlmostEqual(total_value, account_balance)
 
 
 class TestUtils(TestCase):
-    def test_generate_intervals_from_end(self):
+    def test_generate_datetime_intervals_from_end(self):
         expected_dates = [
             "2021-05-05 13:00Z",
             "2021-05-05 09:00Z",
@@ -81,10 +87,27 @@ class TestUtils(TestCase):
         to_date = datetime.datetime.strptime("2021-05-05 13:00Z", date_format)
         output_period = datetime.timedelta(hours=4)
 
-        got = utils.generate_intervals(from_date, to_date, output_period)
+        got = utils.generate_datetime_intervals(from_date, to_date, output_period)
         self.assertEqual(got, expected_dates)
 
-    def test_generate_intervals_from_start(self):
+    def test_generate_date_intervals_from_end(self):
+        expected_dates = [
+            "2021-05-05",
+            "2021-05-04",
+            "2021-05-03",
+        ]
+        expected_dates = [
+            datetime.date.fromisoformat(datestr) for datestr in expected_dates
+        ]
+
+        from_date = datetime.date.fromisoformat("2021-05-03")
+        to_date = datetime.date.fromisoformat("2021-05-05")
+        output_period = datetime.timedelta(days=1)
+
+        got = utils.generate_datetime_intervals(from_date, to_date, output_period)
+        self.assertEqual(got, expected_dates)
+
+    def test_generate_datetime_intervals_from_start(self):
         expected_dates = [
             "2021-05-03 12:00Z",
             "2021-05-03 18:00Z",
@@ -101,7 +124,7 @@ class TestUtils(TestCase):
         to_date = datetime.datetime.strptime("2021-05-04 06:00Z", date_format)
         output_period = datetime.timedelta(hours=6)
 
-        got = utils.generate_intervals(
+        got = utils.generate_datetime_intervals(
             from_date, to_date, output_period, start_with_end=False
         )
         self.assertEqual(got, expected_dates)
@@ -201,3 +224,23 @@ class TestPosition(TestCase):
         ]
 
         self.assertEqual(quantity_history, expected_quantity_history)
+
+    def test_value_history(self):
+        fake_transactions = [
+            ("2021-04-27 10:00Z", 3, 12.11),  # Price after the transaction: 3
+            ("2021-04-29 12:00Z", 4, 12.44),  # 7
+            ("2021-04-30 17:00Z", 3, 14.3),  # 10
+            ("2021-05-01 11:00Z", -2, 15.3),  # 8
+            ("2021-05-02 12:00Z", 3, 14.2),  # 11
+            ("2021-05-03 12:00Z", 3, 12.3),  # 14
+            ("2021-05-03 14:00Z", 3, 14.5),  # 17
+            ("2021-05-04 12:00Z", 3, 22),  # 20
+        ]
+        for transaction in fake_transactions:
+            self._add_transaction(transaction[0], transaction[1], transaction[2])
+
+        # Generate dates for the PriceHistory from
+        from_date = datetime.datetime.strptime("2021-04-24 17:00Z", DATE_FORMAT)
+        to_date = datetime.datetime.strptime("2021-05-04 13:00Z", DATE_FORMAT)
+        # Note, quantity history should be generated for 00 hour (dates not datetimes).
+        # I think that would be better, because then it would perfectly match prices.

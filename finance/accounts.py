@@ -38,7 +38,6 @@ class AccountRepository:
             total_in_account_currency=total_in_account_currency,
             order_id=order_id,
         )
-
         if created:
             position.quantity += quantity
             position.save()
