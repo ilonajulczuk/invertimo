@@ -1,8 +1,15 @@
 from rest_framework import serializers
 
 from finance import models
-from finance.models import (Account, CurrencyExchangeRate, Exchange, Position,
-                            PriceHistory, Security, Transaction)
+from finance.models import (
+    Account,
+    CurrencyExchangeRate,
+    Exchange,
+    Position,
+    PriceHistory,
+    Security,
+    Transaction,
+)
 
 
 class ExchangeSerializer(serializers.ModelSerializer):
@@ -32,14 +39,29 @@ class PositionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Position
-        fields = ["id", "account", "security", "quantity", "latest_price", "latest_price_date"]
+        fields = [
+            "id",
+            "account",
+            "security",
+            "quantity",
+            "latest_price",
+            "latest_price_date",
+        ]
+
 
 class EmbeddedTransactionSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Transaction
-        fields = ["id", "executed_at", "quantity",
-                  "price", "transaction_costs", "order_id", "local_value"]
+        fields = [
+            "id",
+            "executed_at",
+            "quantity",
+            "price",
+            "transaction_costs",
+            "order_id",
+            "local_value",
+        ]
+
 
 class PositionWithQuantitiesSerializer(serializers.ModelSerializer):
     security = SecuritySerializer()
@@ -95,7 +117,16 @@ class AccountSerializer(serializers.ModelSerializer):
     positions_count = serializers.IntegerField()
     transactions_count = serializers.IntegerField()
     currency = CurrencyField()
+
     class Meta:
         model = Account
-        fields = ["id", "currency", "nickname", "description",
-                  "balance", "last_modified", "positions_count", "transactions_count"]
+        fields = [
+            "id",
+            "currency",
+            "nickname",
+            "description",
+            "balance",
+            "last_modified",
+            "positions_count",
+            "transactions_count",
+        ]

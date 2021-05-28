@@ -82,13 +82,13 @@ WSGI_APPLICATION = "invertimo.wsgi.application"
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'invertimo',
-        'USER': 'myuser',
-        'PASSWORD': DB_KEY,
-        'HOST': 'localhost',
-        'PORT': '',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "invertimo",
+        "USER": "myuser",
+        "PASSWORD": DB_KEY,
+        "HOST": "localhost",
+        "PORT": "",
     }
 }
 
@@ -148,3 +148,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
+SITENAME = "invertimo.com"
+STATIC_ROOT = f"/var/www/{SITENAME}/static/"

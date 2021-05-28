@@ -102,7 +102,7 @@ export default class Portfolio extends React.Component {
             this.setState({ "accounts": accounts }));
         this.apiClient.getPositions().then(
             positions => {
-                return this.setState({ "positions": positions });
+                this.setState({ "positions": positions });
             });
 
     }
