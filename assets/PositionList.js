@@ -24,16 +24,17 @@ class AreaChartWithCursor extends React.Component {
                 containerComponent={<VictoryCursorContainer
                     cursorLabel={({ datum }) => {
                         let y = findClosestValue(datum.x, this.props.dataset);
-                        return `${datum.x.toLocaleDateString()}, ${Math.round(y)}`;
+                        let labelSuffix = this.props.labelSuffix ? this.props.labelSuffix : '';
+                        return `${datum.x.toLocaleDateString()}, ${Math.round(y)}${labelSuffix}`;
                     }}
                     stanadlone={true}
                     cursorDimension="x"
                 />}
                 scale={{ x: "time" }}
-
                 domain={{
                     x: [new Date(2020, 1, 1), new Date()],
                 }}
+                minDomain={{ y: 0}}
             >
                 <VictoryArea
                     style={{ data: { fill: "#e96158" }, labels: { fontSize: 20 } }}
@@ -57,21 +58,24 @@ class LineChartWithCursor extends React.Component {
                 containerComponent={<VictoryCursorContainer
                     cursorLabel={({ datum }) => {
                         let y = findClosestValue(datum.x, this.props.dataset);
-                        return `${datum.x.toLocaleDateString()}, ${Math.round(y)}`;
+                        let labelSuffix = this.props.labelSuffix ? this.props.labelSuffix : '';
+                        return `${datum.x.toLocaleDateString()}, ${Math.round(y)}${labelSuffix}`;
                     }}
                     stanadlone={true}
                     cursorDimension="x"
                 />}
                 scale={{ x: "time" }}
+                domain={{
+                    x: [new Date(2020, 1, 1), new Date()],
+                }}
+                minDomain={{ y: 0}}
             >
                 <VictoryLine
                     style={{ data: { stroke: "#e96158" } }}
                     data={this.props.dataset}
                     x="date"
                     y="value"
-                    domain={{
-                        x: [new Date(2020, 1, 1), new Date()],
-                    }}
+
                 />
             </VictoryChart>
         );
@@ -132,6 +136,8 @@ class ExpandedPositionContent extends React.Component {
         let transactions = this.props.data.transactions.map(
             (transaction) => <Transaction key={transaction.id} data={transaction} />)
 
+        let positionCurrency = this.props.data.security.currency;
+        let accountCurrency = this.props.accountCurrency;
         return (
             <div className="position-card-expanded-content">
                 <div className="position-card-charts-header">
@@ -140,19 +146,24 @@ class ExpandedPositionContent extends React.Component {
                 </div>
                 <div className="position-card-charts">
                     <div className="position-card-chart">
-                        <h3>Price</h3>
-                        <LineChartWithCursor dataset={this.prices} />
+                        <h3>Price ({positionCurrency})</h3>
+                        <LineChartWithCursor dataset={this.prices} labelSuffix={" " + positionCurrency}/>
                     </div>
 
                     <div className="position-card-chart">
                         <h3>Quantity</h3>
                         <AreaChartWithCursor dataset={this.quantities} />
                     </div>
-                    {/* TODO: Change this graph to actually show the value. */}
                     <div className="position-card-chart">
-                        <h3>Value</h3>
-                        <AreaChartWithCursor dataset={this.values} />
+                        <h3>Value ({positionCurrency})</h3>
+                        <LineChartWithCursor dataset={this.values} labelSuffix={" " + positionCurrency} />
                     </div>
+
+                    <div className="position-card-chart">
+                        <h3>Value ({accountCurrency})</h3>
+                        <LineChartWithCursor dataset={this.values} labelSuffix={" " + positionCurrency} />
+                    </div>
+
                 </div>
                 <div>
                     <h3>Transactions & Events</h3>

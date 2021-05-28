@@ -3,7 +3,7 @@
 import regeneratorRuntime from "regenerator-runtime";
 
 
-export class APIClientError extends Error {}
+export class APIClientError extends Error { }
 
 
 export async function fetchDetailResult(url) {
