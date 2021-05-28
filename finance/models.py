@@ -129,7 +129,7 @@ class Position(models.Model):
         return f"<Position account: {self.account}, " f"security: {self.security}>"
 
     def quantity_history(
-        self, from_date, to_date=None, output_period=datetime.timedelta(days=1)
+        self, from_date: datetime.date, to_date : datetime.date=None, output_period=datetime.timedelta(days=1)
     ):
         if to_date is None:
             to_date = datetime.date.today()
@@ -144,7 +144,7 @@ class Position(models.Model):
             return [(date, quantity) for date in dates]
 
         dates_with_quantities = []
-        if transactions[0].executed_at > to_date:
+        if transactions[0].executed_at.date() > to_date:
             # TODO: add support for this if necessary.
             raise ValueError("history ending before last transaction not supported")
 
@@ -152,7 +152,7 @@ class Position(models.Model):
         for date in dates:
             relevant_transactions = transactions[last_relevant_transaction:]
             for i, transaction in enumerate(relevant_transactions):
-                if transaction.executed_at < date:
+                if transaction.executed_at.date() < date:
                     # Since we are going from later to earlier and undoing each
                     # transaction, this transaction doesn't happen yet, so it couldn't
                     # affect the current interval. Since transactions are sorted, we
@@ -164,6 +164,34 @@ class Position(models.Model):
             dates_with_quantities.append((date, quantity))
 
         return dates_with_quantities
+
+    # This seems pretty ugly and will have to be refactored.
+    # I might also want to use caching so it's not a performance nightmare.
+    def value_history(
+        self,
+        quantity_history,
+        from_date,
+        to_date=None,
+        output_period=datetime.timedelta(days=1),
+    ):
+        prices = self.security.price_history_set.order_by("-date").filter(
+            date__gte=from_date, date_lte=to_date
+        )
+        price_tuples = [(price.date, price.value) for price in prices]
+        print(price_tuples[0][0], quantity_history[0][0])
+        value_history_records = []
+        for price, quantity in zip(price_tuples, quantity_history):
+            if price[0] != quantity[0]:
+                print(price, quantity)
+
+    def value_history_in_account_currency(
+        self,
+        value_history,
+        from_date,
+        to_date=None,
+        output_period=datetime.timedelta(days=1),
+    ):
+        pass
 
 
 class Transaction(models.Model):

@@ -202,24 +202,26 @@ class TestPosition(TestCase):
         from_date = datetime.datetime.strptime("2021-04-24 17:00Z", DATE_FORMAT)
         to_date = datetime.datetime.strptime("2021-05-04 13:00Z", DATE_FORMAT)
 
+        from_date = datetime.date.fromisoformat("2021-04-25")
+        to_date =  datetime.date.fromisoformat("2021-05-04")
         quantity_history = position.quantity_history(
             from_date=from_date,
             to_date=to_date,
         )
         expected_quantity_history = [
-            ("2021-05-04 13:00+0000", 20.00),
-            ("2021-05-03 13:00+0000", 14.00),
-            ("2021-05-02 13:00+0000", 11.00),
-            ("2021-05-01 13:00+0000", 8.00),
-            ("2021-04-30 13:00+0000", 7.00),
-            ("2021-04-29 13:00+0000", 7.00),
-            ("2021-04-28 13:00+0000", 3.00),
-            ("2021-04-27 13:00+0000", 3.00),
-            ("2021-04-26 13:00+0000", 0.00),
-            ("2021-04-25 13:00+0000", 0.00),
+            ("2021-05-04", 17.00),
+            ("2021-05-03", 11.00),
+            ("2021-05-02", 8.00),
+            ("2021-05-01", 10.00),
+            ("2021-04-30", 7.00),
+            ("2021-04-29", 3.00),
+            ("2021-04-28", 3.00),
+            ("2021-04-27", 0.00),
+            ("2021-04-26", 0.00),
+            ("2021-04-25", 0.00),
         ]
         expected_quantity_history = [
-            (datestr_to_datetime(date), value)
+            (datetime.date.fromisoformat(date), value)
             for (date, value) in expected_quantity_history
         ]
 

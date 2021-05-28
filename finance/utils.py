@@ -31,7 +31,7 @@ def generate_date_intervals(
     to_date: datetime.date,
     output_period: datetime.timedelta,
     start_with_end: bool = True,
-) -> List[datetime.datetime]:
+) -> List[datetime.date]:
     dates = []
     if start_with_end:
         start_date = to_date

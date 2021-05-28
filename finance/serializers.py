@@ -91,8 +91,8 @@ class SecurityPriceHistorySerializer(serializers.ModelSerializer):
 
 
 class FromToDatesSerializer(serializers.Serializer):
-    from_date = serializers.DateTimeField(required=False)
-    to_date = serializers.DateTimeField(required=False)
+    from_date = serializers.DateField(required=False)
+    to_date = serializers.DateField(required=False)
 
 
 class CurrencyQuerySerializer(FromToDatesSerializer):

@@ -139,9 +139,9 @@ class PositionView(generics.RetrieveAPIView):
             self.query_data = data
             context["from_date"] = self.query_data.get(
                 "from_data",
-                datetime.datetime.now(tz=pytz.UTC) - datetime.timedelta(days=365),
+                datetime.datetime.today() - datetime.timedelta(days=365),
             )
             context["to_date"] = self.query_data.get(
-                "to", datetime.datetime.now(tz=pytz.UTC)
+                "to", datetime.datetime.today()
             )
         return context
