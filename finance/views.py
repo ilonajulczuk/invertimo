@@ -6,6 +6,8 @@ from django.shortcuts import get_object_or_404, render
 from rest_framework import exceptions, generics, permissions, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 
+from django.contrib.auth.models import User
+from typing import Any, Dict
 from finance import accounts, models
 from finance.models import CurrencyExchangeRate, Position, PriceHistory
 from finance.serializers import (
@@ -25,9 +27,8 @@ class AccountsView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-
-        queryset = models.Account.objects.filter(user=self.request.user)
-        queryset = queryset.annotate(
+        assert isinstance(self.request.user, User)
+        queryset = models.Account.objects.filter(user=self.request.user).annotate(
             positions_count=Count("positions", distinct=True),
             transactions_count=Count("positions__transactions", distinct=True),
         )
@@ -41,6 +42,7 @@ class PositionsView(generics.ListAPIView):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
+        assert isinstance(self.request.user, User)
         user = self.request.user
         return (
             Position.objects.filter(account__user=user)
@@ -131,7 +133,7 @@ class PositionView(generics.RetrieveAPIView):
             .prefetch_related("transactions"))
 
     def get_serializer_context(self):
-        context = super().get_serializer_context()
+        context : Dict[str, Any] = super().get_serializer_context()
         query = FromToDatesSerializer(data=self.request.query_params)
 
         if query.is_valid(raise_exception=True):

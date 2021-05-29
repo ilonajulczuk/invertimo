@@ -49,7 +49,9 @@ class AccountRepository:
     def add_event(self, account):
         pass
 
-    def _get_or_create_position(self, account, isin, exchange):
+    def _get_or_create_position(
+        self, account: models.Account, isin: str, exchange: models.Exchange
+    ):
         positions = models.Position.objects.filter(
             account=account, security__isin=isin, security__exchange=exchange
         )

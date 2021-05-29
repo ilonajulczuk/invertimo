@@ -4,11 +4,11 @@ import pytz
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
+from typing import Optional
 from finance import utils
 
 
-def currency_enum_from_string(currency):
+def currency_enum_from_string(currency: str) -> "Currency":
     if currency == "USD":
         return Currency.USD
     elif currency == "EUR":
@@ -19,7 +19,7 @@ def currency_enum_from_string(currency):
         raise ValueError("Unsupported currency")
 
 
-def currency_string_from_enum(currency):
+def currency_string_from_enum(currency: "Currency") -> str:
     if currency == Currency.USD:
         return "USD"
     elif currency == Currency.EURO:
@@ -129,7 +129,7 @@ class Position(models.Model):
         return f"<Position account: {self.account}, " f"security: {self.security}>"
 
     def quantity_history(
-        self, from_date: datetime.date, to_date : datetime.date=None, output_period=datetime.timedelta(days=1)
+        self, from_date: datetime.date, to_date : Optional[datetime.date]=None, output_period=datetime.timedelta(days=1)
     ):
         if to_date is None:
             to_date = datetime.date.today()
@@ -174,8 +174,8 @@ class Position(models.Model):
         to_date=None,
         output_period=datetime.timedelta(days=1),
     ):
-        prices = self.security.price_history_set.order_by("-date").filter(
-            date__gte=from_date, date_lte=to_date
+        prices = self.security.pricehistory_set.order_by("-date").filter(
+            date__gte=from_date, date__lte=to_date
         )
         price_tuples = [(price.date, price.value) for price in prices]
         print(price_tuples[0][0], quantity_history[0][0])

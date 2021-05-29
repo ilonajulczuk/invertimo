@@ -4,6 +4,7 @@ import decimal
 from django.contrib.auth.models import User
 from django.db.models import Sum
 from django.test import SimpleTestCase, TestCase
+from django.urls import reverse
 
 from finance import accounts, degiro_parser, exchanges, models, utils
 
@@ -12,6 +13,43 @@ DATE_FORMAT = "%Y-%m-%d %H:%M%z"
 
 def datestr_to_datetime(datestr) -> datetime.datetime:
     return datetime.datetime.strptime(datestr, DATE_FORMAT)
+
+
+def _add_dummy_account_and_security(user, isin):
+    account = models.Account.objects.create(
+        user=user, currency=models.Currency.EURO, nickname="test account"
+    )
+    exchange = models.Exchange.objects.create(name="my US stocks", country="USA")
+    security = models.Security.objects.create(
+        isin=isin,
+        symbol="MOONIES",
+        name="a stock",
+        currency=models.Currency.USD,
+        exchange=exchange,
+    )
+    return account, exchange, security
+
+
+def _add_transaction(account, isin, exchange, executed_at, quantity, price):
+    transaction_costs = decimal.Decimal(0.5)
+    local_value = decimal.Decimal(0.5)
+    value_in_account_currency = decimal.Decimal(0.5)
+    total_in_account_currency = decimal.Decimal(0.5)
+    order_id = "123"
+    account_repository = accounts.AccountRepository()
+    account_repository.add_transaction(
+        account,
+        isin,
+        exchange,
+        executed_at,
+        quantity,
+        price,
+        transaction_costs,
+        local_value,
+        value_in_account_currency,
+        total_in_account_currency,
+        order_id,
+    )
 
 
 class TestDegiroParser(TestCase):
@@ -136,45 +174,9 @@ class TestPosition(TestCase):
         # Create a user and an account.
         self.user = User.objects.create(username="testuser", email="test@example.com")
         self.client.force_login(self.user)
-        self.account = models.Account.objects.create(
-            user=self.user, currency=models.Currency.EURO, nickname="test account"
-        )
-
-        self.account_repository = accounts.AccountRepository()
-
-        # Set up a dummy security.
-        self.exchange = models.Exchange.objects.create(
-            name="my US stocks", country="USA"
-        )
-        self.isin = "123"
-        security = models.Security(
-            isin=self.isin,
-            symbol="MOONIES",
-            name="a stock",
-            currency=models.Currency.USD,
-            exchange=self.exchange,
-        )
-        security.save()
-
-    def _add_transaction(self, executed_at, quantity, price):
-
-        transaction_costs = decimal.Decimal(0.5)
-        local_value = decimal.Decimal(0.5)
-        value_in_account_currency = decimal.Decimal(0.5)
-        total_in_account_currency = decimal.Decimal(0.5)
-        order_id = "123"
-        self.account_repository.add_transaction(
-            self.account,
-            self.isin,
-            self.exchange,
-            executed_at,
-            quantity,
-            price,
-            transaction_costs,
-            local_value,
-            value_in_account_currency,
-            total_in_account_currency,
-            order_id,
+        self.isin = "US1234"
+        self.account, self.exchange, self.security = _add_dummy_account_and_security(
+            self.user, isin=self.isin
         )
 
     def test_quantity_history_based_on_transactions(self):
@@ -192,7 +194,14 @@ class TestPosition(TestCase):
             ("2021-05-04 12:00Z", 3, 22),  # 20
         ]
         for transaction in fake_transactions:
-            self._add_transaction(transaction[0], transaction[1], transaction[2])
+            _add_transaction(
+                self.account,
+                self.isin,
+                self.exchange,
+                transaction[0],
+                transaction[1],
+                transaction[2],
+            )
 
         self.assertEqual(models.Position.objects.count(), 1)
         self.assertEqual(models.Transaction.objects.count(), 8)
@@ -203,7 +212,7 @@ class TestPosition(TestCase):
         to_date = datetime.datetime.strptime("2021-05-04 13:00Z", DATE_FORMAT)
 
         from_date = datetime.date.fromisoformat("2021-04-25")
-        to_date =  datetime.date.fromisoformat("2021-05-04")
+        to_date = datetime.date.fromisoformat("2021-05-04")
         quantity_history = position.quantity_history(
             from_date=from_date,
             to_date=to_date,
@@ -239,10 +248,143 @@ class TestPosition(TestCase):
             ("2021-05-04 12:00Z", 3, 22),  # 20
         ]
         for transaction in fake_transactions:
-            self._add_transaction(transaction[0], transaction[1], transaction[2])
+            _add_transaction(
+                self.account,
+                self.isin,
+                self.exchange,
+                transaction[0],
+                transaction[1],
+                transaction[2],
+            )
 
         # Generate dates for the PriceHistory from
         from_date = datetime.datetime.strptime("2021-04-24 17:00Z", DATE_FORMAT)
         to_date = datetime.datetime.strptime("2021-05-04 13:00Z", DATE_FORMAT)
         # Note, quantity history should be generated for 00 hour (dates not datetimes).
         # I think that would be better, because then it would perfectly match prices.
+
+
+class ViewTestBase:
+    """ViewTestVase is meant to be used as a base class with the django.test.TestCase
+
+    It offers basic tests for views, so that they don't have to be reimplemented each time.
+    It doesn't inherit from TestCase because we don't want those tests to run, we only want them
+    to be run in the child classes.
+    """
+
+    URL = None
+    VIEW_NAME = None
+    DETAIL_VIEW = False
+    QUERY_PARAMS = "?"
+    # Change to None if the view is fine to access while not authenticated.
+    UNAUTHENTICATED_CODE = 302  # Redirect by default.
+
+    def setUp(self):
+        self.user = User.objects.create(username="testuser", email="test@example.com")
+        self.client.force_login(self.user)
+
+    def get_url(self):
+        return self.URL
+
+    def get_reversed_url(self):
+        return reverse(self.VIEW_NAME)
+
+    def test_url_exists(self):
+        response = self.client.get(self.get_url() + self.QUERY_PARAMS)
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_accessible_by_name(self):
+        response = self.client.get(self.get_reversed_url() + self.QUERY_PARAMS)
+        self.assertEqual(response.status_code, 200)
+
+    def test_cant_access_without_logging_in(self):
+        self.client.logout()
+        response = self.client.get(self.get_reversed_url() + self.QUERY_PARAMS)
+        # If UNAUTHENTICATE_CODE is overriden to None, it means that it shouldn't
+        # be disallowed.
+        if self.UNAUTHENTICATED_CODE:
+            self.assertEquals(response.status_code, self.UNAUTHENTICATED_CODE)
+
+    def test_cant_access_objects_of_other_users(self):
+        if self.DETAIL_VIEW:
+            user2 = User.objects.create(
+                username="anotheruser", email="test2@example.com"
+            )
+            self.client.force_login(user2)
+            response = self.client.get(self.get_reversed_url() + self.QUERY_PARAMS)
+            self.assertEquals(response.status_code, 404)
+
+
+class TestPositionsView(ViewTestBase, TestCase):
+    URL = "/api/positions/"
+    VIEW_NAME = "api-positions"
+    DETAIL_VIEW = False
+    QUERY_PARAMS = "?"
+    UNAUTHENTICATED_CODE = 403
+
+    def setUp(self):
+        super().setUp()
+
+        self.isin = "123"
+        self.account, self.exchange, self.security = _add_dummy_account_and_security(
+            self.user, isin=self.isin
+        )
+        fake_transactions = [
+            ("2021-04-27 10:00Z", 3, 12.11),  # Price after the transaction: 3
+            ("2021-04-29 12:00Z", 4, 12.44),  # 7
+            ("2021-04-30 17:00Z", 3, 14.3),  # 10
+            ("2021-05-01 11:00Z", -2, 15.3),  # 8
+            ("2021-05-02 12:00Z", 3, 14.2),  # 11
+            ("2021-05-03 12:00Z", 3, 12.3),  # 14
+            ("2021-05-03 14:00Z", 3, 14.5),  # 17
+            ("2021-05-04 12:00Z", 3, 22),  # 20
+        ]
+        for transaction in fake_transactions:
+            _add_transaction(
+                self.account,
+                self.isin,
+                self.exchange,
+                transaction[0],
+                transaction[1],
+                transaction[2],
+            )
+
+class TestPositionDetailView(ViewTestBase, TestCase):
+    URL = "/api/positions/%s/"
+    VIEW_NAME = "api-position"
+    DETAIL_VIEW = True
+    QUERY_PARAMS = "?"
+    UNAUTHENTICATED_CODE = 403
+
+    def setUp(self):
+        super().setUp()
+        self.isin = "123"
+        self.account, self.exchange, self.security = _add_dummy_account_and_security(
+            self.user, isin=self.isin
+        )
+        fake_transactions = [
+            ("2021-04-27 10:00Z", 3, 12.11),  # Price after the transaction: 3
+            ("2021-04-29 12:00Z", 4, 12.44),  # 7
+            ("2021-04-30 17:00Z", 3, 14.3),  # 10
+            ("2021-05-01 11:00Z", -2, 15.3),  # 8
+            ("2021-05-02 12:00Z", 3, 14.2),  # 11
+            ("2021-05-03 12:00Z", 3, 12.3),  # 14
+            ("2021-05-03 14:00Z", 3, 14.5),  # 17
+            ("2021-05-04 12:00Z", 3, 22),  # 20
+        ]
+        for transaction in fake_transactions:
+            _add_transaction(
+                self.account,
+                self.isin,
+                self.exchange,
+                transaction[0],
+                transaction[1],
+                transaction[2],
+            )
+        self.position = models.Position.objects.first()
+
+    def get_url(self):
+        return self.URL % self.position.pk
+
+    def get_reversed_url(self):
+        return reverse(self.VIEW_NAME, args=[self.position.pk])

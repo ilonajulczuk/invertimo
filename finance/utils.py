@@ -1,5 +1,7 @@
 import datetime
 from typing import List
+from typing import Callable
+
 
 def generate_datetime_intervals(
     from_date: datetime.datetime,
@@ -8,6 +10,7 @@ def generate_datetime_intervals(
     start_with_end: bool = True,
 ) -> List[datetime.datetime]:
     dates = []
+    comparison : Callable[[datetime.datetime, datetime.datetime], bool]
     if start_with_end:
         start_date = to_date
         end_date = from_date
@@ -33,6 +36,7 @@ def generate_date_intervals(
     start_with_end: bool = True,
 ) -> List[datetime.date]:
     dates = []
+    comparison : Callable[[datetime.date, datetime.date], bool]
     if start_with_end:
         start_date = to_date
         end_date = from_date
