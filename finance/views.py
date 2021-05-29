@@ -18,7 +18,7 @@ from finance.serializers import (
     SecurityPriceHistorySerializer,
 )
 
-
+# TODO: add basic view tests.
 class AccountsView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AccountSerializer
@@ -139,9 +139,9 @@ class PositionView(generics.RetrieveAPIView):
             self.query_data = data
             context["from_date"] = self.query_data.get(
                 "from_data",
-                datetime.datetime.today() - datetime.timedelta(days=365),
+                datetime.date.today() - datetime.timedelta(days=365),
             )
             context["to_date"] = self.query_data.get(
-                "to", datetime.datetime.today()
+                "to_date", datetime.date.today()
             )
         return context
