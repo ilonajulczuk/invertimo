@@ -32,7 +32,7 @@ def generate_datetime_intervals(
 def generate_date_intervals(
     from_date: datetime.date,
     to_date: datetime.date,
-    output_period: datetime.timedelta,
+    output_period: datetime.timedelta=datetime.timedelta(days=1),
     start_with_end: bool = True,
 ) -> List[datetime.date]:
     dates = []

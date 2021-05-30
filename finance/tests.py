@@ -205,11 +205,8 @@ class TestPosition(TestCase):
 
         self.assertEqual(models.Position.objects.count(), 1)
         self.assertEqual(models.Transaction.objects.count(), 8)
-        position = models.Position.objects.all()[0]
+        position = models.Position.objects.first()
         self.assertEqual(position.quantity, 20)
-
-        from_date = datetime.datetime.strptime("2021-04-24 17:00Z", DATE_FORMAT)
-        to_date = datetime.datetime.strptime("2021-05-04 13:00Z", DATE_FORMAT)
 
         from_date = datetime.date.fromisoformat("2021-04-25")
         to_date = datetime.date.fromisoformat("2021-05-04")
@@ -257,12 +254,46 @@ class TestPosition(TestCase):
                 transaction[2],
             )
 
+        # TODO: add test case with misaligned dates and missing dates.
         # Generate dates for the PriceHistory from
-        from_date = datetime.datetime.strptime("2021-04-24 17:00Z", DATE_FORMAT)
-        to_date = datetime.datetime.strptime("2021-05-04 13:00Z", DATE_FORMAT)
-        # Note, quantity history should be generated for 00 hour (dates not datetimes).
-        # I think that would be better, because then it would perfectly match prices.
+        from_date = datetime.date.fromisoformat("2021-04-25")
+        to_date = datetime.date.fromisoformat("2021-05-04")
 
+        # Add fake prices.
+        dates = utils.generate_date_intervals(from_date, to_date)
+        for i, date in enumerate(dates):
+            # Simulate some prices missing (e.g. weekend).
+            if i % 5 == 0:
+                continue
+            models.PriceHistory.objects.create(
+                date=date,
+                value=100 + (i % 3) * 10,
+                security=self.security,
+            )
+        position = models.Position.objects.first()
+        self.assertEqual(position.quantity, 20)
+
+        value_history = position.value_history(
+             from_date, to_date
+        )
+
+        expected_value_history = [
+            # ("2021-05-04", 17.00 * 100), -- price missing
+            ("2021-05-03", 11.00 * 110),
+            ("2021-05-02", 8.00 * 120),
+            ("2021-05-01", 10.00 * 100),
+            ("2021-04-30", 7.00 * 110),
+            # ("2021-04-29", 3.00 * 120), -- price missing
+            ("2021-04-28", 3.00 * 100),
+            ("2021-04-27", 0.00),
+            ("2021-04-26", 0.00),
+            ("2021-04-25", 0.00),
+        ]
+        expected_value_history = [
+            (datetime.date.fromisoformat(date), value)
+            for (date, value) in expected_value_history
+        ]
+        self.assertEqual(value_history, expected_value_history)
 
 class ViewTestBase:
     """ViewTestVase is meant to be used as a base class with the django.test.TestCase

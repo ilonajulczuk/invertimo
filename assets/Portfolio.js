@@ -113,7 +113,7 @@ export default class Portfolio extends React.Component {
                 <h1>Portfolio</h1>
                 <PortfolioOverview accounts={this.state.accounts} />
                 <PortfolioChart />
-                <PositionList positions={this.state.positions} />
+                <PositionList positions={this.state.positions} accounts={this.state.accounts} />
             </div>
         )
 

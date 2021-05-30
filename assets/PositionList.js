@@ -97,11 +97,19 @@ class ExpandedPositionContent extends React.Component {
             return { date: new Date(exactDate.toDateString()), value: Number(elem.value) };
         });
 
-        this.values = this.computeValues(this.quantities, this.prices);
+        this.values = this.props.data.values.map((elem) => {
+            let exactDate = new Date(elem[0]);
+            return { date: new Date(exactDate.toDateString()), value: Number(elem[1]) };
+        });
 
+        this.values_account_currency = this.props.data.values_account_currency.map((elem) => {
+            let exactDate = new Date(elem[0]);
+            return { date: new Date(exactDate.toDateString()), value: Number(elem[1]) };
+        });
         this.quantities = filterPointsWithNoChange(this.quantities, skipFactor);
         this.prices = filterPoints(this.prices, skipFactor);
         this.values = filterPoints(this.values, skipFactor);
+        this.values_account_currency = filterPoints(this.values_account_currency, skipFactor);
     }
 
     computeValues(quantities, prices) {
@@ -137,7 +145,7 @@ class ExpandedPositionContent extends React.Component {
             (transaction) => <Transaction key={transaction.id} data={transaction} />)
 
         let positionCurrency = this.props.data.security.currency;
-        let accountCurrency = this.props.accountCurrency;
+        let accountCurrency = this.props.account.currency;
         return (
             <div className="position-card-expanded-content">
                 <div className="position-card-charts-header">
@@ -155,13 +163,13 @@ class ExpandedPositionContent extends React.Component {
                         <AreaChartWithCursor dataset={this.quantities} />
                     </div>
                     <div className="position-card-chart">
-                        <h3>Value ({positionCurrency})</h3>
+                        <h3>Value in trading currency ({positionCurrency})</h3>
                         <LineChartWithCursor dataset={this.values} labelSuffix={" " + positionCurrency} />
                     </div>
 
                     <div className="position-card-chart">
-                        <h3>Value ({accountCurrency})</h3>
-                        <LineChartWithCursor dataset={this.values} labelSuffix={" " + positionCurrency} />
+                        <h3>Value in account currency ({accountCurrency})</h3>
+                        <LineChartWithCursor dataset={this.values_account_currency} labelSuffix={" " + accountCurrency} />
                     </div>
 
                 </div>
@@ -186,7 +194,7 @@ class Position extends React.Component {
 
         let expandedContent = null;
         if (this.props.active) {
-            expandedContent = <ExpandedPositionContent data={this.props.detailedData} />;
+            expandedContent = <ExpandedPositionContent data={this.props.detailedData} account={this.props.account}/>;
         }
 
         return (
@@ -250,12 +258,26 @@ export default class PositionList extends React.Component {
     }
 
     render() {
-        const positionList = this.props.positions.map((position) => (
-            <Position key={position["id"]} data={position}
+        const positionList = this.props.positions.map((position) =>  {
+
+            let account;
+            for (let acc of  this.props.accounts) {
+                if (acc.id == position.account) {
+                    account = acc;
+                }
+            }
+
+            return (
+                <Position key={position["id"]} data={position}
                 handleClick={this.handlePositionClick(position["id"])}
                 active={this.state.activePosition == position["id"]}
-                detailedData={this.state.positionDetails[position["id"]]} />
-        ))
+                detailedData={this.state.positionDetails[position["id"]]}
+                account={account}
+                />
+            );
+        }
+
+        )
         return (
             <div>
                 <h2>Positions</h2>

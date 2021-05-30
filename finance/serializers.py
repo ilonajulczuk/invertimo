@@ -1,15 +1,8 @@
 from rest_framework import serializers
 
 from finance import models
-from finance.models import (
-    Account,
-    CurrencyExchangeRate,
-    Exchange,
-    Position,
-    PriceHistory,
-    Security,
-    Transaction,
-)
+from finance.models import (Account, CurrencyExchangeRate, Exchange, Position,
+                            PriceHistory, Security, Transaction)
 
 
 class ExchangeSerializer(serializers.ModelSerializer):
@@ -66,16 +59,28 @@ class EmbeddedTransactionSerializer(serializers.ModelSerializer):
 class PositionWithQuantitiesSerializer(serializers.ModelSerializer):
     security = SecuritySerializer()
     quantities = serializers.SerializerMethodField()
+    values = serializers.SerializerMethodField()
+    values_account_currency = serializers.SerializerMethodField()
     transactions = EmbeddedTransactionSerializer(many=True)
 
     class Meta:
         model = Position
-        fields = ["id", "account", "security", "quantity", "quantities", "transactions"]
+        fields = ["id", "account", "security", "quantity", "quantities", "transactions", "values", "values_account_currency"]
 
     def get_quantities(self, obj):
         from_date = self.context["from_date"]
         to_date = self.context["to_date"]
         return obj.quantity_history(from_date=from_date, to_date=to_date)
+
+    def get_values(self, obj):
+        from_date = self.context["from_date"]
+        to_date = self.context["to_date"]
+        return obj.value_history(from_date, to_date)
+
+    def get_values_account_currency(self, obj):
+        from_date = self.context["from_date"]
+        to_date = self.context["to_date"]
+        return obj.value_history_in_account_currency(from_date, to_date)
 
 
 class CurrencyExchangeRateSerializer(serializers.ModelSerializer):

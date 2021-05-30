@@ -129,6 +129,7 @@ class PositionView(generics.RetrieveAPIView):
         return (
             queryset.filter(account__user=self.request.user)
             .select_related("security")
+            .prefetch_related("security__pricehistory_set")
             .select_related("security__exchange")
             .prefetch_related("transactions"))
 

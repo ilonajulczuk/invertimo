@@ -1,11 +1,15 @@
 import datetime
+import decimal
+import functools
+from typing import List, Optional, Tuple, Sequence
 
 import pytz
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from typing import Optional
+
 from finance import utils
+import functools
 
 
 def currency_enum_from_string(currency: str) -> "Currency":
@@ -91,7 +95,6 @@ class ExchangeIdentifier(models.Model):
             f"{self.get_id_type_display()}, value: {self.value}>"
         )
 
-
 class Security(models.Model):
     isin = models.CharField(max_length=30)
     symbol = models.CharField(max_length=30)
@@ -114,6 +117,31 @@ class Security(models.Model):
         )
 
 
+def multiply_at_matching_dates(
+    first_sequence: Sequence[Tuple[datetime.date, decimal.Decimal]],
+    second_sequence: Sequence[Tuple[datetime.date, decimal.Decimal]]
+):
+
+    multiplied_records = []
+    max_first = len(first_sequence)
+    max_second = len(second_sequence)
+
+    i = 0
+    j = 0
+    while i < max_first and j < max_second:
+        if first_sequence[i][0] > second_sequence[j][0]:
+            i += 1
+        elif first_sequence[i][0] < second_sequence[j][0]:
+            j += 1
+        else:
+            multiplied_records.append(
+                (second_sequence[j][0], second_sequence[j][1] * first_sequence[i][1])
+            )
+            j += 1
+            i += 1
+    return multiplied_records
+
+
 class Position(models.Model):
     account = models.ForeignKey(
         Account, on_delete=models.CASCADE, related_name="positions"
@@ -128,8 +156,12 @@ class Position(models.Model):
     def __str__(self):
         return f"<Position account: {self.account}, " f"security: {self.security}>"
 
+    @functools.lru_cache
     def quantity_history(
-        self, from_date: datetime.date, to_date : Optional[datetime.date]=None, output_period=datetime.timedelta(days=1)
+        self,
+        from_date: datetime.date,
+        to_date: Optional[datetime.date] = None,
+        output_period=datetime.timedelta(days=1),
     ):
         if to_date is None:
             to_date = datetime.date.today()
@@ -167,31 +199,46 @@ class Position(models.Model):
 
     # This seems pretty ugly and will have to be refactored.
     # I might also want to use caching so it's not a performance nightmare.
+    @functools.lru_cache
     def value_history(
         self,
-        quantity_history,
-        from_date,
-        to_date=None,
+        from_date: datetime.date,
+        to_date=Optional[datetime.date],
         output_period=datetime.timedelta(days=1),
     ):
+        quantity_history = self.quantity_history(from_date, to_date, output_period)
+
+        if to_date is None:
+            to_date = datetime.date.today()
         prices = self.security.pricehistory_set.order_by("-date").filter(
             date__gte=from_date, date__lte=to_date
         )
+
         price_tuples = [(price.date, price.value) for price in prices]
-        print(price_tuples[0][0], quantity_history[0][0])
-        value_history_records = []
-        for price, quantity in zip(price_tuples, quantity_history):
-            if price[0] != quantity[0]:
-                print(price, quantity)
+
+        return multiply_at_matching_dates(price_tuples, quantity_history)
 
     def value_history_in_account_currency(
         self,
-        value_history,
         from_date,
         to_date=None,
         output_period=datetime.timedelta(days=1),
     ):
-        pass
+        # TODO: add support for GBX.
+        to_currency = self.account.currency
+        from_currency = self.security.currency
+        if to_date is None:
+            to_date = datetime.date.today()
+
+        value_history = self.value_history(from_date, to_date, output_period)
+        if to_currency == from_currency:
+            return value_history
+        exchange_rates = CurrencyExchangeRate.objects.order_by("-date").filter(
+            date__gte=from_date, date__lte=to_date,
+            from_currency=from_currency, to_currency=to_currency
+        )
+        exchange_rate_tuples = [(rate.date, rate.value) for rate in exchange_rates]
+        return multiply_at_matching_dates(value_history, exchange_rate_tuples)
 
 
 class Transaction(models.Model):
