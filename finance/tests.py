@@ -11,6 +11,18 @@ from finance import accounts, degiro_parser, exchanges, models, utils
 DATE_FORMAT = "%Y-%m-%d %H:%M%z"
 
 
+_FAKE_TRANSACTIONS = [
+    ("2021-04-27 10:00Z", 3, 12.11),  # Price after the transaction: 3
+    ("2021-04-29 12:00Z", 4, 12.44),  # 7
+    ("2021-04-30 17:00Z", 3, 14.3),  # 10
+    ("2021-05-01 11:00Z", -2, 15.3),  # 8
+    ("2021-05-02 12:00Z", 3, 14.2),  # 11
+    ("2021-05-03 12:00Z", 3, 12.3),  # 14
+    ("2021-05-03 14:00Z", 3, 14.5),  # 17
+    ("2021-05-04 12:00Z", 3, 22),  # 20
+]
+
+
 def datestr_to_datetime(datestr) -> datetime.datetime:
     return datetime.datetime.strptime(datestr, DATE_FORMAT)
 
@@ -182,18 +194,7 @@ class TestPosition(TestCase):
     def test_quantity_history_based_on_transactions(self):
 
         # Nothing special like stock splits here.
-
-        fake_transactions = [
-            ("2021-04-27 10:00Z", 3, 12.11),  # Price after the transaction: 3
-            ("2021-04-29 12:00Z", 4, 12.44),  # 7
-            ("2021-04-30 17:00Z", 3, 14.3),  # 10
-            ("2021-05-01 11:00Z", -2, 15.3),  # 8
-            ("2021-05-02 12:00Z", 3, 14.2),  # 11
-            ("2021-05-03 12:00Z", 3, 12.3),  # 14
-            ("2021-05-03 14:00Z", 3, 14.5),  # 17
-            ("2021-05-04 12:00Z", 3, 22),  # 20
-        ]
-        for transaction in fake_transactions:
+        for transaction in _FAKE_TRANSACTIONS:
             _add_transaction(
                 self.account,
                 self.isin,
@@ -234,17 +235,7 @@ class TestPosition(TestCase):
         self.assertEqual(quantity_history, expected_quantity_history)
 
     def test_value_history(self):
-        fake_transactions = [
-            ("2021-04-27 10:00Z", 3, 12.11),  # Price after the transaction: 3
-            ("2021-04-29 12:00Z", 4, 12.44),  # 7
-            ("2021-04-30 17:00Z", 3, 14.3),  # 10
-            ("2021-05-01 11:00Z", -2, 15.3),  # 8
-            ("2021-05-02 12:00Z", 3, 14.2),  # 11
-            ("2021-05-03 12:00Z", 3, 12.3),  # 14
-            ("2021-05-03 14:00Z", 3, 14.5),  # 17
-            ("2021-05-04 12:00Z", 3, 22),  # 20
-        ]
-        for transaction in fake_transactions:
+        for transaction in _FAKE_TRANSACTIONS:
             _add_transaction(
                 self.account,
                 self.isin,
@@ -254,12 +245,9 @@ class TestPosition(TestCase):
                 transaction[2],
             )
 
-        # TODO: add test case with misaligned dates and missing dates.
-        # Generate dates for the PriceHistory from
         from_date = datetime.date.fromisoformat("2021-04-25")
         to_date = datetime.date.fromisoformat("2021-05-04")
 
-        # Add fake prices.
         dates = utils.generate_date_intervals(from_date, to_date)
         for i, date in enumerate(dates):
             # Simulate some prices missing (e.g. weekend).
@@ -273,9 +261,7 @@ class TestPosition(TestCase):
         position = models.Position.objects.first()
         self.assertEqual(position.quantity, 20)
 
-        value_history = position.value_history(
-             from_date, to_date
-        )
+        value_history = position.value_history(from_date, to_date)
 
         expected_value_history = [
             # ("2021-05-04", 17.00 * 100), -- price missing
@@ -294,6 +280,7 @@ class TestPosition(TestCase):
             for (date, value) in expected_value_history
         ]
         self.assertEqual(value_history, expected_value_history)
+
 
 class ViewTestBase:
     """ViewTestVase is meant to be used as a base class with the django.test.TestCase
@@ -360,17 +347,7 @@ class TestPositionsView(ViewTestBase, TestCase):
         self.account, self.exchange, self.security = _add_dummy_account_and_security(
             self.user, isin=self.isin
         )
-        fake_transactions = [
-            ("2021-04-27 10:00Z", 3, 12.11),  # Price after the transaction: 3
-            ("2021-04-29 12:00Z", 4, 12.44),  # 7
-            ("2021-04-30 17:00Z", 3, 14.3),  # 10
-            ("2021-05-01 11:00Z", -2, 15.3),  # 8
-            ("2021-05-02 12:00Z", 3, 14.2),  # 11
-            ("2021-05-03 12:00Z", 3, 12.3),  # 14
-            ("2021-05-03 14:00Z", 3, 14.5),  # 17
-            ("2021-05-04 12:00Z", 3, 22),  # 20
-        ]
-        for transaction in fake_transactions:
+        for transaction in _FAKE_TRANSACTIONS:
             _add_transaction(
                 self.account,
                 self.isin,
@@ -379,6 +356,7 @@ class TestPositionsView(ViewTestBase, TestCase):
                 transaction[1],
                 transaction[2],
             )
+
 
 class TestPositionDetailView(ViewTestBase, TestCase):
     URL = "/api/positions/%s/"
@@ -393,17 +371,7 @@ class TestPositionDetailView(ViewTestBase, TestCase):
         self.account, self.exchange, self.security = _add_dummy_account_and_security(
             self.user, isin=self.isin
         )
-        fake_transactions = [
-            ("2021-04-27 10:00Z", 3, 12.11),  # Price after the transaction: 3
-            ("2021-04-29 12:00Z", 4, 12.44),  # 7
-            ("2021-04-30 17:00Z", 3, 14.3),  # 10
-            ("2021-05-01 11:00Z", -2, 15.3),  # 8
-            ("2021-05-02 12:00Z", 3, 14.2),  # 11
-            ("2021-05-03 12:00Z", 3, 12.3),  # 14
-            ("2021-05-03 14:00Z", 3, 14.5),  # 17
-            ("2021-05-04 12:00Z", 3, 22),  # 20
-        ]
-        for transaction in fake_transactions:
+        for transaction in _FAKE_TRANSACTIONS:
             _add_transaction(
                 self.account,
                 self.isin,
