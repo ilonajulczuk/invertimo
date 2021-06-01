@@ -3,7 +3,7 @@ import './position_list.css';
 import { APIClient } from './api_utils.js';
 import { filterPointsWithNoChange, filterPoints, findClosestValue } from './timeseries_utils.js'
 import TimeSelector from './TimeSelector.js';
-import { VictoryLine, VictoryChart, VictoryArea, VictoryCursorContainer } from 'victory';
+import { VictoryLine, VictoryChart, VictoryArea, VictoryCursorContainer, VictoryAxis } from 'victory';
 
 
 function Transaction(props) {
@@ -32,10 +32,13 @@ class AreaChartWithCursor extends React.Component {
                 />}
                 scale={{ x: "time" }}
                 domain={{
-                    x: [new Date(2020, 1, 1), new Date()],
+                    x: [this.props.startDay, new Date()],
                 }}
-                minDomain={{ y: 0}}
+                minDomain={{ y: 0 }}
             >
+                 <VictoryAxis style={{
+                    tickLabels: { angle: -45, padding: 20 },
+                }} />
                 <VictoryArea
                     style={{ data: { fill: "#e96158" }, labels: { fontSize: 20 } }}
                     data={this.props.dataset}
@@ -54,7 +57,7 @@ class LineChartWithCursor extends React.Component {
             <VictoryChart
                 height={300}
                 width={500}
-                padding={{ left: 70, top: 10, right: 140, bottom: 50 }}
+                padding={{ left: 70, top: 10, right: 140, bottom: 70 }}
                 containerComponent={<VictoryCursorContainer
                     cursorLabel={({ datum }) => {
                         let y = findClosestValue(datum.x, this.props.dataset);
@@ -66,10 +69,13 @@ class LineChartWithCursor extends React.Component {
                 />}
                 scale={{ x: "time" }}
                 domain={{
-                    x: [new Date(2020, 1, 1), new Date()],
+                    x: [this.props.startDay, new Date()],
                 }}
-                minDomain={{ y: 0}}
+                minDomain={{ y: 0 }}
             >
+                <VictoryAxis style={{
+                    tickLabels: { angle: -45, padding: 20 },
+                }} />
                 <VictoryLine
                     style={{ data: { stroke: "#e96158" } }}
                     data={this.props.dataset}
@@ -86,60 +92,78 @@ class ExpandedPositionContent extends React.Component {
 
     constructor(props) {
         super(props);
-        const skipFactor = 3;
-        this.quantities = this.props.data.quantities.map((elem) => {
+
+        this.state = {
+            chartTimeSelectorOptionId: 3,
+            chartTimePeriod: { months: 3 },
+        };
+
+        this.handleChartTimeSelectorChange = this.handleChartTimeSelectorChange.bind(this);
+    }
+
+    handleChartTimeSelectorChange(selectorOptionId, selectorData) {
+        this.setState({
+            chartTimeSelectorOptionId: selectorOptionId,
+            chartTimePeriod: selectorData,
+        });
+    }
+
+    daysFromDurationObject(duration) {
+        if (duration == null) {
+            return null;
+        }
+        let totalDays = 0;
+        if (duration.days) {
+
+            totalDays += duration.days;
+        }
+        if (duration.months) {
+            totalDays += duration.months * 31;
+        }
+        if (duration.years) {
+            totalDays += duration.years * 365;
+        }
+        return totalDays;
+    }
+
+    render() {
+
+        let skipFactor = 1;
+        const dataDays = this.daysFromDurationObject(this.state.chartTimePeriod) || 4 * 365;
+
+        if (dataDays > 300) {
+            skipFactor = 3;
+        }
+        const today = new Date();
+        let startDay = today.setDate(today.getDate() - dataDays);
+        let quantities = this.props.data.quantities;
+        if (dataDays) {
+            quantities = this.props.data.quantities.slice(0, dataDays);
+        }
+        quantities = quantities.map((elem) => {
             let exactDate = new Date(elem[0]);
             return { date: new Date(exactDate.toDateString()), value: elem[1] };
         })
 
-        this.prices = this.props.data.prices.map((elem) => {
+        let prices = this.props.data.prices.map((elem) => {
             let exactDate = new Date(elem.date);
             return { date: new Date(exactDate.toDateString()), value: Number(elem.value) };
         });
 
-        this.values = this.props.data.values.map((elem) => {
+        let values = this.props.data.values.map((elem) => {
             let exactDate = new Date(elem[0]);
             return { date: new Date(exactDate.toDateString()), value: Number(elem[1]) };
         });
 
-        this.values_account_currency = this.props.data.values_account_currency.map((elem) => {
+        let valuesAccountCurrency = this.props.data.values_account_currency.map((elem) => {
             let exactDate = new Date(elem[0]);
             return { date: new Date(exactDate.toDateString()), value: Number(elem[1]) };
         });
-        this.quantities = filterPointsWithNoChange(this.quantities, skipFactor);
-        this.prices = filterPoints(this.prices, skipFactor);
-        this.values = filterPoints(this.values, skipFactor);
-        this.values_account_currency = filterPoints(this.values_account_currency, skipFactor);
-    }
+        quantities = filterPointsWithNoChange(quantities, skipFactor);
+        prices = filterPoints(prices, skipFactor);
+        values = filterPoints(values, skipFactor);
+        valuesAccountCurrency = filterPoints(valuesAccountCurrency, skipFactor);
 
-    computeValues(quantities, prices) {
-
-        let values = [];
-        const maxQ = quantities.length;
-        const maxP = prices.length;
-        let i = 0;
-        let j = 0;
-
-        while (i < maxQ && j < maxP) {
-            if (quantities[i].date > prices[j].date) {
-                i += 1;
-            } else if (quantities[i].date < prices[j].date) {
-                j += 1;
-            } else {
-                values.push(
-                    {
-                        date: quantities[i].date,
-                        value: quantities[i].value * prices[j].value
-                    });
-                j += 1;
-                i += 1;
-            }
-        }
-        return values;
-    }
-
-    render() {
-        // TODO: Value in account currency.
 
         let transactions = this.props.data.transactions.map(
             (transaction) => <Transaction key={transaction.id} data={transaction} />)
@@ -150,26 +174,26 @@ class ExpandedPositionContent extends React.Component {
             <div className="position-card-expanded-content">
                 <div className="position-card-charts-header">
                     <h3>Charts</h3>
-                    <TimeSelector />
+                    <TimeSelector activeId={this.state.chartTimeSelectorOptionId} onClick={this.handleChartTimeSelectorChange} />
                 </div>
                 <div className="position-card-charts">
                     <div className="position-card-chart">
                         <h3>Price ({positionCurrency})</h3>
-                        <LineChartWithCursor dataset={this.prices} labelSuffix={" " + positionCurrency}/>
+                        <LineChartWithCursor dataset={prices} labelSuffix={" " + positionCurrency} startDay={startDay} />
                     </div>
 
                     <div className="position-card-chart">
                         <h3>Quantity</h3>
-                        <AreaChartWithCursor dataset={this.quantities} />
+                        <AreaChartWithCursor dataset={quantities} startDay={startDay} />
                     </div>
                     <div className="position-card-chart">
                         <h3>Value in trading currency ({positionCurrency})</h3>
-                        <LineChartWithCursor dataset={this.values} labelSuffix={" " + positionCurrency} />
+                        <LineChartWithCursor dataset={values} labelSuffix={" " + positionCurrency} startDay={startDay} />
                     </div>
 
                     <div className="position-card-chart">
                         <h3>Value in account currency ({accountCurrency})</h3>
-                        <LineChartWithCursor dataset={this.values_account_currency} labelSuffix={" " + accountCurrency} />
+                        <LineChartWithCursor dataset={valuesAccountCurrency} labelSuffix={" " + accountCurrency} startDay={startDay} />
                     </div>
 
                 </div>
@@ -194,7 +218,7 @@ class Position extends React.Component {
 
         let expandedContent = null;
         if (this.props.active) {
-            expandedContent = <ExpandedPositionContent data={this.props.detailedData} account={this.props.account}/>;
+            expandedContent = <ExpandedPositionContent data={this.props.detailedData} account={this.props.account} />;
         }
 
         return (
@@ -258,10 +282,10 @@ export default class PositionList extends React.Component {
     }
 
     render() {
-        const positionList = this.props.positions.map((position) =>  {
+        const positionList = this.props.positions.map((position) => {
 
             let account;
-            for (let acc of  this.props.accounts) {
+            for (let acc of this.props.accounts) {
                 if (acc.id == position.account) {
                     account = acc;
                 }
@@ -269,10 +293,10 @@ export default class PositionList extends React.Component {
 
             return (
                 <Position key={position["id"]} data={position}
-                handleClick={this.handlePositionClick(position["id"])}
-                active={this.state.activePosition == position["id"]}
-                detailedData={this.state.positionDetails[position["id"]]}
-                account={account}
+                    handleClick={this.handlePositionClick(position["id"])}
+                    active={this.state.activePosition == position["id"]}
+                    detailedData={this.state.positionDetails[position["id"]]}
+                    account={account}
                 />
             );
         }

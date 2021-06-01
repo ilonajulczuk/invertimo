@@ -77,21 +77,6 @@ it("renders portfolio value", async () => {
           <div>? <a href=\\"\\">Account Events</a></div><a class=\\"button\\">Manage transactions</a><a class=\\"button\\">Manage events</a>
         </div>
       </div>
-      <div class=\\"portfolio-chart\\">
-        <h2>Performance over time</h2><span class=\\"card-label\\">Time period</span>
-        <ul class=\\"time-selectors\\">
-          <li>1 week</li>
-          <li>1 month</li>
-          <li class=\\"active-time-selector\\">3 months</li>
-          <li>6 months</li>
-          <li>1 year</li>
-          <li>3 years</li>
-          <li>Max</li>
-        </ul><span class=\\"card-label\\">Breakdown type</span><select>
-          <option value=\\"security\\">By security</option>
-          <option value=\\"account\\">By account</option>
-        </select>
-      </div>
       <div>
         <h2>Positions</h2>
         <ul class=\\"position-list\\">

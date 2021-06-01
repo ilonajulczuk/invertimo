@@ -34,7 +34,6 @@ export function filterPoints(points, pickEvery) {
     return selectedPoints;
 }
 
-
 export function findClosestValue(x, data) {
     // Assumes the data is sorted latest to earliest.
     let start = 0;
@@ -66,3 +65,29 @@ export function findClosestValue(x, data) {
     }
 
 };
+
+export function combineValues(firstSequence, secondSequence, combineFn) {
+
+    let values = [];
+    const maxFirst = firstSequence.length;
+    const maxSecond = secondSequence.length;
+    let i = 0;
+    let j = 0;
+
+    while (i < maxFist && j < maxSecond) {
+        if (firstSequence[i].date > secondSequence[j].date) {
+            i += 1;
+        } else if (firstSequence[i].date < secondSequence[j].date) {
+            j += 1;
+        } else {
+            values.push(
+                {
+                    date: firstSequence[i].date,
+                    value: combineFn(firstSequence[i].value, secondSequence[j].value)
+                });
+            j += 1;
+            i += 1;
+        }
+    }
+    return values;
+}
