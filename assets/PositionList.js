@@ -36,7 +36,8 @@ class AreaChartWithCursor extends React.Component {
                 }}
                 minDomain={{ y: 0 }}
             >
-                 <VictoryAxis style={{
+                <VictoryAxis dependentAxis />
+                <VictoryAxis style={{
                     tickLabels: { angle: -45, padding: 20 },
                 }} />
                 <VictoryArea
@@ -73,6 +74,7 @@ class LineChartWithCursor extends React.Component {
                 }}
                 minDomain={{ y: 0 }}
             >
+                <VictoryAxis dependentAxis />
                 <VictoryAxis style={{
                     tickLabels: { angle: -45, padding: 20 },
                 }} />
