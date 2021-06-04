@@ -343,7 +343,7 @@ class TestPositionsView(ViewTestBase, TestCase):
     def setUp(self):
         super().setUp()
 
-        self.isin = "123"
+        self.isin = "USA123"
         self.account, self.exchange, self.security = _add_dummy_account_and_security(
             self.user, isin=self.isin
         )
@@ -356,6 +356,35 @@ class TestPositionsView(ViewTestBase, TestCase):
                 transaction[1],
                 transaction[2],
             )
+
+    def test_valid_content(self):
+        from_date = datetime.date.fromisoformat("2021-04-25")
+        to_date = datetime.date.fromisoformat("2021-05-04")
+
+        dates = utils.generate_date_intervals(from_date, to_date)
+        for i, date in enumerate(dates):
+            # Simulate some prices missing (e.g. weekend).
+            if i % 5 == 0:
+                continue
+            models.PriceHistory.objects.create(
+                date=date,
+                value=100 + (i % 3) * 10,
+                security=self.security,
+            )
+        for i, date in enumerate(dates):
+            models.CurrencyExchangeRate.objects.create(
+                date=date,
+                value=1 + (i % 3) / 10,
+                from_currency=self.security.currency,
+                to_currency=self.account.currency
+            )
+
+        response = self.client.get(self.get_url() + self.QUERY_PARAMS)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "USA123")
+        self.assertContains(response, "\"latest_price\":\"1")
+        self.assertContains(response, "\"latest_exchange_rate\":\"1")
 
 
 class TestPositionDetailView(ViewTestBase, TestCase):

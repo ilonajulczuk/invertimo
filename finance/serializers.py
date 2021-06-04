@@ -28,6 +28,7 @@ class SecuritySerializer(serializers.ModelSerializer):
 class PositionSerializer(serializers.ModelSerializer):
     security = SecuritySerializer()
     latest_price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    latest_exchange_rate = serializers.DecimalField(max_digits=20, decimal_places=8)
     latest_price_date = serializers.DateField()
 
     class Meta:
@@ -39,6 +40,7 @@ class PositionSerializer(serializers.ModelSerializer):
             "quantity",
             "latest_price",
             "latest_price_date",
+            "latest_exchange_rate",
         ]
 
 

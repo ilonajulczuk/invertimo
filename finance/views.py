@@ -62,6 +62,17 @@ class PositionsView(generics.ListAPIView):
                     .values("date")[:1]
                 )
             )
+            .annotate(
+                latest_exchange_rate=Subquery(
+                    CurrencyExchangeRate.objects.filter(
+                        from_currency=OuterRef("security__currency"),
+                        to_currency=OuterRef("account__currency"),
+                        date=OuterRef("latest_price_date"),
+                    )
+                    .order_by("-date")
+                    .values("value")[:1]
+                )
+            )
         )
 
 
@@ -131,10 +142,11 @@ class PositionView(generics.RetrieveAPIView):
             .select_related("security")
             .prefetch_related("security__pricehistory_set")
             .select_related("security__exchange")
-            .prefetch_related("transactions"))
+            .prefetch_related("transactions")
+        )
 
     def get_serializer_context(self):
-        context : Dict[str, Any] = super().get_serializer_context()
+        context: Dict[str, Any] = super().get_serializer_context()
         query = FromToDatesSerializer(data=self.request.query_params)
 
         if query.is_valid(raise_exception=True):
@@ -144,7 +156,5 @@ class PositionView(generics.RetrieveAPIView):
                 "from_data",
                 datetime.date.today() - datetime.timedelta(days=365),
             )
-            context["to_date"] = self.query_data.get(
-                "to_date", datetime.date.today()
-            )
+            context["to_date"] = self.query_data.get("to_date", datetime.date.today())
         return context

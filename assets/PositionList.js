@@ -223,6 +223,7 @@ class Position extends React.Component {
             expandedContent = <ExpandedPositionContent data={this.props.detailedData} account={this.props.account} />;
         }
 
+        let displayConvertedValue = (data.security.currency != this.props.account.currency && data.latest_exchange_rate);
         return (
             <li onClick={this.props.handleClick}>
                 <div className={"position-card " + (this.props.active ? "position-card-active" : "")}>
@@ -243,7 +244,14 @@ class Position extends React.Component {
                         {price} {data.security.currency}
                     </div>
                     <div>
-                        {value} {data.security.currency}
+                        <span>
+                            {value} {data.security.currency}
+                        </span>
+                        <span>
+                            {displayConvertedValue ? Math.round(100 * value * data.latest_exchange_rate) / 100 : ""}
+                            {displayConvertedValue ? " " + this.props.account.currency : ""}
+                        </span>
+
                     </div>
                 </div>
 
