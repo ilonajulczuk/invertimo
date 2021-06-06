@@ -3,6 +3,7 @@ import './position_list.css';
 import { APIClient } from './api_utils.js';
 import { filterPointsWithNoChange, filterPoints, findClosestValue } from './timeseries_utils.js'
 import TimeSelector from './TimeSelector.js';
+import { ErrorBoundary } from './error_utils.js';
 import { VictoryLine, VictoryChart, VictoryArea, VictoryCursorContainer, VictoryAxis } from 'victory';
 
 
@@ -220,13 +221,16 @@ class Position extends React.Component {
 
         let expandedContent = null;
         if (this.props.active) {
-            expandedContent = <ExpandedPositionContent data={this.props.detailedData} account={this.props.account} />;
+            expandedContent = (
+                <ErrorBoundary>
+                    <ExpandedPositionContent data={this.props.detailedData} account={this.props.account} />
+                </ErrorBoundary>);
         }
 
         let displayConvertedValue = (data.security.currency != this.props.account.currency && data.latest_exchange_rate);
         return (
-            <li onClick={this.props.handleClick}>
-                <div className={"position-card " + (this.props.active ? "position-card-active" : "")}>
+            <li >
+                <div onClick={this.props.handleClick} className={"position-card " + (this.props.active ? "position-card-active" : "")}>
                     <div className="position-name">
                         <span className="card-label">{data.security.isin}</span>
                         <span className="position-symbol">{data.security.symbol}</span>
@@ -273,6 +277,13 @@ export default class PositionList extends React.Component {
         };
         this.apiClient = new APIClient('./api');
         this.handlePositionClick = positionId => _ => {
+            console.log(this.state.activePosition, positionId);
+            if (this.state.activePosition == positionId) {
+
+                this.setState({ "activePosition": null });
+                return;
+            }
+
             // Don't fetch the info again if it's already available.
             if (positionId in this.state.positionDetails) {
                 this.setState({ "activePosition": positionId });

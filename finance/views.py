@@ -28,9 +28,12 @@ class AccountsView(generics.ListAPIView):
 
     def get_queryset(self):
         assert isinstance(self.request.user, User)
-        queryset = models.Account.objects.filter(user=self.request.user).annotate(
-            positions_count=Count("positions", distinct=True),
-            transactions_count=Count("positions__transactions", distinct=True),
+        queryset = (
+            models.Account.objects.filter(user=self.request.user)
+            .annotate(
+                positions_count=Count("positions", distinct=True),
+                transactions_count=Count("positions__transactions", distinct=True),
+            )
         )
         return queryset
 

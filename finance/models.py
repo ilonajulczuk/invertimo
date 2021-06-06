@@ -19,6 +19,8 @@ def currency_enum_from_string(currency: str) -> "Currency":
         return Currency.EURO
     elif currency == "GBX":
         return Currency.GBX
+    elif currency == "GBP":
+        return Currency.GBP
     else:
         raise ValueError("Unsupported currency")
 
@@ -30,6 +32,8 @@ def currency_string_from_enum(currency: "Currency") -> str:
         return "EUR"
     elif currency == Currency.GBX:
         return "GBX"
+    elif currency == Currency.GBP:
+        return "GBP"
     else:
         raise ValueError("Unsupported currency")
 

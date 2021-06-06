@@ -6,8 +6,16 @@ import TimeSelector from './TimeSelector.js';
 import { APIClient } from './api_utils.js';
 
 
-class PortfolioOverview extends React.Component {
+const CURRENCY_TO_SYMBOL = new Map(
+    [
+        ["USD", "$"],
+        ["EUR", "€"],
+        ["GBP", "£"],
+    ]
+)
 
+
+class PortfolioOverview extends React.Component {
 
     render() {
         let positions_count = 0;
@@ -15,12 +23,29 @@ class PortfolioOverview extends React.Component {
         let account_event_count = "?";
         let total_value = 0;
 
-        for (let account of this.props.accounts) {
+        let accounts = this.props.accounts;
+        for (let account of accounts) {
             positions_count += account.positions_count;
             transactions_count += account.transactions_count;
             total_value += Number(account.balance);
         }
-        let account_count = this.props.accounts.length;
+        let account_count = accounts.length;
+
+        let currencySymbol = "?";
+        if (accounts.length) {
+            currencySymbol = CURRENCY_TO_SYMBOL.has(accounts[0].currency) ? CURRENCY_TO_SYMBOL.get(accounts[0].currency) : accounts[0].currency;
+        }
+        // TODO: rethink if positions should have an api endpoint per account or not
+        // (likely, yes, because accounts can be in different currencies).
+        // Assumes all accounts in one currency for now.
+
+        const assetValues = this.props.positions.map(position => {
+            // Exchange rate is null if account and position trading currency are the same.
+            let latest_exchange_rate = position.latest_exchange_rate ? position.latest_exchange_rate : 1;
+            return position.quantity * position.latest_price * latest_exchange_rate;
+        });
+        const totalAssetValue = Math.round(
+            assetValues.reduce((sum, current) => sum + current, 0) * 100) / 100;
 
         return (
             <div className="portfolio-overview">
@@ -28,22 +53,13 @@ class PortfolioOverview extends React.Component {
                     <span className="card-label">At a glance</span>
                     <ul className="portfolio-stats-list">
                         <li>
-                            Total Value: {total_value} €
+                            Total Cash: {total_value} {currencySymbol}
                         </li>
                         <li>
-                            1 Week Δ: +12.24 €
+                            Total Assets: {totalAssetValue} {currencySymbol}
                         </li>
                         <li>
-                            1 Month Δ: -145.24 €
-                        </li>
-                        <li>
-                            3 Months Δ: +15.24 €
-                        </li>
-                        <li>
-                            6 Months Δ: +123.24 €
-                        </li>
-                        <li>
-                            1 Year Δ: +1245.24 €
+                            Portfolio Value: {Math.round((total_value + totalAssetValue) * 100) / 100} {currencySymbol}
                         </li>
                     </ul>
                 </div>
@@ -104,14 +120,13 @@ export default class Portfolio extends React.Component {
             positions => {
                 this.setState({ "positions": positions });
             });
-
     }
 
     render() {
         return (
             <div>
                 <h1>Portfolio</h1>
-                <PortfolioOverview accounts={this.state.accounts} />
+                <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
                 <PositionList positions={this.state.positions} accounts={this.state.accounts} />
             </div>
         )
