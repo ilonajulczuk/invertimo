@@ -5,12 +5,18 @@ import { filterPointsWithNoChange, filterPoints, findClosestValue } from './time
 import TimeSelector from './TimeSelector.js';
 import { ErrorBoundary } from './error_utils.js';
 import { VictoryLine, VictoryChart, VictoryArea, VictoryCursorContainer, VictoryAxis } from 'victory';
+import PropTypes from 'prop-types';
 
 
 function Transaction(props) {
+
     return (
         <li>{props.data.quantity} for {props.data.price}</li>
     )
+}
+
+Transaction.propTypes = {
+    data: PropTypes.object.isRequired,
 }
 
 
@@ -52,6 +58,14 @@ class AreaChartWithCursor extends React.Component {
     }
 }
 
+
+AreaChartWithCursor.propTypes = {
+    dataset: PropTypes.array.isRequired,
+    labelSuffix: PropTypes.string,
+    startDay: PropTypes.instanceOf(Date),
+}
+
+
 class LineChartWithCursor extends React.Component {
 
     render() {
@@ -90,6 +104,13 @@ class LineChartWithCursor extends React.Component {
         );
     }
 }
+
+LineChartWithCursor.propTypes = {
+    dataset: PropTypes.array.isRequired,
+    labelSuffix: PropTypes.string,
+    startDay: PropTypes.instanceOf(Date),
+}
+
 
 class ExpandedPositionContent extends React.Component {
 
@@ -137,8 +158,8 @@ class ExpandedPositionContent extends React.Component {
         if (dataDays > 300) {
             skipFactor = 3;
         }
-        const today = new Date();
-        let startDay = today.setDate(today.getDate() - dataDays);
+        const startDay = new Date();
+        startDay.setDate(startDay.getDate() - dataDays);
         let quantities = this.props.data.quantities;
         if (dataDays) {
             quantities = this.props.data.quantities.slice(0, dataDays);
@@ -277,7 +298,6 @@ export default class PositionList extends React.Component {
         };
         this.apiClient = new APIClient('./api');
         this.handlePositionClick = positionId => _ => {
-            console.log(this.state.activePosition, positionId);
             if (this.state.activePosition == positionId) {
 
                 this.setState({ "activePosition": null });
