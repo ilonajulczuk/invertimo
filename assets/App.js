@@ -1,12 +1,15 @@
 import React from 'react';
 import Portfolio from './Portfolio.js';
+import {
+    HashRouter as Router,
+} from "react-router-dom";
 
 export default class App extends React.Component {
     render() {
         return (
-            <div>
+            <Router>
                 <Portfolio/>
-            </div>
+            </Router>
         );
     }
 }

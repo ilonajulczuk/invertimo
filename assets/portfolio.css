@@ -6,6 +6,25 @@
 
 .portfolio-overview {
     display: flex;
+    flex-wrap: wrap;
+}
+
+h1 {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.sidenav {
+    padding-top: 1em;
+}
+
+.sidenav a {
+    color: #404747;
+}
+
+.sidenav>ul {
+    padding-left: 10px;
+    border-left: 4px solid #1b98a147    ;
 }
 
 .card {
@@ -26,6 +45,7 @@
 a {
     color: #1b98a1;
     font-weight: bold;
+    text-decoration: none;
 }
 
 a.button {
@@ -35,7 +55,7 @@ a.button {
 .card-label {
     text-transform: uppercase;
     font-weight: bold;
-    color: #52787b;
+    color: #1a777d;
     font-size: 0.7em;
     margin-bottom: 0.5em;
 }
@@ -62,11 +82,12 @@ ul {
 ul.time-selectors {
     list-style-type: none;
     margin: 0;
-    margin-top: 0.5em;
+    margin-top: 1em;
     padding: 0;
     display: flex;
     flex-direction: row;
     margin-bottom: 2em;
+    font-size: 14px;
 }
 
 ul.time-selectors li {
@@ -101,4 +122,13 @@ ul.time-selectors li:first-child {
 select {
     margin-top: 0.5em;
     max-width: 200px;
+}
+
+ul.portfolio-stats-list {
+    margin-bottom: 1em;
+}
+
+.portfolio-stats-account-name {
+    position: relative;
+    margin-bottom: 0.5em;
 }

@@ -175,6 +175,42 @@ ul.features {
     }
 }
 
+.main-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    grid-template-areas: "sidenav main-content";
+}
+
+.sidenav {
+    padding: 5px;
+    position: fixed;
+    grid-area: sidenav;
+    height: 100%;
+    width: 200px;
+}
+.main-content {
+    grid-area: main-content;
+}
+
+nav a {
+    display: block;
+    margin-bottom: 0.5em;
+}
+nav a.active {
+    position: relative;
+}
+
+nav a.active::before {
+    content: "";
+    position: absolute;
+    border-top: 4px solid #1b98a1;
+    width: 10%;
+    height: -9px;
+    bottom: -2px;
+    z-index: -1;
+}
+
+
 @media only screen and (min-width: 1200px) {
     .header-wrapper {
         width: 80%;
@@ -184,6 +220,7 @@ ul.features {
         width: 80%;
         margin: auto;
     }
+
     ul.features {
         list-style-type: none;
         margin: 0;

@@ -15,6 +15,7 @@ defusedxml==0.7.1
 Django==3.2
 django-debug-toolbar==3.2.1
 django-extensions==3.1.2
+djangorestframework==3.12.4
 entrypoints==0.3
 idna==2.10
 ipykernel==5.5.3
@@ -48,6 +49,7 @@ pexpect==4.8.0
 pickleshare==0.7.5
 prometheus-client==0.10.1
 prompt-toolkit==3.0.18
+psycopg2==2.8.6
 ptyprocess==0.7.0
 pycparser==2.20
 Pygments==2.8.1
@@ -75,4 +77,3 @@ wcwidth==0.2.5
 webencodings==0.5.1
 Werkzeug==1.0.1
 widgetsnbextension==3.5.1
-djangorestframework==3.12.4

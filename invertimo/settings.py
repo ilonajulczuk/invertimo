@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from pathlib import Path
 from invertimo.secrets import *
-
+from typing import List
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-one@)zg@c$lf5z3@fy!o#pnhg(85o9bvu-r0w=0380ip6=h!h(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS : List[str] = []
 
 
 # Application definition
@@ -83,8 +83,12 @@ WSGI_APPLICATION = "invertimo.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "invertimo",
+        "USER": "myuser",
+        "PASSWORD": DB_KEY,
+        "HOST": "localhost",
+        "PORT": "",
     }
 }
 
@@ -144,3 +148,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
+SITENAME = "invertimo.com"
+STATIC_ROOT = f"/var/www/{SITENAME}/static/"

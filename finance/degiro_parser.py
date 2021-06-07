@@ -6,19 +6,22 @@ from finance import models
 from finance import exchanges
 from django.db import transaction
 from finance import accounts
+import datetime
 
 
 def import_transaction(account, transaction_record):
     date = transaction_record["Date"]
     day, month, year = date.split("-")
     time = transaction_record["Time"]
-    datetime = f"{year}-{month}-{day} {time}Z"
+    datestr = f"{year}-{month}-{day} {time}Z"
+
+    date_format = "%Y-%m-%d %H:%M%z"
+    executed_at = datetime.datetime.strptime(datestr, date_format)
     isin = transaction_record["ISIN"]
     local_value = transaction_record["Local value"]
     total_in_account_currency = transaction_record["Total"]
     value_in_account_currency = transaction_record["Value"]
-    transaction_costs = transaction_record["Transaction costs"]
-    print(transaction_costs)
+    transaction_costs = transaction_record["Transaction costs"].astype(str)
     order_id = transaction_record["Order ID"]
     quantity = transaction_record["Quantity"]
     price = transaction_record["Price"]
@@ -26,10 +29,9 @@ def import_transaction(account, transaction_record):
     exchange_mic = transaction_record["Venue"]
     exchange_ref = transaction_record["Reference"]
     exchange = exchanges.ExchangeRepository().get(exchange_mic, exchange_ref)
-    # Find or create a position.
 
     def to_decimal(pd_f):
-        return decimal.Decimal(pd_f.astype(decimal.Decimal))
+        return decimal.Decimal(pd_f.astype(str))
 
     transaction_costs = decimal.Decimal(transaction_costs)
     if transaction_costs.is_nan():
@@ -38,7 +40,7 @@ def import_transaction(account, transaction_record):
         account,
         isin=isin,
         exchange=exchange,
-        executed_at=datetime,
+        executed_at=executed_at,
         quantity=to_decimal(quantity),
         price=to_decimal(price),
         transaction_costs=transaction_costs,
@@ -67,7 +69,7 @@ def import_transactions_from_file(account, filename):
             transaction_record = transactions_data_clean.iloc[x]
             import_transaction(account, transaction_record)
         except Exception as e:
-            print(e)
+            print("Import exception", e)
             failed_records.append(transaction_record)
     print("Failed records", len(failed_records))
     return failed_records

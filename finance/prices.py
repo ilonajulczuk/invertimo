@@ -1,6 +1,8 @@
 import requests
 from django.conf import settings
 from finance import models
+import logging
+
 
 symbol_to_currency_pair = {
     "USDEUR": {
@@ -27,6 +29,18 @@ symbol_to_currency_pair = {
         "from_currency": models.Currency.GBP,
         "to_currency": models.Currency.EURO,
     },
+    "GBXEUR": {
+        "from_currency": models.Currency.GBX,
+        "to_currency": models.Currency.EURO,
+    },
+    "GBXUSD": {
+        "from_currency": models.Currency.GBX,
+        "to_currency": models.Currency.USD,
+    },
+    "GBXGBP": {
+        "from_currency": models.Currency.GBX,
+        "to_currency": models.Currency.GBP,
+    },
 }
 
 
@@ -45,14 +59,28 @@ def collect_exchange_rates():
         if last_record:
             from_date = str(last_record.date)
 
+        divide_by_hundred = False
+        if symbol.startswith("GBX"):
+            divide_by_hundred = True
+            symbol = symbol.replace("GBX", "GBP")
+
         r = requests.get(
             f"https://eodhistoricaldata.com/api/eod/{symbol}.FOREX?api_token={settings.EOD_APIKEY}&order=d&fmt=json&from={from_date}"
         )
-        records = r.json()
+        records = []
+        try:
+            records = r.json()
+        except Exception as e:
+            logging.error("failed fetching %s, because of %s", symbol, e)
+
         for record in records:
+            if divide_by_hundred:
+                value = record["close"] / 100
+            else:
+                value = record["close"]
             models.CurrencyExchangeRate.objects.get_or_create(
                 date=record["date"],
-                value=record["close"],
+                value=value,
                 from_currency=from_currency,
                 to_currency=to_currency,
             )
@@ -73,7 +101,11 @@ def collect_prices(security):
     r = requests.get(
             f"https://eodhistoricaldata.com/api/eod/{symbol}.{exchange_code}?api_token={settings.EOD_APIKEY}&order=d&fmt=json&from={from_date}"
         )
-    records = r.json()
+    records = []
+    try:
+        records = r.json()
+    except Exception as e:
+        logging.error("failed fetching %s, because of %s", symbol, e)
     prices = []
     for record in records:
         price, _ = models.PriceHistory.objects.get_or_create(

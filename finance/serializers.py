@@ -1,5 +1,8 @@
-from finance.models import Position, Security, Exchange
 from rest_framework import serializers
+
+from finance import models
+from finance.models import (Account, CurrencyExchangeRate, Exchange, Position,
+                            PriceHistory, Security, Transaction)
 
 
 class ExchangeSerializer(serializers.ModelSerializer):
@@ -8,8 +11,14 @@ class ExchangeSerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 
+class CurrencyField(serializers.IntegerField):
+    def to_representation(self, value):
+        return models.currency_string_from_enum(value)
+
+
 class SecuritySerializer(serializers.ModelSerializer):
     exchange = ExchangeSerializer()
+    currency = CurrencyField()
 
     class Meta:
         model = Security
@@ -18,7 +27,113 @@ class SecuritySerializer(serializers.ModelSerializer):
 
 class PositionSerializer(serializers.ModelSerializer):
     security = SecuritySerializer()
+    latest_price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    latest_exchange_rate = serializers.DecimalField(max_digits=20, decimal_places=8)
+    latest_price_date = serializers.DateField()
 
     class Meta:
         model = Position
-        fields = ["id", "account", "security", "quantity"]
+        fields = [
+            "id",
+            "account",
+            "security",
+            "quantity",
+            "latest_price",
+            "latest_price_date",
+            "latest_exchange_rate",
+        ]
+
+
+class EmbeddedTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = [
+            "id",
+            "executed_at",
+            "quantity",
+            "price",
+            "transaction_costs",
+            "order_id",
+            "local_value",
+        ]
+
+
+class PositionWithQuantitiesSerializer(serializers.ModelSerializer):
+    security = SecuritySerializer()
+    quantities = serializers.SerializerMethodField()
+    values = serializers.SerializerMethodField()
+    values_account_currency = serializers.SerializerMethodField()
+    transactions = EmbeddedTransactionSerializer(many=True)
+
+    class Meta:
+        model = Position
+        fields = ["id", "account", "security", "quantity", "quantities", "transactions", "values", "values_account_currency"]
+
+    def get_quantities(self, obj):
+        from_date = self.context["from_date"]
+        to_date = self.context["to_date"]
+        return obj.quantity_history(from_date=from_date, to_date=to_date)
+
+    def get_values(self, obj):
+        from_date = self.context["from_date"]
+        to_date = self.context["to_date"]
+        return obj.value_history(from_date, to_date)
+
+    def get_values_account_currency(self, obj):
+        from_date = self.context["from_date"]
+        to_date = self.context["to_date"]
+        return obj.value_history_in_account_currency(from_date, to_date)
+
+
+class CurrencyExchangeRateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CurrencyExchangeRate
+        fields = ["date", "value"]
+
+
+class SecurityPriceHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PriceHistory
+        fields = ["date", "value"]
+
+
+class FromToDatesSerializer(serializers.Serializer):
+    from_date = serializers.DateField(required=False)
+    to_date = serializers.DateField(required=False)
+
+
+class CurrencyQuerySerializer(FromToDatesSerializer):
+    from_currency = serializers.CharField()
+    to_currency = serializers.CharField()
+
+    def validate_from_currency(self, value):
+        try:
+            return models.currency_enum_from_string(value)
+        except ValueError:
+            raise serializers.ValidationError(f"{value} is not a valid currency symbol")
+
+    def validate_to_currency(self, value):
+        try:
+            return models.currency_enum_from_string(value)
+        except ValueError:
+            raise serializers.ValidationError(f"{value} is not a valid currency symbol")
+
+
+class AccountSerializer(serializers.ModelSerializer):
+
+    positions_count = serializers.IntegerField()
+    transactions_count = serializers.IntegerField()
+    currency = CurrencyField()
+
+    class Meta:
+        model = Account
+        fields = [
+            "id",
+            "currency",
+            "nickname",
+            "description",
+            "balance",
+            "last_modified",
+            "positions_count",
+            "transactions_count",
+        ]

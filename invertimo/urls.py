@@ -17,8 +17,16 @@ import debug_toolbar
 from django.contrib import admin
 from django.urls import include, path
 from invertimo import views
-from finance.views import PositionView
+from finance.views import (
+    AccountsView,
+    PositionView,
+    PositionsView,
+    CurrencyExchangeRateView,
+    SecurityPricesView,
+)
 from rest_framework import routers
+
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 router = routers.DefaultRouter()
 
@@ -30,6 +38,17 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("__debug__/", include(debug_toolbar.urls)),
     path("api/", include(router.urls)),
-     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path("api/positions/", PositionView.as_view(), name="api-positions"),
+    path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
+    path("api/accounts/", AccountsView.as_view(), name="api-accounts"),
+    path("api/positions/", PositionsView.as_view(), name="api-positions"),
+    path("api/positions/<int:pk>/", PositionView.as_view(), name="api-position"),
+    path("api/currencies/", CurrencyExchangeRateView.as_view(), name="api-currencies"),
+    path(
+        "api/securities/<int:security_pk>/prices/",
+        SecurityPricesView.as_view(),
+        name="api-securities",
+    ),
 ]
+
+
+urlpatterns += staticfiles_urlpatterns()
