@@ -7,6 +7,7 @@ import pretty from "pretty";
 import regeneratorRuntime from "regenerator-runtime";
 import Portfolio from "./Portfolio.js";
 import { PortfolioOverview, divideByAccount } from "./Portfolio.js";
+import { MemoryRouter } from "react-router-dom";
 
 let container = null;
 beforeEach(() => {
@@ -151,7 +152,7 @@ jest.mock("./api_utils", () => {
         getPositions: () => {
           return Promise.resolve(_ACCOUNT_POSITIONS);
         },
-        getPositionDetail: (positionId) => {},
+        getPositionDetail: (positionId) => { },
       };
     }),
   };
@@ -178,25 +179,7 @@ it("shows portfolio overview with one account", async () => {
     );
   });
 
-  expect(pretty(container.innerHTML)).toMatchInlineSnapshot(`
-    "<div class=\\"portfolio-overview\\">
-      <div class=\\"portfolio-overview-card card\\"><span class=\\"card-label\\">At a glance</span>
-        <ul class=\\"portfolio-stats-list\\">
-          <li class=\\"portfolio-stats-account-name\\">In <a href=\\"\\">test account</a> account:</li>
-          <li>Total Cash: -16584.76 €</li>
-          <li>Total Assets: 25874.64 €</li>
-          <li>Portfolio Value: 9289.88 €</li>
-        </ul>
-      </div>
-      <div class=\\"card\\"><span class=\\"card-label\\">Assets</span>
-        <p>3 <a href=\\"\\">Positions</a> in 1 <a href=\\"\\"> Account</a></p><a class=\\"button\\">See all Positions</a><a class=\\"button\\">Manage accounts</a>
-      </div>
-      <div class=\\"card\\"><span class=\\"card-label\\">Events</span>
-        <div>15 <a href=\\"\\">Transactions</a></div>
-        <div>? <a href=\\"\\">Account Events</a></div><a class=\\"button\\">Manage transactions</a><a class=\\"button\\">Manage events</a>
-      </div>
-    </div>"
-  `);
+  expect(pretty(container.innerHTML)).toMatchSnapshot();
 });
 
 it("divides positions by account correctly", () => {
@@ -264,31 +247,7 @@ it("shows portfolio overview with two accounts", async () => {
     );
   });
 
-  expect(pretty(container.innerHTML)).toMatchInlineSnapshot(`
-    "<div class=\\"portfolio-overview\\">
-      <div class=\\"portfolio-overview-card card\\"><span class=\\"card-label\\">At a glance</span>
-        <ul class=\\"portfolio-stats-list\\">
-          <li class=\\"portfolio-stats-account-name\\">In <a href=\\"\\">test account</a> account:</li>
-          <li>Total Cash: -16584.76 €</li>
-          <li>Total Assets: 25874.64 €</li>
-          <li>Portfolio Value: 9289.88 €</li>
-        </ul>
-        <ul class=\\"portfolio-stats-list\\">
-          <li class=\\"portfolio-stats-account-name\\">In <a href=\\"\\">second account</a> account:</li>
-          <li>Total Cash: 161 $</li>
-          <li>Total Assets: 5043.56 $</li>
-          <li>Portfolio Value: 5204.56 $</li>
-        </ul>
-      </div>
-      <div class=\\"card\\"><span class=\\"card-label\\">Assets</span>
-        <p>5 <a href=\\"\\">Positions</a> in 2 <a href=\\"\\"> Accounts</a></p><a class=\\"button\\">See all Positions</a><a class=\\"button\\">Manage accounts</a>
-      </div>
-      <div class=\\"card\\"><span class=\\"card-label\\">Events</span>
-        <div>20 <a href=\\"\\">Transactions</a></div>
-        <div>? <a href=\\"\\">Account Events</a></div><a class=\\"button\\">Manage transactions</a><a class=\\"button\\">Manage events</a>
-      </div>
-    </div>"
-  `);
+  expect(pretty(container.innerHTML)).toMatchSnapshot();
 });
 
 it("shows portfolio overview without any accounts", async () => {
@@ -302,85 +261,14 @@ it("shows portfolio overview without any accounts", async () => {
     );
   });
 
-  expect(pretty(container.innerHTML)).toMatchInlineSnapshot(`
-    "<div class=\\"portfolio-overview\\">
-      <div class=\\"portfolio-overview-card card\\"><span class=\\"card-label\\">At a glance</span></div>
-      <div class=\\"card\\"><span class=\\"card-label\\">Assets</span>
-        <p>0 <a href=\\"\\">Positions</a> in 0 <a href=\\"\\"> Account</a></p><a class=\\"button\\">See all Positions</a><a class=\\"button\\">Manage accounts</a>
-      </div>
-      <div class=\\"card\\"><span class=\\"card-label\\">Events</span>
-        <div>0 <a href=\\"\\">Transactions</a></div>
-        <div>? <a href=\\"\\">Account Events</a></div><a class=\\"button\\">Manage transactions</a><a class=\\"button\\">Manage events</a>
-      </div>
-    </div>"
-  `);
+  expect(pretty(container.innerHTML)).toMatchSnapshot();
 });
 
 it("renders portfolio value", async () => {
   await act(async () => {
-    render(<Portfolio />, container);
+    render(<MemoryRouter initialEntries={['/positions']}>
+      <Portfolio />
+    </MemoryRouter>, container);
   });
-  expect(pretty(container.innerHTML)).toMatchInlineSnapshot(`
-    "<div>
-      <h1>Portfolio</h1>
-      <div class=\\"portfolio-overview\\">
-        <div class=\\"portfolio-overview-card card\\"><span class=\\"card-label\\">At a glance</span>
-          <ul class=\\"portfolio-stats-list\\">
-            <li class=\\"portfolio-stats-account-name\\">In <a href=\\"\\">test account</a> account:</li>
-            <li>Total Cash: -106584.76 €</li>
-            <li>Total Assets: 25874.64 €</li>
-            <li>Portfolio Value: -80710.12 €</li>
-          </ul>
-        </div>
-        <div class=\\"card\\"><span class=\\"card-label\\">Assets</span>
-          <p>30 <a href=\\"\\">Positions</a> in 1 <a href=\\"\\"> Account</a></p><a class=\\"button\\">See all Positions</a><a class=\\"button\\">Manage accounts</a>
-        </div>
-        <div class=\\"card\\"><span class=\\"card-label\\">Events</span>
-          <div>135 <a href=\\"\\">Transactions</a></div>
-          <div>? <a href=\\"\\">Account Events</a></div><a class=\\"button\\">Manage transactions</a><a class=\\"button\\">Manage events</a>
-        </div>
-      </div>
-      <div>
-        <h2>Positions</h2>
-        <ul class=\\"position-list\\">
-          <li class=\\"position-list-header\\">
-            <ul class=\\"position-list-fields\\">
-              <li class=\\"position-list-fields-product\\">Product</li>
-              <li>Exchange</li>
-              <li>Quantity</li>
-              <li>Price</li>
-              <li>Value</li>
-            </ul>
-          </li>
-          <li>
-            <div class=\\"position-card \\">
-              <div class=\\"position-name\\"><span class=\\"card-label\\">US2546871060</span><span class=\\"position-symbol\\">DIS</span><span>The Walt Disney Company</span></div>
-              <div>USA Stocks</div>
-              <div>35.00</div>
-              <div><span class=\\"card-label\\">As of 2021-06-03</span>176.24 USD</div>
-              <div><span>6168.4 USD</span><span>5087.08 EUR</span></div>
-            </div>
-          </li>
-          <li>
-            <div class=\\"position-card \\">
-              <div class=\\"position-name\\"><span class=\\"card-label\\">US4781601046</span><span class=\\"position-symbol\\">JNJ</span><span>Johnson &amp; Johnson</span></div>
-              <div>USA Stocks</div>
-              <div>29.00</div>
-              <div><span class=\\"card-label\\">As of 2021-06-03</span>166.04 USD</div>
-              <div><span>4815.16 USD</span><span>3971.06 EUR</span></div>
-            </div>
-          </li>
-          <li>
-            <div class=\\"position-card \\">
-              <div class=\\"position-name\\"><span class=\\"card-label\\">IE00BF4RFH31</span><span class=\\"position-symbol\\">IUSN</span><span>iShares MSCI World Small Cap UCITS ETF USD (Acc)</span></div>
-              <div>XETRA Exchange</div>
-              <div>2775.00</div>
-              <div><span class=\\"card-label\\">As of 2021-06-04</span>6.06 EUR</div>
-              <div><span>16816.5 EUR</span><span></span></div>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>"
-  `);
+  expect(pretty(container.innerHTML)).toMatchSnapshot();
 });

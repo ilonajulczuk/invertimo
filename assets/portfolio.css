@@ -6,6 +6,25 @@
 
 .portfolio-overview {
     display: flex;
+    flex-wrap: wrap;
+}
+
+h1 {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.sidenav {
+    padding-top: 1em;
+}
+
+.sidenav a {
+    color: #404747;
+}
+
+.sidenav>ul {
+    padding-left: 10px;
+    border-left: 4px solid #1b98a147    ;
 }
 
 .card {

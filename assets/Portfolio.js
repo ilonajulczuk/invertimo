@@ -5,6 +5,12 @@ import PositionList from './PositionList.js';
 import TimeSelector from './TimeSelector.js';
 import { APIClient } from './api_utils.js';
 import PropTypes from 'prop-types';
+import {
+    HashRouter as Router,
+    Switch,
+    Route,
+    NavLink
+} from "react-router-dom";
 
 
 const CURRENCY_TO_SYMBOL = new Map(
@@ -166,12 +172,35 @@ export default class Portfolio extends React.Component {
 
     render() {
         return (
-            <div>
-                <h1>Portfolio</h1>
-                <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
-                <PositionList positions={this.state.positions} accounts={this.state.accounts} />
-            </div>
-        )
+                <div className="main-grid">
+                    <nav className="sidenav">
+                        <ul>
+                            <li>
+                                <NavLink to="/" exact={true}>Home</NavLink>
+                            </li>
+                            <li>
+                                <NavLink to="/transactions">Transactions</NavLink>
+                            </li>
+                            <li>
+                                <NavLink to="/positions">Positions</NavLink>
+                            </li>
+                        </ul>
+                    </nav>
+
+                    <div className="main-content">
+                        <h1>Portfolio</h1>
+                        <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
+                        <Switch>
+                            <Route path="/transactions">
+                                <h2>Transactions</h2>
+                            </Route>
+                            <Route path="/positions">
+                                <PositionList positions={this.state.positions} accounts={this.state.accounts} />
+                            </Route>
+                        </Switch>
+                    </div>
+                </div>
+        );
 
     }
 }
