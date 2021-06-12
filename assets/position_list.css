@@ -46,7 +46,7 @@ ul.position-list {
     border-left: 5px solid #1b98a1;
 }
 
-.position-card div {
+.position-card>div {
     padding: 20px;
     flex-basis: 200px;
     display: flex;
@@ -60,6 +60,7 @@ ul.position-list {
 }
 
 /* TODO: add handling for screens smaller than that. */
+
 .position-card-chart {
     flex: 0 0 500px;
     margin-bottom: 2em;
@@ -94,4 +95,18 @@ ul.position-list {
 
 .position-list-fields .position-list-fields-product {
     flex-basis: 250px;
+}
+
+.arrow-down-svg.up {
+    transform: rotate(180deg);
+}
+
+div.position-values {
+    display: grid;
+    grid-template-columns: 100px 30px;
+}
+
+div.position-values-spans {
+    display: flex;
+    flex-direction: column;
 }

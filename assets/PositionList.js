@@ -268,16 +268,20 @@ class Position extends React.Component {
                         <span className="card-label">As of {data.latest_price_date}</span>
                         {price} {data.security.currency}
                     </div>
-                    <div>
-                        <span>
-                            {value} {data.security.currency}
-                        </span>
-                        <span>
-                            {displayConvertedValue ? Math.round(100 * value * data.latest_exchange_rate) / 100 : ""}
-                            {displayConvertedValue ? " " + this.props.account.currency : ""}
-                        </span>
+                    <div className="position-values">
+                        <div className="position-values-spans">
+                            <span>
+                                {value} {data.security.currency}
+                            </span>
+                            <span>
+                                {displayConvertedValue ? Math.round(100 * value * data.latest_exchange_rate) / 100 : ""}
+                                {displayConvertedValue ? " " + this.props.account.currency : ""}
+                            </span>
+                        </div>
 
+                        <svg className={"arrow-down-svg " + (this.props.active ? "up" : "")} focusable="false" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path></svg>
                     </div>
+
                 </div>
 
                 {expandedContent}

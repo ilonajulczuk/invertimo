@@ -24,7 +24,7 @@ h1 {
 
 .sidenav>ul {
     padding-left: 10px;
-    border-left: 4px solid #1b98a147    ;
+    border-left: 4px solid #1b98a147;
 }
 
 .card {
@@ -93,6 +93,11 @@ ul.time-selectors {
 ul.time-selectors li {
     padding: 0.5em;
     border-right: 1px solid #40535371;
+    cursor: pointer;
+}
+
+ul.time-selectors li:hover {
+    color: black;
 }
 
 ul.time-selectors li:last-child {
