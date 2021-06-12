@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders portfolio value 1`] = `
+exports[`portfolio tests renders portfolio value 1`] = `
 "<div class=\\"main-grid\\">
   <nav class=\\"sidenav\\">
     <ul>
@@ -46,7 +46,11 @@ exports[`renders portfolio value 1`] = `
             <div>USA Stocks</div>
             <div>35.00</div>
             <div><span class=\\"card-label\\">As of 2021-06-03</span>176.24 USD</div>
-            <div><span>6168.4 USD</span><span>5087.08 EUR</span></div>
+            <div class=\\"position-values\\">
+              <div class=\\"position-values-spans\\"><span>6168.4 USD</span><span>5087.08 EUR</span></div><svg class=\\"arrow-down-svg \\" focusable=\\"false\\" viewBox=\\"0 0 24 24\\" aria-hidden=\\"true\\">
+                <path d=\\"M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z\\"></path>
+              </svg>
+            </div>
           </div>
         </li>
         <li>
@@ -55,7 +59,11 @@ exports[`renders portfolio value 1`] = `
             <div>USA Stocks</div>
             <div>29.00</div>
             <div><span class=\\"card-label\\">As of 2021-06-03</span>166.04 USD</div>
-            <div><span>4815.16 USD</span><span>3971.06 EUR</span></div>
+            <div class=\\"position-values\\">
+              <div class=\\"position-values-spans\\"><span>4815.16 USD</span><span>3971.06 EUR</span></div><svg class=\\"arrow-down-svg \\" focusable=\\"false\\" viewBox=\\"0 0 24 24\\" aria-hidden=\\"true\\">
+                <path d=\\"M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z\\"></path>
+              </svg>
+            </div>
           </div>
         </li>
         <li>
@@ -64,7 +72,11 @@ exports[`renders portfolio value 1`] = `
             <div>XETRA Exchange</div>
             <div>2775.00</div>
             <div><span class=\\"card-label\\">As of 2021-06-04</span>6.06 EUR</div>
-            <div><span>16816.5 EUR</span><span></span></div>
+            <div class=\\"position-values\\">
+              <div class=\\"position-values-spans\\"><span>16816.5 EUR</span><span></span></div><svg class=\\"arrow-down-svg \\" focusable=\\"false\\" viewBox=\\"0 0 24 24\\" aria-hidden=\\"true\\">
+                <path d=\\"M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z\\"></path>
+              </svg>
+            </div>
           </div>
         </li>
       </ul>
@@ -73,7 +85,7 @@ exports[`renders portfolio value 1`] = `
 </div>"
 `;
 
-exports[`shows portfolio overview with one account 1`] = `
+exports[`portfolio tests shows portfolio overview with one account 1`] = `
 "<div class=\\"portfolio-overview\\">
   <div class=\\"portfolio-overview-card card\\"><span class=\\"card-label\\">At a glance</span>
     <ul class=\\"portfolio-stats-list\\">
@@ -93,7 +105,7 @@ exports[`shows portfolio overview with one account 1`] = `
 </div>"
 `;
 
-exports[`shows portfolio overview with two accounts 1`] = `
+exports[`portfolio tests shows portfolio overview with two accounts 1`] = `
 "<div class=\\"portfolio-overview\\">
   <div class=\\"portfolio-overview-card card\\"><span class=\\"card-label\\">At a glance</span>
     <ul class=\\"portfolio-stats-list\\">
@@ -119,7 +131,7 @@ exports[`shows portfolio overview with two accounts 1`] = `
 </div>"
 `;
 
-exports[`shows portfolio overview without any accounts 1`] = `
+exports[`portfolio tests shows portfolio overview without any accounts 1`] = `
 "<div class=\\"portfolio-overview\\">
   <div class=\\"portfolio-overview-card card\\"><span class=\\"card-label\\">At a glance</span></div>
   <div class=\\"card\\"><span class=\\"card-label\\">Assets</span>

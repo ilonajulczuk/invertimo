@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+
 
 export default class TimeSelector extends React.Component {
 
@@ -28,4 +30,9 @@ export default class TimeSelector extends React.Component {
             </ul>
         );
     }
+}
+
+TimeSelector.propTypes = {
+    activeId: PropTypes.any.isRequired,
+    onClick: PropTypes.func.isRequired
 }

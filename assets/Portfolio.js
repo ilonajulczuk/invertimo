@@ -1,12 +1,9 @@
 import React from 'react';
-import stacked_area_graph from './stacked_area_graph.png';
 import './portfolio.css';
 import PositionList from './PositionList.js';
-import TimeSelector from './TimeSelector.js';
 import { APIClient } from './api_utils.js';
 import PropTypes from 'prop-types';
 import {
-    HashRouter as Router,
     Switch,
     Route,
     NavLink
@@ -129,25 +126,6 @@ export class PortfolioOverview extends React.Component {
 PortfolioOverview.propTypes = {
     positions: PropTypes.array.isRequired,
     accounts: PropTypes.array.isRequired,
-}
-
-class PortfolioChart extends React.Component {
-    render() {
-        return (
-            <div className="portfolio-chart">
-                <h2>Performance over time</h2>
-                {/* <img src={stacked_area_graph} /> */}
-                <TimeSelector />
-                <span className="card-label">
-                    Breakdown type
-                </span>
-                <select>
-                    <option value="security">By security</option>
-                    <option value="account">By account</option>
-                </select>
-            </div>
-        )
-    }
 }
 
 export default class Portfolio extends React.Component {

@@ -231,6 +231,10 @@ class ExpandedPositionContent extends React.Component {
     }
 }
 
+ExpandedPositionContent.propTypes = {
+    data: PropTypes.object.isRequired,
+    account: PropTypes.object.isRequired,
+}
 
 class Position extends React.Component {
 
@@ -279,7 +283,10 @@ class Position extends React.Component {
                             </span>
                         </div>
 
-                        <svg className={"arrow-down-svg " + (this.props.active ? "up" : "")} focusable="false" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path></svg>
+                        <svg className={"arrow-down-svg " + (this.props.active ? "up" : "")}
+                            focusable="false" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
+                        </svg>
                     </div>
 
                 </div>
@@ -292,6 +299,14 @@ class Position extends React.Component {
 }
 
 
+Position.propTypes = {
+    active: PropTypes.bool.isRequired,
+    data: PropTypes.object.isRequired,
+    detailedData: PropTypes.object,
+    handleClick: PropTypes.func.isRequired,
+    account: PropTypes.object.isRequired,
+}
+
 export default class PositionList extends React.Component {
 
     constructor(props) {
@@ -301,7 +316,7 @@ export default class PositionList extends React.Component {
             activePosition: null,
         };
         this.apiClient = new APIClient('./api');
-        this.handlePositionClick = positionId => _ => {
+        this.handlePositionClick = positionId => () => {
             if (this.state.activePosition == positionId) {
 
                 this.setState({ "activePosition": null });
@@ -376,4 +391,9 @@ export default class PositionList extends React.Component {
 
         )
     }
+}
+
+PositionList.propTypes = {
+    positions: PropTypes.array.isRequired,
+    accounts: PropTypes.array.isRequired,
 }

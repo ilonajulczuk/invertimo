@@ -4,24 +4,12 @@ import { act } from "react-dom/test-utils";
 import pretty from "pretty";
 
 // The import below is necessary for async/await to work.
+// eslint-disable-next-line no-unused-vars
 import regeneratorRuntime from "regenerator-runtime";
 import Portfolio from "./Portfolio.js";
 import { PortfolioOverview, divideByAccount } from "./Portfolio.js";
 import { MemoryRouter } from "react-router-dom";
 
-let container = null;
-beforeEach(() => {
-  // setup a DOM element as a render target
-  container = document.createElement("div");
-  document.body.appendChild(container);
-});
-
-afterEach(() => {
-  // cleanup on exiting
-  unmountComponentAtNode(container);
-  container.remove();
-  container = null;
-});
 
 const _ACCOUNT_POSITIONS = [
   {
@@ -152,123 +140,147 @@ jest.mock("./api_utils", () => {
         getPositions: () => {
           return Promise.resolve(_ACCOUNT_POSITIONS);
         },
-        getPositionDetail: (positionId) => { },
+        getPositionDetail: () => { },
       };
     }),
   };
 });
 
-it("shows portfolio overview with one account", async () => {
-  const accounts = [
-    {
-      id: 3,
-      currency: "EUR",
-      nickname: "test account",
-      description: "",
-      balance: "-16584.76000",
-      last_modified: "2021-05-03T14:20:29.732353Z",
-      positions_count: 3,
-      transactions_count: 15,
-    },
-  ];
-  const positions = _ACCOUNT_POSITIONS;
-  await act(async () => {
-    render(
-      <PortfolioOverview accounts={accounts} positions={positions} />,
-      container
-    );
+let container = null;
+
+describe('portfolio tests', () => {
+
+  beforeEach(() => {
+    // setup a DOM element as a render target
+    container = document.createElement("div");
+    document.body.appendChild(container);
   });
 
-  expect(pretty(container.innerHTML)).toMatchSnapshot();
-});
-
-it("divides positions by account correctly", () => {
-  const accounts = [
-    {
-      id: 3,
-      currency: "EUR",
-      nickname: "test account",
-      description: "",
-      balance: "-16584.76000",
-      last_modified: "2021-05-03T14:20:29.732353Z",
-      positions_count: 3,
-      transactions_count: 15,
-    },
-    {
-      id: 4,
-      currency: "USD",
-      nickname: "second account",
-      description: "",
-      balance: "161",
-      last_modified: "2021-05-03T14:20:29.732353Z",
-      positions_count: 2,
-      transactions_count: 5,
-    },
-  ];
-
-  const positions = _ACCOUNT_POSITIONS.concat(_ACCOUNT_POSITIONS_USD);
-  const positionsByAccount = divideByAccount(accounts, positions);
-  expect(positionsByAccount).toHaveLength(2);
-  expect(positionsByAccount[0].account.nickname).toBe("test account");
-  expect(positionsByAccount[0].positions).toHaveLength(3);
-  expect(positionsByAccount[1].account.nickname).toBe("second account");
-  expect(positionsByAccount[1].positions).toHaveLength(2);
-});
-
-it("shows portfolio overview with two accounts", async () => {
-  const accounts = [
-    {
-      id: 3,
-      currency: "EUR",
-      nickname: "test account",
-      description: "",
-      balance: "-16584.76000",
-      last_modified: "2021-05-03T14:20:29.732353Z",
-      positions_count: 3,
-      transactions_count: 15,
-    },
-    {
-      id: 4,
-      currency: "USD",
-      nickname: "second account",
-      description: "",
-      balance: "161",
-      last_modified: "2021-05-03T14:20:29.732353Z",
-      positions_count: 2,
-      transactions_count: 5,
-    },
-  ];
-
-  const positions = _ACCOUNT_POSITIONS.concat(_ACCOUNT_POSITIONS_USD);
-  await act(async () => {
-    render(
-      <PortfolioOverview accounts={accounts} positions={positions} />,
-      container
-    );
+  afterEach(() => {
+    // cleanup on exiting
+    unmountComponentAtNode(container);
+    container.remove();
+    container = null;
   });
 
-  expect(pretty(container.innerHTML)).toMatchSnapshot();
-});
 
-it("shows portfolio overview without any accounts", async () => {
-  const accounts = [];
+  it("shows portfolio overview with one account", async () => {
+    expect.hasAssertions();
+    const accounts = [
+      {
+        id: 3,
+        currency: "EUR",
+        nickname: "test account",
+        description: "",
+        balance: "-16584.76000",
+        last_modified: "2021-05-03T14:20:29.732353Z",
+        positions_count: 3,
+        transactions_count: 15,
+      },
+    ];
+    const positions = _ACCOUNT_POSITIONS;
+    await act(async () => {
+      render(
+        <PortfolioOverview accounts={accounts} positions={positions} />,
+        container
+      );
+    });
 
-  const positions = [];
-  await act(async () => {
-    render(
-      <PortfolioOverview accounts={accounts} positions={positions} />,
-      container
-    );
+    expect(pretty(container.innerHTML)).toMatchSnapshot();
   });
 
-  expect(pretty(container.innerHTML)).toMatchSnapshot();
-});
+  it("divides positions by account correctly", () => {
+    const accounts = [
+      {
+        id: 3,
+        currency: "EUR",
+        nickname: "test account",
+        description: "",
+        balance: "-16584.76000",
+        last_modified: "2021-05-03T14:20:29.732353Z",
+        positions_count: 3,
+        transactions_count: 15,
+      },
+      {
+        id: 4,
+        currency: "USD",
+        nickname: "second account",
+        description: "",
+        balance: "161",
+        last_modified: "2021-05-03T14:20:29.732353Z",
+        positions_count: 2,
+        transactions_count: 5,
+      },
+    ];
 
-it("renders portfolio value", async () => {
-  await act(async () => {
-    render(<MemoryRouter initialEntries={['/positions']}>
-      <Portfolio />
-    </MemoryRouter>, container);
+    const positions = _ACCOUNT_POSITIONS.concat(_ACCOUNT_POSITIONS_USD);
+    const positionsByAccount = divideByAccount(accounts, positions);
+    expect(positionsByAccount).toHaveLength(2);
+    expect(positionsByAccount[0].account.nickname).toBe("test account");
+    expect(positionsByAccount[0].positions).toHaveLength(3);
+    expect(positionsByAccount[1].account.nickname).toBe("second account");
+    expect(positionsByAccount[1].positions).toHaveLength(2);
   });
-  expect(pretty(container.innerHTML)).toMatchSnapshot();
+
+  it("shows portfolio overview with two accounts", async () => {
+    expect.hasAssertions();
+    const accounts = [
+      {
+        id: 3,
+        currency: "EUR",
+        nickname: "test account",
+        description: "",
+        balance: "-16584.76000",
+        last_modified: "2021-05-03T14:20:29.732353Z",
+        positions_count: 3,
+        transactions_count: 15,
+      },
+      {
+        id: 4,
+        currency: "USD",
+        nickname: "second account",
+        description: "",
+        balance: "161",
+        last_modified: "2021-05-03T14:20:29.732353Z",
+        positions_count: 2,
+        transactions_count: 5,
+      },
+    ];
+
+    const positions = _ACCOUNT_POSITIONS.concat(_ACCOUNT_POSITIONS_USD);
+    await act(async () => {
+      render(
+        <PortfolioOverview accounts={accounts} positions={positions} />,
+        container
+      );
+    });
+
+    expect(pretty(container.innerHTML)).toMatchSnapshot();
+  });
+
+  it("shows portfolio overview without any accounts", async () => {
+    expect.hasAssertions();
+    const accounts = [];
+
+    const positions = [];
+    await act(async () => {
+      render(
+        <PortfolioOverview accounts={accounts} positions={positions} />,
+        container
+      );
+    });
+
+    expect(pretty(container.innerHTML)).toMatchSnapshot();
+  });
+
+  it("renders portfolio value", async () => {
+    expect.hasAssertions();
+    await act(async () => {
+      render(<MemoryRouter initialEntries={['/positions']}>
+        <Portfolio />
+      </MemoryRouter>, container);
+    });
+    expect(pretty(container.innerHTML)).toMatchSnapshot();
+  });
+
 });
