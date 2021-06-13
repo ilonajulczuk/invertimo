@@ -1,4 +1,5 @@
 // The import below is necessary for async/await to work.
+// eslint-disable-next-line no-unused-vars
 import regeneratorRuntime from "regenerator-runtime";
 import { APIClient, APIClientError } from './api_utils.js';
 
@@ -522,31 +523,37 @@ const TEST_DATA = {
     ]
 };
 
+describe("API Client", () => {
 
+    it("fetches positions correctly", async () => {
+        expect.hasAssertions();
+        // eslint-disable-next-line no-undef
+        global.fetch = jest.fn(() => Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(TEST_DATA)
+        }));
 
-it("fetches positions correctly", async () => {
-    global.fetch = jest.fn(() => Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(TEST_DATA)
-    }));
+        let apiClient = new APIClient('./my-api');
 
-    let apiClient = new APIClient('./my-api');
+        let got = await apiClient.getPositions();
+        const expectedPositions = TEST_DATA.results;
+        expect(got).toEqual(expectedPositions);
 
-    let got = await apiClient.getPositions();
-    const expectedPositions = TEST_DATA.results;
-    expect(got).toEqual(expectedPositions);
+        // eslint-disable-next-line no-undef
+        global.fetch.mockRestore();
+    });
 
-    global.fetch.mockRestore();
-});
+    it("fetches positions encounters error", async () => {
+        expect.hasAssertions();
+        // eslint-disable-next-line no-undef
+        global.fetch = jest.fn(() => Promise.resolve({
+            ok: false,
+            json: () => Promise.resolve(TEST_DATA)
+        }));
 
-it("fetches positions encounters error", async () => {
-    global.fetch = jest.fn(() => Promise.resolve({
-        ok: false,
-        json: () => Promise.resolve(TEST_DATA)
-    }));
-
-    let apiClient = new APIClient('./my-api');
-    const expectedError = new APIClientError(
-        "failed at fetching data, non successful response");
-    await expect(apiClient.getPositions()).rejects.toEqual(expectedError);
+        let apiClient = new APIClient('./my-api');
+        const expectedError = new APIClientError(
+            "failed at fetching data, non successful response");
+        await expect(apiClient.getPositions()).rejects.toEqual(expectedError);
+    });
 });
