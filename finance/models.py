@@ -228,7 +228,6 @@ class Position(models.Model):
         to_date=None,
         output_period=datetime.timedelta(days=1),
     ):
-        # TODO: add support for GBX.
         to_currency = self.account.currency
         from_currency = self.security.currency
         if to_date is None:

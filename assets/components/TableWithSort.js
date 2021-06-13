@@ -57,6 +57,7 @@ function TableHeadWithSort(props) {
                         <TableSortLabel
                             active={orderBy === headCell.id}
                             direction={orderBy === headCell.id ? order : 'asc'}
+                            data-test-id={"sort-column-" + headCell.id}
                             onClick={createSortHandler(headCell.id)}
                         >
                             {headCell.label}
@@ -166,7 +167,7 @@ export function TableWithSort(props) {
     return (
 
         <div className={classes.root}>
-            <Paper className={classes.paper + ' transaction-list'} >
+            <Paper className={classes.paper} >
                 <TableContainer className={classes.tablePadding}>
                     <Table
                         className={classes.table}
