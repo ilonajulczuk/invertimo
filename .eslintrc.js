@@ -25,6 +25,7 @@ module.exports = {
     "jest/prefer-expect-assertions": [
       "warn",
       { "onlyFunctionsWithAsyncKeyword": true }
-    ]
+    ],
+    "semi": [2, "always"],
   },
 };

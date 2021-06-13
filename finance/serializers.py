@@ -45,6 +45,11 @@ class PositionSerializer(serializers.ModelSerializer):
 
 
 class EmbeddedTransactionSerializer(serializers.ModelSerializer):
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
+    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
+    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+
     class Meta:
         model = Transaction
         fields = [

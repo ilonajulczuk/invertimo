@@ -1,115 +1,12 @@
 import React from 'react';
 import './position_list.css';
 import { APIClient } from './api_utils.js';
-import { filterPointsWithNoChange, filterPoints, findClosestValue } from './timeseries_utils.js'
+import { filterPointsWithNoChange, filterPoints} from './timeseries_utils.js';
 import TimeSelector from './TimeSelector.js';
+import { EmbeddedTransactionList } from './TransactionList.js';
 import { ErrorBoundary } from './error_utils.js';
-import { VictoryLine, VictoryChart, VictoryArea, VictoryCursorContainer, VictoryAxis } from 'victory';
 import PropTypes from 'prop-types';
-
-
-function Transaction(props) {
-
-    return (
-        <li>{props.data.quantity} for {props.data.price}</li>
-    )
-}
-
-Transaction.propTypes = {
-    data: PropTypes.object.isRequired,
-}
-
-
-class AreaChartWithCursor extends React.Component {
-
-    render() {
-        return (
-            <VictoryChart
-                height={300}
-                width={500}
-                padding={{ left: 70, top: 10, right: 140, bottom: 50 }}
-                containerComponent={<VictoryCursorContainer
-                    cursorLabel={({ datum }) => {
-                        let y = findClosestValue(datum.x, this.props.dataset);
-                        let labelSuffix = this.props.labelSuffix ? this.props.labelSuffix : '';
-                        return `${datum.x.toLocaleDateString()}, ${Math.round(y)}${labelSuffix}`;
-                    }}
-                    stanadlone={true}
-                    cursorDimension="x"
-                />}
-                scale={{ x: "time" }}
-                domain={{
-                    x: [this.props.startDay, new Date()],
-                }}
-                minDomain={{ y: 0 }}
-            >
-                <VictoryAxis dependentAxis />
-                <VictoryAxis style={{
-                    tickLabels: { angle: -45, padding: 20 },
-                }} />
-                <VictoryArea
-                    style={{ data: { fill: "#e96158" }, labels: { fontSize: 20 } }}
-                    data={this.props.dataset}
-                    x="date"
-                    y="value"
-                />
-            </VictoryChart>
-        );
-    }
-}
-
-
-AreaChartWithCursor.propTypes = {
-    dataset: PropTypes.array.isRequired,
-    labelSuffix: PropTypes.string,
-    startDay: PropTypes.instanceOf(Date),
-}
-
-
-class LineChartWithCursor extends React.Component {
-
-    render() {
-        return (
-            <VictoryChart
-                height={300}
-                width={500}
-                padding={{ left: 70, top: 10, right: 140, bottom: 70 }}
-                containerComponent={<VictoryCursorContainer
-                    cursorLabel={({ datum }) => {
-                        let y = findClosestValue(datum.x, this.props.dataset);
-                        let labelSuffix = this.props.labelSuffix ? this.props.labelSuffix : '';
-                        return `${datum.x.toLocaleDateString()}, ${Math.round(y)}${labelSuffix}`;
-                    }}
-                    stanadlone={true}
-                    cursorDimension="x"
-                />}
-                scale={{ x: "time" }}
-                domain={{
-                    x: [this.props.startDay, new Date()],
-                }}
-                minDomain={{ y: 0 }}
-            >
-                <VictoryAxis dependentAxis />
-                <VictoryAxis style={{
-                    tickLabels: { angle: -45, padding: 20 },
-                }} />
-                <VictoryLine
-                    style={{ data: { stroke: "#e96158" } }}
-                    data={this.props.dataset}
-                    x="date"
-                    y="value"
-
-                />
-            </VictoryChart>
-        );
-    }
-}
-
-LineChartWithCursor.propTypes = {
-    dataset: PropTypes.array.isRequired,
-    labelSuffix: PropTypes.string,
-    startDay: PropTypes.instanceOf(Date),
-}
+import {AreaChartWithCursor, LineChartWithCursor} from './components/charts.js';
 
 
 class ExpandedPositionContent extends React.Component {
@@ -167,7 +64,7 @@ class ExpandedPositionContent extends React.Component {
         quantities = quantities.map((elem) => {
             let exactDate = new Date(elem[0]);
             return { date: new Date(exactDate.toDateString()), value: elem[1] };
-        })
+        });
 
         let prices = this.props.data.prices.map((elem) => {
             let exactDate = new Date(elem.date);
@@ -187,10 +84,6 @@ class ExpandedPositionContent extends React.Component {
         prices = filterPoints(prices, skipFactor);
         values = filterPoints(values, skipFactor);
         valuesAccountCurrency = filterPoints(valuesAccountCurrency, skipFactor);
-
-
-        let transactions = this.props.data.transactions.map(
-            (transaction) => <Transaction key={transaction.id} data={transaction} />)
 
         let positionCurrency = this.props.data.security.currency;
         let accountCurrency = this.props.account.currency;
@@ -223,7 +116,7 @@ class ExpandedPositionContent extends React.Component {
                 </div>
                 <div>
                     <h3>Transactions & Events</h3>
-                    <ul>{transactions}</ul>
+                    <EmbeddedTransactionList transactions={this.props.data.transactions}/>
                 </div>
 
             </div>
@@ -234,7 +127,7 @@ class ExpandedPositionContent extends React.Component {
 ExpandedPositionContent.propTypes = {
     data: PropTypes.object.isRequired,
     account: PropTypes.object.isRequired,
-}
+};
 
 class Position extends React.Component {
 
@@ -294,7 +187,7 @@ class Position extends React.Component {
                 {expandedContent}
 
             </li>
-        )
+        );
     }
 }
 
@@ -305,7 +198,7 @@ Position.propTypes = {
     detailedData: PropTypes.object,
     handleClick: PropTypes.func.isRequired,
     account: PropTypes.object.isRequired,
-}
+};
 
 export default class PositionList extends React.Component {
 
@@ -361,7 +254,7 @@ export default class PositionList extends React.Component {
             );
         }
 
-        )
+        );
         return (
             <div>
                 <h2>Positions</h2>
@@ -389,11 +282,11 @@ export default class PositionList extends React.Component {
                 </ul>
             </div>
 
-        )
+        );
     }
 }
 
 PositionList.propTypes = {
     positions: PropTypes.array.isRequired,
     accounts: PropTypes.array.isRequired,
-}
+};

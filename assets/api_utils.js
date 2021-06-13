@@ -1,5 +1,6 @@
 
 // The import below is necessary for async/await to work.
+// eslint-disable-next-line no-unused-vars
 import regeneratorRuntime from "regenerator-runtime";
 
 
@@ -52,6 +53,11 @@ export class APIClient {
         return positions;
     }
 
+    async getTransactions() {
+        let url = this.base_url + '/transactions/?limit=50';
+        let transactions = await fetchAllResults(url);
+        return transactions;
+    }
     async getPositionDetail(positionId) {
         let positionsUrl = this.base_url + `/positions/${positionId}/`;
         let positionDetails = await fetchDetailResult(positionsUrl);
@@ -61,4 +67,4 @@ export class APIClient {
         positionDetails.prices = securityPrices;
         return positionDetails;
     }
-};
+}

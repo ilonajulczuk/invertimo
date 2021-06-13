@@ -16,7 +16,8 @@ const CURRENCY_TO_SYMBOL = new Map(
         ["EUR", "€"],
         ["GBP", "£"],
     ]
-)
+);
+
 
 class AccountStats extends React.Component {
     render() {
@@ -55,7 +56,8 @@ class AccountStats extends React.Component {
 AccountStats.propTypes = {
     positions: PropTypes.array.isRequired,
     account: PropTypes.object.isRequired,
-}
+};
+
 
 export function divideByAccount(accounts, positions) {
     const positionsByAccount = [];
@@ -90,8 +92,8 @@ export class PortfolioOverview extends React.Component {
                     account={entry.account}
                     positions={entry.positions}
                 />
-            )
-        })
+            );
+        });
         for (let account of accounts) {
             positionsCount += account.positions_count;
             transactionsCount += account.transactions_count;
@@ -119,14 +121,14 @@ export class PortfolioOverview extends React.Component {
                     <a className="button">Manage events</a>
                 </div>
             </div>
-        )
+        );
     }
 }
 
 PortfolioOverview.propTypes = {
     positions: PropTypes.array.isRequired,
     accounts: PropTypes.array.isRequired,
-}
+};
 
 export default class Portfolio extends React.Component {
 
