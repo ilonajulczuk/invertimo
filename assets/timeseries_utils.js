@@ -64,7 +64,7 @@ export function findClosestValue(x, data) {
         return data[end].value;
     }
 
-};
+}
 
 export function combineValues(firstSequence, secondSequence, combineFn) {
 
@@ -74,7 +74,7 @@ export function combineValues(firstSequence, secondSequence, combineFn) {
     let i = 0;
     let j = 0;
 
-    while (i < maxFist && j < maxSecond) {
+    while (i < maxFirst && j < maxSecond) {
         if (firstSequence[i].date > secondSequence[j].date) {
             i += 1;
         } else if (firstSequence[i].date < secondSequence[j].date) {
