@@ -51,6 +51,7 @@ function TableHeadWithSort(props) {
                 {props.headCells.map((headCell) => (
                     <TableCell
                         key={headCell.id}
+                        className={classes.additionalCellPadding}
                         align='left'
                         sortDirection={orderBy === headCell.id ? order : false}
                     >
@@ -122,7 +123,11 @@ const useStyles = makeStyles((theme) => ({
         minWidth: 750,
 
     },
-    tablePadding: {
+    additionalCellPadding: {
+        paddingTop: "1em",
+        paddingBottom: "1em",
+        paddingLeft: "2em",
+        paddingRight: "2em",
     },
 
     visuallyHidden: {
@@ -168,7 +173,7 @@ export function TableWithSort(props) {
 
         <div className={classes.root}>
             <Paper className={classes.paper} >
-                <TableContainer className={classes.tablePadding}>
+                <TableContainer>
                     <Table
                         className={classes.table}
                         size='medium'
@@ -189,12 +194,13 @@ export function TableWithSort(props) {
                                     ];
                                     for (let headCell of props.headCells) {
                                         cells.push(
-                                            < TableCell key={headCell.id} align="left" > {row[headCell.id]}</TableCell>
+                                            < TableCell className={classes.additionalCellPadding} key={headCell.id} align="left" > {row[headCell.id]}</TableCell>
                                         );
                                     }
 
                                     return (
                                         <TableRow
+
                                             hover
                                             key={row.id}
                                         >

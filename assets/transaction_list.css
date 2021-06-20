@@ -1,0 +1,10 @@
+.position-name {
+    display: flex;
+    flex-direction: column;
+    flex-basis: 250px;
+}
+
+.position-symbol {
+    font-weight: bold;
+    font-size: 1.5em;
+}

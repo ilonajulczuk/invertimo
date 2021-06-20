@@ -99,6 +99,7 @@ class ExchangeIdentifier(models.Model):
             f"{self.get_id_type_display()}, value: {self.value}>"
         )
 
+
 class Security(models.Model):
     isin = models.CharField(max_length=30)
     symbol = models.CharField(max_length=30)
@@ -123,7 +124,7 @@ class Security(models.Model):
 
 def multiply_at_matching_dates(
     first_sequence: Sequence[Tuple[datetime.date, decimal.Decimal]],
-    second_sequence: Sequence[Tuple[datetime.date, decimal.Decimal]]
+    second_sequence: Sequence[Tuple[datetime.date, decimal.Decimal]],
 ):
 
     multiplied_records = []
@@ -237,8 +238,10 @@ class Position(models.Model):
         if to_currency == from_currency:
             return value_history
         exchange_rates = CurrencyExchangeRate.objects.order_by("-date").filter(
-            date__gte=from_date, date__lte=to_date,
-            from_currency=from_currency, to_currency=to_currency
+            date__gte=from_date,
+            date__lte=to_date,
+            from_currency=from_currency,
+            to_currency=to_currency,
         )
         exchange_rate_tuples = [(rate.date, rate.value) for rate in exchange_rates]
         return multiply_at_matching_dates(value_history, exchange_rate_tuples)

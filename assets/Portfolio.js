@@ -1,6 +1,7 @@
 import React from 'react';
 import './portfolio.css';
 import PositionList from './PositionList.js';
+import {TransactionList} from './TransactionList.js';
 import { APIClient } from './api_utils.js';
 import PropTypes from 'prop-types';
 import {
@@ -137,6 +138,7 @@ export default class Portfolio extends React.Component {
         this.state = {
             "positions": [],
             "accounts": [],
+            "transactions": [],
         };
         this.apiClient = new APIClient('./api');
     }
@@ -148,38 +150,43 @@ export default class Portfolio extends React.Component {
             positions => {
                 this.setState({ "positions": positions });
             });
+            this.apiClient.getTransactions().then(
+                transactions => {
+                    this.setState({ "transactions": transactions });
+                });
     }
 
     render() {
         return (
-                <div className="main-grid">
-                    <nav className="sidenav">
-                        <ul>
-                            <li>
-                                <NavLink to="/" exact={true}>Home</NavLink>
-                            </li>
-                            <li>
-                                <NavLink to="/transactions">Transactions</NavLink>
-                            </li>
-                            <li>
-                                <NavLink to="/positions">Positions</NavLink>
-                            </li>
-                        </ul>
-                    </nav>
+            <div className="main-grid">
+                <nav className="sidenav">
+                    <ul>
+                        <li>
+                            <NavLink to="/" exact={true}>Home</NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/transactions">Transactions</NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="/positions">Positions</NavLink>
+                        </li>
+                    </ul>
+                </nav>
 
-                    <div className="main-content">
-                        <h1>Portfolio</h1>
-                        <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
-                        <Switch>
-                            <Route path="/transactions">
-                                <h2>Transactions</h2>
-                            </Route>
-                            <Route path="/positions">
-                                <PositionList positions={this.state.positions} accounts={this.state.accounts} />
-                            </Route>
-                        </Switch>
-                    </div>
+                <div className="main-content">
+                    <h1>Portfolio</h1>
+                    <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
+                    <Switch>
+                        <Route path="/transactions">
+                            <h2>Transactions</h2>
+                            <TransactionList transactions={this.state.transactions}/>
+                        </Route>
+                        <Route path="/positions">
+                            <PositionList positions={this.state.positions} accounts={this.state.accounts} />
+                        </Route>
+                    </Switch>
                 </div>
+            </div>
         );
 
     }

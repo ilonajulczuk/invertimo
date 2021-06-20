@@ -9,7 +9,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from django.contrib.auth.models import User
 from typing import Any, Dict
 from finance import accounts, models
-from finance.models import CurrencyExchangeRate, Position, PriceHistory
+from finance.models import CurrencyExchangeRate, Position, PriceHistory, Transaction
 from finance.serializers import (
     AccountSerializer,
     CurrencyExchangeRateSerializer,
@@ -18,6 +18,7 @@ from finance.serializers import (
     PositionSerializer,
     PositionWithQuantitiesSerializer,
     SecurityPriceHistorySerializer,
+    TransactionSerializer,
 )
 
 # TODO: add basic view tests.
@@ -28,12 +29,9 @@ class AccountsView(generics.ListAPIView):
 
     def get_queryset(self):
         assert isinstance(self.request.user, User)
-        queryset = (
-            models.Account.objects.filter(user=self.request.user)
-            .annotate(
-                positions_count=Count("positions", distinct=True),
-                transactions_count=Count("positions__transactions", distinct=True),
-            )
+        queryset = models.Account.objects.filter(user=self.request.user).annotate(
+            positions_count=Count("positions", distinct=True),
+            transactions_count=Count("positions__transactions", distinct=True),
         )
         return queryset
 
@@ -76,6 +74,23 @@ class PositionsView(generics.ListAPIView):
                     .values("value")[:1]
                 )
             )
+        )
+
+
+class TransactionsView(generics.ListAPIView):
+    model = Transaction
+    serializer_class = TransactionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        assert isinstance(self.request.user, User)
+        user = self.request.user
+        return (
+            Transaction.objects.filter(position__account__user=user)
+            .select_related("position")
+            .select_related("position__security")
+            .select_related("position__security__exchange")
         )
 
 

@@ -58,6 +58,7 @@ export class APIClient {
         let transactions = await fetchAllResults(url);
         return transactions;
     }
+
     async getPositionDetail(positionId) {
         let positionsUrl = this.base_url + `/positions/${positionId}/`;
         let positionDetails = await fetchDetailResult(positionsUrl);

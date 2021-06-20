@@ -44,6 +44,19 @@ class PositionSerializer(serializers.ModelSerializer):
         ]
 
 
+class EmbeddedPositionSerializer(serializers.ModelSerializer):
+    security = SecuritySerializer()
+
+    class Meta:
+        model = Position
+        fields = [
+            "id",
+            "account",
+            "security",
+            "quantity",
+        ]
+
+
 class EmbeddedTransactionSerializer(serializers.ModelSerializer):
     quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
     price = serializers.DecimalField(max_digits=20, decimal_places=2)
@@ -60,6 +73,32 @@ class EmbeddedTransactionSerializer(serializers.ModelSerializer):
             "transaction_costs",
             "order_id",
             "local_value",
+        ]
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
+    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    position = EmbeddedPositionSerializer()
+    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
+    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    value_in_account_currency = serializers.DecimalField(max_digits=20, decimal_places=2)
+    total_in_account_currency = serializers.DecimalField(max_digits=20, decimal_places=2)
+
+    class Meta:
+        model = Transaction
+        fields = [
+            "id",
+            "executed_at",
+            "last_modified",
+            "position",
+            "quantity",
+            "price",
+            "transaction_costs",
+            "local_value",
+            "value_in_account_currency",
+            "total_in_account_currency",
+            "order_id",
         ]
 
 

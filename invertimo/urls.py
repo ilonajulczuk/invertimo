@@ -21,6 +21,7 @@ from finance.views import (
     AccountsView,
     PositionView,
     PositionsView,
+    TransactionsView,
     CurrencyExchangeRateView,
     SecurityPricesView,
 )
@@ -42,6 +43,7 @@ urlpatterns = [
     path("api/accounts/", AccountsView.as_view(), name="api-accounts"),
     path("api/positions/", PositionsView.as_view(), name="api-positions"),
     path("api/positions/<int:pk>/", PositionView.as_view(), name="api-position"),
+    path("api/transactions/", TransactionsView.as_view(), name="api-transactions"),
     path("api/currencies/", CurrencyExchangeRateView.as_view(), name="api-currencies"),
     path(
         "api/securities/<int:security_pk>/prices/",
