@@ -13,10 +13,17 @@ import Paper from '@material-ui/core/Paper';
 
 
 function descendingComparator(a, b, orderBy) {
-    if (b[orderBy] < a[orderBy]) {
+    let first = a[orderBy];
+    let second = b[orderBy];
+    if (first.comparisonKey != undefined && second.comparisonKey != undefined) {
+        first = first.comparisonKey;
+        second = second.comparisonKey;
+    }
+
+    if (second < first) {
         return -1;
     }
-    if (b[orderBy] > a[orderBy]) {
+    if (second > first) {
         return 1;
     }
     return 0;
@@ -192,9 +199,16 @@ export function TableWithSort(props) {
                                 .map((row) => {
                                     const cells = [
                                     ];
+
                                     for (let headCell of props.headCells) {
+                                        let cellContents = row[headCell.id];
+                                        if (cellContents.displayValue != undefined) {
+                                            cellContents = cellContents.displayValue;
+                                        }
                                         cells.push(
-                                            < TableCell className={classes.additionalCellPadding} key={headCell.id} align="left" > {row[headCell.id]}</TableCell>
+                                            < TableCell className={classes.additionalCellPadding}
+                                                key={headCell.id} align="left"
+                                            > {cellContents}</TableCell>
                                         );
                                     }
 

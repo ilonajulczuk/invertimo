@@ -65,7 +65,10 @@ export class TransactionList extends React.Component {
         const transactions = this.props.transactions.map(transaction => {
             let transactionCopy = { ...transaction };
             let date = new Date(transactionCopy.executed_at);
-            transactionCopy.executed_at = date.toLocaleString();
+            transactionCopy.executed_at = {
+                displayValue:  date.toLocaleDateString(),
+                comparisonKey: date,
+            };
 
             let position = transactionCopy.position;
             let positionField = (
@@ -83,7 +86,7 @@ export class TransactionList extends React.Component {
             // { id: 'total_in_account_currency', label: 'Total spent value (y curr)' },
 
             let lastModifiedDate = new Date(transactionCopy.last_modified);
-            transactionCopy.last_modified = lastModifiedDate.toLocaleString();
+            transactionCopy.last_modified = lastModifiedDate.toLocaleDateString();
             return transactionCopy;
         });
         return (

@@ -119,4 +119,6 @@ describe('table with sort', () => {
         expect(container.querySelectorAll('tr').length).toBe(1);
 
     });
+
+    // TODO: add a test for custom display + comparator support (e.g. with a date).
 });
