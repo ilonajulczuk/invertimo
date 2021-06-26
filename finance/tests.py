@@ -376,15 +376,15 @@ class TestPositionsView(ViewTestBase, TestCase):
                 date=date,
                 value=1 + (i % 3) / 10,
                 from_currency=self.security.currency,
-                to_currency=self.account.currency
+                to_currency=self.account.currency,
             )
 
         response = self.client.get(self.get_url() + self.QUERY_PARAMS)
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "USA123")
-        self.assertContains(response, "\"latest_price\":\"1")
-        self.assertContains(response, "\"latest_exchange_rate\":\"1")
+        self.assertContains(response, '"latest_price":"1')
+        self.assertContains(response, '"latest_exchange_rate":"1')
 
 
 class TestPositionDetailView(ViewTestBase, TestCase):
@@ -416,3 +416,75 @@ class TestPositionDetailView(ViewTestBase, TestCase):
 
     def get_reversed_url(self):
         return reverse(self.VIEW_NAME, args=[self.position.pk])
+
+
+class TestAccountsView(ViewTestBase, TestCase):
+    URL = "/api/accounts/"
+    VIEW_NAME = "api-accounts"
+    DETAIL_VIEW = False
+    QUERY_PARAMS = "?"
+    UNAUTHENTICATED_CODE = 403
+
+    def setUp(self):
+        super().setUp()
+
+        self.isin = "USA123"
+        self.account, _, _ = _add_dummy_account_and_security(self.user, isin=self.isin)
+
+
+class TestTransactionsView(ViewTestBase, TestCase):
+    URL = "/api/transactions/"
+    VIEW_NAME = "transaction-list"
+    DETAIL_VIEW = False
+    QUERY_PARAMS = "?"
+    UNAUTHENTICATED_CODE = 403
+
+    def setUp(self):
+        super().setUp()
+
+        self.isin = "USA123"
+        self.account, self.exchange, self.security = _add_dummy_account_and_security(
+            self.user, isin=self.isin
+        )
+        for transaction in _FAKE_TRANSACTIONS:
+            _add_transaction(
+                self.account,
+                self.isin,
+                self.exchange,
+                transaction[0],
+                transaction[1],
+                transaction[2],
+            )
+
+
+class TestTransactionsDetailView(ViewTestBase, TestCase):
+    URL = "/api/transactions/%s/"
+    VIEW_NAME = "transaction-detail"
+    DETAIL_VIEW = True
+    QUERY_PARAMS = "?"
+    UNAUTHENTICATED_CODE = 403
+
+    def setUp(self):
+        super().setUp()
+
+        self.isin = "USA123"
+        self.account, self.exchange, self.security = _add_dummy_account_and_security(
+            self.user, isin=self.isin
+        )
+        for transaction in _FAKE_TRANSACTIONS:
+            _add_transaction(
+                self.account,
+                self.isin,
+                self.exchange,
+                transaction[0],
+                transaction[1],
+                transaction[2],
+            )
+
+        self.transaction = models.Transaction.objects.first()
+
+    def get_url(self):
+        return self.URL % self.transaction.pk
+
+    def get_reversed_url(self):
+        return reverse(self.VIEW_NAME, args=[self.transaction.pk])

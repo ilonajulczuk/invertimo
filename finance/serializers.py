@@ -1,8 +1,15 @@
 from rest_framework import serializers
 
 from finance import models
-from finance.models import (Account, CurrencyExchangeRate, Exchange, Position,
-                            PriceHistory, Security, Transaction)
+from finance.models import (
+    Account,
+    CurrencyExchangeRate,
+    Exchange,
+    Position,
+    PriceHistory,
+    Security,
+    Transaction,
+)
 
 
 class ExchangeSerializer(serializers.ModelSerializer):
@@ -82,8 +89,12 @@ class TransactionSerializer(serializers.ModelSerializer):
     position = EmbeddedPositionSerializer()
     transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
     local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
-    value_in_account_currency = serializers.DecimalField(max_digits=20, decimal_places=2)
-    total_in_account_currency = serializers.DecimalField(max_digits=20, decimal_places=2)
+    value_in_account_currency = serializers.DecimalField(
+        max_digits=20, decimal_places=2
+    )
+    total_in_account_currency = serializers.DecimalField(
+        max_digits=20, decimal_places=2
+    )
 
     class Meta:
         model = Transaction
@@ -111,7 +122,16 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Position
-        fields = ["id", "account", "security", "quantity", "quantities", "transactions", "values", "values_account_currency"]
+        fields = [
+            "id",
+            "account",
+            "security",
+            "quantity",
+            "quantities",
+            "transactions",
+            "values",
+            "values_account_currency",
+        ]
 
     def get_quantities(self, obj):
         from_date = self.context["from_date"]

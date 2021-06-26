@@ -3,7 +3,7 @@ import datetime
 import pytz
 from django.db.models import Count, Sum, Subquery, OuterRef
 from django.shortcuts import get_object_or_404, render
-from rest_framework import exceptions, generics, permissions, viewsets
+from rest_framework import exceptions, generics, permissions, viewsets, mixins
 from rest_framework.pagination import LimitOffsetPagination
 
 from django.contrib.auth.models import User
@@ -21,7 +21,7 @@ from finance.serializers import (
     TransactionSerializer,
 )
 
-# TODO: add basic view tests.
+
 class AccountsView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AccountSerializer
@@ -74,23 +74,6 @@ class PositionsView(generics.ListAPIView):
                     .values("value")[:1]
                 )
             )
-        )
-
-
-class TransactionsView(generics.ListAPIView):
-    model = Transaction
-    serializer_class = TransactionSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    pagination_class = LimitOffsetPagination
-
-    def get_queryset(self):
-        assert isinstance(self.request.user, User)
-        user = self.request.user
-        return (
-            Transaction.objects.filter(position__account__user=user)
-            .select_related("position")
-            .select_related("position__security")
-            .select_related("position__security__exchange")
         )
 
 
@@ -176,3 +159,23 @@ class PositionView(generics.RetrieveAPIView):
             )
             context["to_date"] = self.query_data.get("to_date", datetime.date.today())
         return context
+
+
+class TransactionsViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+):
+    model = Transaction
+    serializer_class = TransactionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = LimitOffsetPagination
+    basename = "transaction"
+
+    def get_queryset(self):
+        assert isinstance(self.request.user, User)
+        user = self.request.user
+        return (
+            Transaction.objects.filter(position__account__user=user)
+            .select_related("position")
+            .select_related("position__security")
+            .select_related("position__security__exchange")
+        )
