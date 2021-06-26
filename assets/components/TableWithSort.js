@@ -157,7 +157,7 @@ export function TableWithSort(props) {
     const defaultOrderBy = props.defaultOrderBy ? props.defaultOrderBy : props.headCells[0] ? props.headCells[0].id : "";
     const defaultOrder = props.defaultOrder == 'desc' ? props.defaultOrder : 'asc';
     const [order, setOrder] = React.useState(defaultOrder);
-    const [orderBy, setOrderBy] = React.useState(defaultOrder);
+    const [orderBy, setOrderBy] = React.useState(defaultOrderBy);
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
