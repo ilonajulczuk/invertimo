@@ -99,11 +99,11 @@ export class TransactionList extends React.Component {
                 </div>),
                 comparisonKey: Number(transactionCopy.value_in_account_currency)
             };
-            transactionCopy.transaction_costs = Number(transactionCopy.transaction_costs);
+            transactionCopy.transaction_costs = {
+                displayValue: transactionCopy.transaction_costs + accountCurrencySymbol,
+                comparisonKey: Number(transactionCopy.transaction_costs)
+            };
 
-            // TODO: Also show Value and purchase price in multiple currencies.
-            // { id: 'value_in_account_currency', label: 'Purchased value (y curr)' },
-            // { id: 'total_in_account_currency', label: 'Total spent value (y curr)' },
 
             let lastModifiedDate = new Date(transactionCopy.last_modified);
             transactionCopy.last_modified = lastModifiedDate.toLocaleDateString();

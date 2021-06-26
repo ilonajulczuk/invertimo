@@ -167,15 +167,20 @@ export default class Portfolio extends React.Component {
                 </nav>
 
                 <div className="main-content">
-                    <h1>Portfolio</h1>
-                    <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
                     <Switch>
                         <Route path="/transactions">
                             <h2>Transactions</h2>
                             <TransactionList transactions={this.state.transactions} accounts={this.state.accounts} />
                         </Route>
+                        <Route path="/positions/:id">
+                           <div>Woah</div>
+                        </Route>
                         <Route path="/positions">
                             <PositionList positions={this.state.positions} accounts={this.state.accounts} />
+                        </Route>
+
+                        <Route path="/"><h1>Portfolio</h1>
+                            <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
                         </Route>
                     </Switch>
                 </div>
