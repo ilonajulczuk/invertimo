@@ -154,8 +154,9 @@ const useStyles = makeStyles((theme) => ({
 export function TableWithSort(props) {
     const rows = props.rows;
     const classes = useStyles();
-    const defaultOrder = props.headCells[0] ? props.headCells[0].id : "";
-    const [order, setOrder] = React.useState('asc');
+    const defaultOrderBy = props.defaultOrderBy ? props.defaultOrderBy : props.headCells[0] ? props.headCells[0].id : "";
+    const defaultOrder = props.defaultOrder == 'desc' ? props.defaultOrder : 'asc';
+    const [order, setOrder] = React.useState(defaultOrder);
     const [orderBy, setOrderBy] = React.useState(defaultOrder);
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(5);
@@ -247,4 +248,6 @@ TableWithSort.propTypes = {
         id: PropTypes.string.isRequired,
         label: PropTypes.string.isRequired,
     })).isRequired,
+    defaultOrder: PropTypes.string,
+    defaultOrderBy: PropTypes.string,
 };

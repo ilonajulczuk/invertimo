@@ -9,15 +9,8 @@ import {
     Route,
     NavLink
 } from "react-router-dom";
+import { toSymbol } from './currencies.js';
 
-
-const CURRENCY_TO_SYMBOL = new Map(
-    [
-        ["USD", "$"],
-        ["EUR", "€"],
-        ["GBP", "£"],
-    ]
-);
 
 
 class AccountStats extends React.Component {
@@ -25,7 +18,7 @@ class AccountStats extends React.Component {
         const account = this.props.account;
 
         let totalCash = Number(account.balance);
-        let currencySymbol = CURRENCY_TO_SYMBOL.has(account.currency) ? CURRENCY_TO_SYMBOL.get(account.currency) : account.currency;
+        let currencySymbol = toSymbol(account.currency);
 
         const assetValues = this.props.positions.map(position => {
             // Exchange rate is null if account and position trading currency are the same.
@@ -179,7 +172,7 @@ export default class Portfolio extends React.Component {
                     <Switch>
                         <Route path="/transactions">
                             <h2>Transactions</h2>
-                            <TransactionList transactions={this.state.transactions} />
+                            <TransactionList transactions={this.state.transactions} accounts={this.state.accounts} />
                         </Route>
                         <Route path="/positions">
                             <PositionList positions={this.state.positions} accounts={this.state.accounts} />

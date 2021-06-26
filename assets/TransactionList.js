@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { ErrorBoundary } from './error_utils.js';
 import { TableWithSort } from './components/TableWithSort.js';
-
+import { toSymbol } from './currencies.js';
 import './transaction_list.css';
 
 const embeddedTransactionHeadCells = [
@@ -55,18 +55,19 @@ export class TransactionList extends React.Component {
             { id: 'position', label: 'Position' },
             { id: 'quantity', label: 'Quantity' },
             { id: 'price', label: 'Price' },
-            { id: 'local_value', label: 'Value' },
+            { id: 'value', label: 'Value' },
             { id: 'transaction_costs', label: 'Fees' },
             { id: 'executed_at', label: 'Executed At' },
             { id: 'order_id', label: 'Order Details' },
         ];
 
+        let accountsById = new Map(this.props.accounts.map(account => [account.id, account]));
 
         const transactions = this.props.transactions.map(transaction => {
             let transactionCopy = { ...transaction };
             let date = new Date(transactionCopy.executed_at);
             transactionCopy.executed_at = {
-                displayValue:  date.toLocaleDateString(),
+                displayValue: date.toLocaleDateString(),
                 comparisonKey: date,
             };
 
@@ -78,10 +79,26 @@ export class TransactionList extends React.Component {
                     <span>{position.security.name}</span>
                 </div>
             );
-            transactionCopy.position = positionField;
+            transactionCopy.position = {
+                displayValue: positionField,
+                comparisonKey: position.security.symbol,
+            };
 
-            transactionCopy.price = Number(transactionCopy.price);
-            transactionCopy.local_value = Number(transactionCopy.local_value);
+            let account = accountsById.get(transaction.position.account);
+            const accountCurrencySymbol = toSymbol(account.currency);
+            const positionCurrencySymbol = toSymbol(transaction.position.security.currency);
+
+            transactionCopy.price = {
+                displayValue: transactionCopy.price + positionCurrencySymbol,
+                comparisonKey: Number(transactionCopy.price),
+            };
+            transactionCopy.value = {
+                displayValue: (<div className="position-name">
+                    <span>{Number(transactionCopy.value_in_account_currency) + accountCurrencySymbol}</span>
+                    <span>{Number(transactionCopy.local_value) + positionCurrencySymbol}</span>
+                </div>),
+                comparisonKey: Number(transactionCopy.value_in_account_currency)
+            };
             transactionCopy.transaction_costs = Number(transactionCopy.transaction_costs);
 
             // TODO: Also show Value and purchase price in multiple currencies.
@@ -94,9 +111,11 @@ export class TransactionList extends React.Component {
         });
         return (
             <ErrorBoundary>
-
-                <TableWithSort rows={transactions} headCells={transactionHeadCells} />
-
+                <TableWithSort
+                    rows={transactions}
+                    headCells={transactionHeadCells}
+                    defaultOrder="desc"
+                    defaultOrderBy="executed_at" />
             </ErrorBoundary>
 
         );
@@ -104,6 +123,7 @@ export class TransactionList extends React.Component {
 }
 
 TransactionList.propTypes = {
+    accounts: PropTypes.array.isRequired,
     transactions: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.number.isRequired,
         quantity: PropTypes.string.isRequired,
