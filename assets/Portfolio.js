@@ -1,7 +1,7 @@
 import React from 'react';
 import './portfolio.css';
 import PositionList from './PositionList.js';
-import {TransactionList} from './TransactionList.js';
+import { TransactionList } from './TransactionList.js';
 import { APIClient } from './api_utils.js';
 import PropTypes from 'prop-types';
 import {
@@ -150,10 +150,10 @@ export default class Portfolio extends React.Component {
             positions => {
                 this.setState({ "positions": positions });
             });
-            this.apiClient.getTransactions().then(
-                transactions => {
-                    this.setState({ "transactions": transactions });
-                });
+        this.apiClient.getTransactions().then(
+            transactions => {
+                this.setState({ "transactions": transactions });
+            });
     }
 
     render() {
@@ -179,7 +179,7 @@ export default class Portfolio extends React.Component {
                     <Switch>
                         <Route path="/transactions">
                             <h2>Transactions</h2>
-                            <TransactionList transactions={this.state.transactions}/>
+                            <TransactionList transactions={this.state.transactions} />
                         </Route>
                         <Route path="/positions">
                             <PositionList positions={this.state.positions} accounts={this.state.accounts} />

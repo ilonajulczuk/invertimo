@@ -15,11 +15,10 @@ import Paper from '@material-ui/core/Paper';
 function descendingComparator(a, b, orderBy) {
     let first = a[orderBy];
     let second = b[orderBy];
-    if (first.comparisonKey != undefined && second.comparisonKey != undefined) {
+    if (first != null && second != null && first.comparisonKey != undefined && second.comparisonKey != undefined) {
         first = first.comparisonKey;
         second = second.comparisonKey;
     }
-
     if (second < first) {
         return -1;
     }
@@ -37,6 +36,7 @@ function getComparator(order, orderBy) {
 
 function stableSort(array, comparator) {
     const stabilizedThis = array.map((el, index) => [el, index]);
+
     stabilizedThis.sort((a, b) => {
         const order = comparator(a[0], b[0]);
         if (order !== 0) return order;
@@ -202,7 +202,8 @@ export function TableWithSort(props) {
 
                                     for (let headCell of props.headCells) {
                                         let cellContents = row[headCell.id];
-                                        if (cellContents.displayValue != undefined) {
+
+                                        if (cellContents && cellContents.displayValue != undefined) {
                                             cellContents = cellContents.displayValue;
                                         }
                                         cells.push(

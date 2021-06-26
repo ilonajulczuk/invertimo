@@ -117,6 +117,96 @@ const _ACCOUNT_POSITIONS_USD = [
   },
 ];
 
+
+const _ACCOUNT_TRANSACTIONS = [
+  {
+    "id": 666,
+    "executed_at": "2021-04-07T20:25:00Z",
+    "last_modified": "2021-06-06T17:14:28.728056Z",
+    "position": {
+      "id": 121,
+      "account": 4,
+      "security": {
+        "id": 1,
+        "isin": "US2546871060",
+        "symbol": "DIS",
+        "name": "The Walt Disney Company",
+        "exchange": {
+          "id": 132,
+          "name": "USA Stocks"
+        },
+        "currency": "USD",
+        "country": "USA"
+      },
+      "quantity": "16.00"
+    },
+    "quantity": "16.00",
+    "price": "188.12",
+    "transaction_costs": "-0.55",
+    "local_value": "-3009.92",
+    "value_in_account_currency": "-2533.39",
+    "total_in_account_currency": "-2533.94",
+    "order_id": "420be97a-265e-4b69-b7a7-acfad1ba8940"
+  },
+  {
+    "id": 531,
+    "executed_at": "2021-04-07T20:25:00Z",
+    "last_modified": "2021-06-06T15:07:31.366491Z",
+    "position": {
+      "id": 91,
+      "account": 3,
+      "security": {
+        "id": 1,
+        "isin": "US2546871060",
+        "symbol": "DIS",
+        "name": "The Walt Disney Company",
+        "exchange": {
+          "id": 132,
+          "name": "USA Stocks"
+        },
+        "currency": "USD",
+        "country": "USA"
+      },
+      "quantity": "35.00"
+    },
+    "quantity": "16.00",
+    "price": "188.12",
+    "transaction_costs": "-0.55",
+    "local_value": "-3009.92",
+    "value_in_account_currency": "-2533.39",
+    "total_in_account_currency": "-2533.94",
+    "order_id": "420be97a-265e-4b69-b7a7-acfad1ba8940"
+  },
+  {
+    "id": 532,
+    "executed_at": "2021-04-07T20:23:00Z",
+    "last_modified": "2021-06-06T15:07:31.373143Z",
+    "position": {
+      "id": 92,
+      "account": 3,
+      "security": {
+        "id": 2,
+        "isin": "US0378331005",
+        "symbol": "AAPL",
+        "name": "Apple Inc",
+        "exchange": {
+          "id": 132,
+          "name": "USA Stocks"
+        },
+        "currency": "USD",
+        "country": "USA"
+      },
+      "quantity": "53.00"
+    },
+    "quantity": "18.00",
+    "price": "127.64",
+    "transaction_costs": "-0.56",
+    "local_value": "-2297.52",
+    "value_in_account_currency": "-1933.78",
+    "total_in_account_currency": "-1934.34",
+    "order_id": "5e9d4dd0-6d3a-4ca2-aba5-356ac49e7ab4"
+  },
+];
 jest.mock("./api_utils", () => {
   // Works and lets you check for constructor calls:
   return {
@@ -141,6 +231,10 @@ jest.mock("./api_utils", () => {
           return Promise.resolve(_ACCOUNT_POSITIONS);
         },
         getPositionDetail: () => { },
+        getTransactions: () => {
+
+          return Promise.resolve(_ACCOUNT_TRANSACTIONS);
+        },
       };
     }),
   };

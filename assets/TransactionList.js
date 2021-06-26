@@ -72,7 +72,6 @@ export class TransactionList extends React.Component {
 
             let position = transactionCopy.position;
             let positionField = (
-
                 <div className="position-name">
                     <span className="card-label">{position.security.isin}</span>
                     <span className="position-symbol">{position.security.symbol}</span>
@@ -80,6 +79,10 @@ export class TransactionList extends React.Component {
                 </div>
             );
             transactionCopy.position = positionField;
+
+            transactionCopy.price = Number(transactionCopy.price);
+            transactionCopy.local_value = Number(transactionCopy.local_value);
+            transactionCopy.transaction_costs = Number(transactionCopy.transaction_costs);
 
             // TODO: Also show Value and purchase price in multiple currencies.
             // { id: 'value_in_account_currency', label: 'Purchased value (y curr)' },
