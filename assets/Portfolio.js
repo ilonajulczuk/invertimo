@@ -1,6 +1,6 @@
 import React from 'react';
 import './portfolio.css';
-import PositionList from './PositionList.js';
+import {PositionList} from './PositionList.js';
 import { TransactionList } from './TransactionList.js';
 import { APIClient } from './api_utils.js';
 import PropTypes from 'prop-types';
@@ -130,10 +130,32 @@ export default class Portfolio extends React.Component {
         super(props);
         this.state = {
             "positions": [],
+            "positionDetails": new Map(),
             "accounts": [],
             "transactions": [],
         };
         this.apiClient = new APIClient('./api');
+        this.getPositionDetail = this.getPositionDetail.bind(this);
+    }
+
+    async getPositionDetail(positionId) {
+        if (this.state.positionDetails.has(positionId)) {
+            return this.state.positionDetails.get(positionId);
+        }
+        try {
+            let positionData = await this.apiClient.getPositionDetail(positionId);
+            let positionDetails = this.state.positionDetails;
+            positionDetails.set(positionId, positionData);
+            this.setState({
+                "positionDetails": positionDetails,
+            });
+            return positionData;
+        }
+        catch (error) {
+            alert(error);
+            return null;
+        }
+
     }
 
     async componentDidMount() {
@@ -167,15 +189,17 @@ export default class Portfolio extends React.Component {
                 </nav>
 
                 <div className="main-content">
-                    <h1>Portfolio</h1>
-                    <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
                     <Switch>
                         <Route path="/transactions">
                             <h2>Transactions</h2>
                             <TransactionList transactions={this.state.transactions} accounts={this.state.accounts} />
                         </Route>
                         <Route path="/positions">
-                            <PositionList positions={this.state.positions} accounts={this.state.accounts} />
+                            <PositionList positions={this.state.positions} accounts={this.state.accounts} getPositionDetail={this.getPositionDetail}/>
+                        </Route>
+
+                        <Route path="/"><h1>Portfolio</h1>
+                            <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
                         </Route>
                     </Switch>
                 </div>

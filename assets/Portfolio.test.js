@@ -374,7 +374,7 @@ describe('portfolio tests', () => {
         <Portfolio />
       </MemoryRouter>, container);
     });
-    expect(pretty(container.innerHTML)).toMatchSnapshot();
+    expect(pretty(container.innerHTML)).toContain('The Walt Disney Company');
   });
 
 });

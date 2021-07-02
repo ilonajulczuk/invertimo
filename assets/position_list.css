@@ -106,7 +106,7 @@ div.position-values {
     grid-template-columns: 100px 30px;
 }
 
-div.position-values-spans {
+.column-stack {
     display: flex;
     flex-direction: column;
 }
