@@ -5,13 +5,14 @@ from django.db.models import Count, Sum, Subquery, OuterRef
 from django.shortcuts import get_object_or_404, render
 from rest_framework import exceptions, generics, permissions, viewsets, mixins
 from rest_framework.pagination import LimitOffsetPagination
-
+from rest_framework.response import Response
 from django.contrib.auth.models import User
 from typing import Any, Dict
 from finance import accounts, models
 from finance.models import CurrencyExchangeRate, Position, PriceHistory, Transaction
 from finance.serializers import (
     AccountSerializer,
+    AccountWithValuesSerializer,
     CurrencyExchangeRateSerializer,
     CurrencyQuerySerializer,
     FromToDatesSerializer,
@@ -22,10 +23,13 @@ from finance.serializers import (
 )
 
 
-class AccountsView(generics.ListAPIView):
+class AccountsViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AccountSerializer
     pagination_class = LimitOffsetPagination
+    basename = "account"
 
     def get_queryset(self):
         assert isinstance(self.request.user, User)
@@ -34,6 +38,29 @@ class AccountsView(generics.ListAPIView):
             transactions_count=Count("positions__transactions", distinct=True),
         )
         return queryset
+
+    def get_serializer_context(self):
+        context: Dict[str, Any] = super().get_serializer_context()
+        query = FromToDatesSerializer(data=self.request.query_params)
+
+        if query.is_valid(raise_exception=True):
+            data = query.validated_data
+            self.query_data = data
+            context["from_date"] = self.query_data.get(
+                "from_date",
+                datetime.date.today() - datetime.timedelta(days=30),
+            )
+            context["to_date"] = self.query_data.get("to_date", datetime.date.today())
+        return context
+
+    def retrieve(self, request, pk=None):
+        queryset = self.get_queryset()
+        queryset = queryset.prefetch_related("positions__security")
+        account = get_object_or_404(queryset, pk=pk)
+        serializer = AccountWithValuesSerializer(
+            account, context=self.get_serializer_context()
+        )
+        return Response(serializer.data)
 
 
 class PositionsView(generics.ListAPIView):
@@ -154,7 +181,7 @@ class PositionView(generics.RetrieveAPIView):
             data = query.validated_data
             self.query_data = data
             context["from_date"] = self.query_data.get(
-                "from_data",
+                "from_date",
                 datetime.date.today() - datetime.timedelta(days=365),
             )
             context["to_date"] = self.query_data.get("to_date", datetime.date.today())

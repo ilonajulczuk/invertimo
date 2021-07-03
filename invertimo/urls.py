@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import include, path
 from invertimo import views
 from finance.views import (
-    AccountsView,
+    AccountsViewSet,
     PositionView,
     PositionsView,
     TransactionsViewSet,
@@ -31,6 +31,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 router = routers.DefaultRouter()
 router.register(r'transactions', TransactionsViewSet, basename='transaction')
+router.register(r'accounts', AccountsViewSet, basename='account')
 urlpatterns = [
     path("", views.index_view, name="index"),
     path("admin/", admin.site.urls),
@@ -40,7 +41,6 @@ urlpatterns = [
     path("__debug__/", include(debug_toolbar.urls)),
     path("api/", include(router.urls)),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
-    path("api/accounts/", AccountsView.as_view(), name="api-accounts"),
     path("api/positions/", PositionsView.as_view(), name="api-positions"),
     path("api/positions/<int:pk>/", PositionView.as_view(), name="api-position"),
     path("api/currencies/", CurrencyExchangeRateView.as_view(), name="api-currencies"),

@@ -60,6 +60,12 @@ class Account(models.Model):
             f"currency: {self.get_currency_display()}>"
         )
 
+    def value_history_per_position(self, from_date, to_date):
+        results = []
+        for position in self.positions.all():
+            results.append((position.pk, position.value_history_in_account_currency(from_date, to_date)))
+        return results
+
 
 class Exchange(models.Model):
     name = models.CharField(max_length=200)
@@ -237,14 +243,20 @@ class Position(models.Model):
         value_history = self.value_history(from_date, to_date, output_period)
         if to_currency == from_currency:
             return value_history
-        exchange_rates = CurrencyExchangeRate.objects.order_by("-date").filter(
+
+        exchange_rate_tuples = get_exchange_rates(from_date, to_date, from_currency, to_currency)
+        return multiply_at_matching_dates(value_history, exchange_rate_tuples)
+
+@functools.lru_cache
+def get_exchange_rates(from_date, to_date, from_currency, to_currency):
+    exchange_rates = CurrencyExchangeRate.objects.order_by("-date").filter(
             date__gte=from_date,
             date__lte=to_date,
             from_currency=from_currency,
             to_currency=to_currency,
         )
-        exchange_rate_tuples = [(rate.date, rate.value) for rate in exchange_rates]
-        return multiply_at_matching_dates(value_history, exchange_rate_tuples)
+    exchange_rate_tuples = [(rate.date, rate.value) for rate in exchange_rates]
+    return exchange_rate_tuples
 
 
 class Transaction(models.Model):

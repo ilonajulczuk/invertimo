@@ -10,6 +10,7 @@ from finance.models import (
     Security,
     Transaction,
 )
+import datetime
 
 
 class ExchangeSerializer(serializers.ModelSerializer):
@@ -136,12 +137,14 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer):
     def get_quantities(self, obj):
         from_date = self.context["from_date"]
         to_date = self.context["to_date"]
-        return obj.quantity_history(from_date=from_date, to_date=to_date)
+        return obj.quantity_history(
+            from_date=from_date, to_date=to_date, output_period=datetime.timedelta(days=1)
+        )
 
     def get_values(self, obj):
         from_date = self.context["from_date"]
         to_date = self.context["to_date"]
-        return obj.value_history(from_date, to_date)
+        return obj.value_history(from_date, to_date, output_period=datetime.timedelta(days=1))
 
     def get_values_account_currency(self, obj):
         from_date = self.context["from_date"]
@@ -201,3 +204,50 @@ class AccountSerializer(serializers.ModelSerializer):
             "positions_count",
             "transactions_count",
         ]
+
+class AccountSerializer(serializers.ModelSerializer):
+
+    positions_count = serializers.IntegerField()
+    transactions_count = serializers.IntegerField()
+    currency = CurrencyField()
+
+    class Meta:
+        model = Account
+        fields = [
+            "id",
+            "currency",
+            "nickname",
+            "description",
+            "balance",
+            "last_modified",
+            "positions_count",
+            "transactions_count",
+        ]
+
+
+class AccountWithValuesSerializer(serializers.ModelSerializer):
+
+    positions_count = serializers.IntegerField()
+    transactions_count = serializers.IntegerField()
+    currency = CurrencyField()
+    values = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Account
+        fields = [
+            "id",
+            "currency",
+            "nickname",
+            "description",
+            "balance",
+            "last_modified",
+            "positions_count",
+            "transactions_count",
+            "values",
+        ]
+
+    def get_values(self, obj):
+        from_date = self.context["from_date"]
+        to_date = self.context["to_date"]
+
+        return obj.value_history_per_position(from_date, to_date)

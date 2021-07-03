@@ -420,7 +420,7 @@ class TestPositionDetailView(ViewTestBase, TestCase):
 
 class TestAccountsView(ViewTestBase, TestCase):
     URL = "/api/accounts/"
-    VIEW_NAME = "api-accounts"
+    VIEW_NAME = "account-list"
     DETAIL_VIEW = False
     QUERY_PARAMS = "?"
     UNAUTHENTICATED_CODE = 403
@@ -430,6 +430,26 @@ class TestAccountsView(ViewTestBase, TestCase):
 
         self.isin = "USA123"
         self.account, _, _ = _add_dummy_account_and_security(self.user, isin=self.isin)
+
+
+class TestDetailAccountsView(ViewTestBase, TestCase):
+    URL = "/api/accounts/%s/"
+    VIEW_NAME = "account-detail"
+    DETAIL_VIEW = True
+    QUERY_PARAMS = "?"
+    UNAUTHENTICATED_CODE = 403
+
+    def setUp(self):
+        super().setUp()
+
+        self.isin = "USA123"
+        self.account, _, _ = _add_dummy_account_and_security(self.user, isin=self.isin)
+
+    def get_url(self):
+        return self.URL % self.account.pk
+
+    def get_reversed_url(self):
+        return reverse(self.VIEW_NAME, args=[self.account.pk])
 
 
 class TestTransactionsView(ViewTestBase, TestCase):
