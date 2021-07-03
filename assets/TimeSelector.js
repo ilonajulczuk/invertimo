@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 
-export default class TimeSelector extends React.Component {
+export class TimeSelector extends React.Component {
 
     render() {
         let items = [

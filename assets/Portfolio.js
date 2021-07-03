@@ -1,7 +1,8 @@
 import React from 'react';
 import './portfolio.css';
-import {PositionList} from './PositionList.js';
+import { PositionList } from './PositionList.js';
 import { TransactionList } from './TransactionList.js';
+import { AccountValue } from './AccountValue.js';
 import { APIClient } from './api_utils.js';
 import PropTypes from 'prop-types';
 import {
@@ -10,6 +11,9 @@ import {
     NavLink
 } from "react-router-dom";
 import { toSymbol } from './currencies.js';
+
+
+import { ErrorBoundary } from './error_utils.js';
 
 
 
@@ -133,6 +137,7 @@ export default class Portfolio extends React.Component {
             "positionDetails": new Map(),
             "accounts": [],
             "transactions": [],
+            "accountValues": new Map(),
         };
         this.apiClient = new APIClient('./api');
         this.getPositionDetail = this.getPositionDetail.bind(this);
@@ -159,8 +164,19 @@ export default class Portfolio extends React.Component {
     }
 
     async componentDidMount() {
-        this.apiClient.getAccounts().then(accounts =>
-            this.setState({ "accounts": accounts }));
+        this.apiClient.getAccounts().then(accounts => {
+            this.setState({ "accounts": accounts });
+            accounts.forEach(account => {
+                this.apiClient.getAccountDetail(account.id).then(account => {
+                    let accountValues = this.state.accountValues;
+                    accountValues.set(account.id, account);
+                    this.setState({
+                        "accountValues": accountValues,
+                    });
+                });
+            });
+        }
+        );
         this.apiClient.getPositions().then(
             positions => {
                 this.setState({ "positions": positions });
@@ -172,6 +188,18 @@ export default class Portfolio extends React.Component {
     }
 
     render() {
+
+        let accountValues = this.state.accounts.map((account) => {
+
+            let accountDetail = this.state.accountValues.get(account.id);
+            let values = [];
+            if (accountDetail) {
+                values = accountDetail.values;
+            }
+            return (
+                <AccountValue key={account.id} account={account} positions={this.state.positions} values={values} />
+            );
+        });
         return (
             <div className="main-grid">
                 <nav className="sidenav">
@@ -192,14 +220,22 @@ export default class Portfolio extends React.Component {
                     <Switch>
                         <Route path="/transactions">
                             <h2>Transactions</h2>
-                            <TransactionList transactions={this.state.transactions} accounts={this.state.accounts} />
+                            <ErrorBoundary>
+                                <TransactionList transactions={this.state.transactions} accounts={this.state.accounts} />
+                            </ErrorBoundary>
                         </Route>
                         <Route path="/positions">
-                            <PositionList positions={this.state.positions} accounts={this.state.accounts} getPositionDetail={this.getPositionDetail}/>
+                            <ErrorBoundary>
+                                <PositionList positions={this.state.positions} accounts={this.state.accounts} getPositionDetail={this.getPositionDetail} />
+                            </ErrorBoundary>
                         </Route>
 
                         <Route path="/"><h1>Portfolio</h1>
-                            <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
+                            <ErrorBoundary>
+                                <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
+                                {accountValues}
+                            </ErrorBoundary>
+
                         </Route>
                     </Switch>
                 </div>

@@ -207,6 +207,43 @@ const _ACCOUNT_TRANSACTIONS = [
     "order_id": "5e9d4dd0-6d3a-4ca2-aba5-356ac49e7ab4"
   },
 ];
+
+const _ACCOUNT_DETAIL = {
+  "id": 3,
+  "currency": "EUR",
+  "nickname": "degiro",
+  "description": "",
+  "balance": "-106584.76000",
+  "last_modified": "2021-06-06T16:59:02.458510Z",
+  "positions_count": 30,
+  "transactions_count": 135,
+  "values": [
+    [
+      97,
+      [
+        [
+          "2021-07-02",
+          1307.836692
+        ],
+        [
+          "2021-07-01",
+          1303.817061
+        ],
+        [
+          "2021-06-30",
+          1313.840086
+        ],
+        [
+          "2021-06-29",
+          1330.6698
+        ],
+        [
+          "2021-06-28",
+          1317.04872
+        ],
+      ]]]
+};
+
 jest.mock("./api_utils", () => {
   // Works and lets you check for constructor calls:
   return {
@@ -231,8 +268,11 @@ jest.mock("./api_utils", () => {
           return Promise.resolve(_ACCOUNT_POSITIONS);
         },
         getPositionDetail: () => { },
-        getTransactions: () => {
+        getAccountDetail: () => {
 
+          return Promise.resolve(_ACCOUNT_DETAIL);
+        },
+        getTransactions: () => {
           return Promise.resolve(_ACCOUNT_TRANSACTIONS);
         },
       };

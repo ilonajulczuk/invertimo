@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import './position_list.css';
-import { filterPointsWithNoChange, filterPoints } from './timeseries_utils.js';
-import TimeSelector from './TimeSelector.js';
-import { EmbeddedTransactionList } from './TransactionList.js';
 import PropTypes from 'prop-types';
-import { AreaChartWithCursor, LineChartWithCursor } from './components/charts.js';
 import {
     useParams,
 } from "react-router-dom";
+
+
+import { filterPointsWithNoChange, filterPoints } from './timeseries_utils.js';
+import { TimeSelector } from './TimeSelector.js';
+import { EmbeddedTransactionList } from './TransactionList.js';
+import { AreaChartWithCursor, LineChartWithCursor } from './components/charts.js';
 import { toSymbol } from './currencies';
+
+
+import './position_list.css';
 
 
 function daysFromDurationObject(duration) {
@@ -51,9 +55,7 @@ export function PositionDetail(props) {
     });
 
     let basicData = null;
-    console.log(props.positions);
     for (let position of props.positions) {
-        console.log("inside a loop for props.positions", position.id, positionId, position.id == positionId);
         if (position.id == positionId) {
             basicData = position;
         }
@@ -64,7 +66,6 @@ export function PositionDetail(props) {
 
     let account = props.accounts[0];
     for (let acc of props.accounts) {
-        console.log(basicData, acc);
         if (acc.id == basicData.account) {
             account = acc;
         }
@@ -94,7 +95,7 @@ export function PositionDetail(props) {
             </div>
             <div className="position-values">
                 <div className="column-stack">
-                <span className="card-label">Value as of {basicData.latest_price_date}</span>
+                    <span className="card-label">Value as of {basicData.latest_price_date}</span>
                     <span>
                         {value} {positionCurrency}
                     </span>

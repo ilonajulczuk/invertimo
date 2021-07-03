@@ -37,35 +37,42 @@ export async function fetchAllResults(url) {
 
 
 export class APIClient {
-    constructor(base_url) {
-        this.base_url = base_url;
+    constructor(baseUrl) {
+        this.baseUrl = baseUrl;
     }
 
     async getAccounts() {
-        let url = this.base_url + '/accounts/?limit=50';
+        let url = this.baseUrl + '/accounts/?limit=50';
         let accounts = await fetchAllResults(url);
         return accounts;
     }
 
     async getPositions() {
-        let url = this.base_url + '/positions/?limit=50';
+        let url = this.baseUrl + '/positions/?limit=50';
         let positions = await fetchAllResults(url);
         return positions;
     }
 
     async getTransactions() {
-        let url = this.base_url + '/transactions/?limit=50';
+        let url = this.baseUrl + '/transactions/?limit=50';
         let transactions = await fetchAllResults(url);
         return transactions;
     }
 
     async getPositionDetail(positionId) {
-        let positionsUrl = this.base_url + `/positions/${positionId}/`;
-        let positionDetails = await fetchDetailResult(positionsUrl);
-        const securityId = positionDetails.security.id;
-        let securityUrl = this.base_url + `/securities/${securityId}/prices/`;
+        let positionsUrl = this.baseUrl + `/positions/${positionId}/`;
+        let positionDetail = await fetchDetailResult(positionsUrl);
+        const securityId = positionDetail.security.id;
+        let securityUrl = this.baseUrl + `/securities/${securityId}/prices/`;
         let securityPrices = await fetchDetailResult(securityUrl);
-        positionDetails.prices = securityPrices;
-        return positionDetails;
+        positionDetail.prices = securityPrices;
+        return positionDetail;
+    }
+
+    async getAccountDetail(accountId) {
+        let url = this.baseUrl + `/accounts/${accountId}/`;
+        let accountDetail = await fetchDetailResult(url);
+
+        return accountDetail;
     }
 }
