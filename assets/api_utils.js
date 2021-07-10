@@ -69,8 +69,11 @@ export class APIClient {
         return positionDetail;
     }
 
-    async getAccountDetail(accountId) {
-        let url = this.baseUrl + `/accounts/${accountId}/`;
+    async getAccountDetail(accountId, historyDays) {
+        const startDay = new Date();
+        startDay.setDate(startDay.getDate() - historyDays);
+
+        let url = this.baseUrl + `/accounts/${accountId}/?from_date=${startDay.toISOString().substring(0, 10)}`;
         let accountDetail = await fetchDetailResult(url);
 
         return accountDetail;

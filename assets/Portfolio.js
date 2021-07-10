@@ -167,7 +167,7 @@ export default class Portfolio extends React.Component {
         this.apiClient.getAccounts().then(accounts => {
             this.setState({ "accounts": accounts });
             accounts.forEach(account => {
-                this.apiClient.getAccountDetail(account.id).then(account => {
+                this.apiClient.getAccountDetail(account.id, 4 * 365).then(account => {
                     let accountValues = this.state.accountValues;
                     accountValues.set(account.id, account);
                     this.setState({

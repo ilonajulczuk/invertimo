@@ -225,8 +225,13 @@ class Position(models.Model):
             date__gte=from_date, date__lte=to_date
         )
 
+
         price_tuples = [(price.date, price.value) for price in prices]
 
+        if prices.last().date > from_date:
+            day_before_first_date = prices.last().date - datetime.timedelta(days=1)
+            additional_dates = utils.generate_datetime_intervals(from_date, day_before_first_date, output_period=output_period)
+            price_tuples.extend([(date, 0) for date in additional_dates])
         return multiply_at_matching_dates(price_tuples, quantity_history)
 
     def value_history_in_account_currency(
