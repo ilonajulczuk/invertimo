@@ -3,6 +3,7 @@ import { AreaChart } from './components/AreaChart.js';
 import { TimeSelector, daysFromDurationObject } from './TimeSelector.js';
 import PropTypes from 'prop-types';
 import { useState } from 'react';
+import { ErrorBoundary } from './error_utils.js';
 
 // TODO: add test for this.
 function sortByFirstValue(positions) {
@@ -21,6 +22,24 @@ function sortByFirstValue(positions) {
 
 }
 
+function trimDataUntilDate(timeSeries, date) {
+    // Data is expected from newest to oldest.
+    let trimmedTimeSeries = [];
+    for (let i = 0; i < timeSeries.length; i++) {
+        if (new Date(timeSeries[i][0]) > date) {
+            trimmedTimeSeries.push(timeSeries[i]);
+        } else {
+            break;
+        }
+    }
+    // In case there aren't any values left, leave the first one.
+    if (trimmedTimeSeries.length < 1) {
+        return timeSeries.slice(0, 1);
+    }
+    return trimmedTimeSeries;
+}
+
+
 export function addAcrossDates(rowsOfValues, compareFunc) {
     const NumRows = rowsOfValues.length;
     let indices = new Array(NumRows);
@@ -30,7 +49,8 @@ export function addAcrossDates(rowsOfValues, compareFunc) {
         return [];
     }
     let combinedValues = [];
-    let currentDate = rowsOfValues[0][0][0];
+    const firstRowOfValues = rowsOfValues[0];
+    let currentDate = firstRowOfValues[0][0];
     let currentVal = 0;
 
     let finishedSomeRow = false;
@@ -79,6 +99,8 @@ export function addAcrossDates(rowsOfValues, compareFunc) {
     return combinedValues;
 }
 
+
+
 export function AccountValue(props) {
 
     const [chartTimeSelectorOptionId, setChartTimeSelectorOptionId] = useState(2);
@@ -95,20 +117,17 @@ export function AccountValue(props) {
     const startDay = new Date();
     startDay.setDate(startDay.getDate() - dataDays);
 
-    // TODO: instead of slicing, cut the data at the startDay or otherwise
-    // there is too much data.
-
-    let biggestValues = sortedValues.slice(0, 9);
-    let restOfValues = sortedValues.slice(9, sortedValues.length);
-    restOfValues = restOfValues.map(positionIdAndValues => {
-        return positionIdAndValues[1].slice(0, dataDays);
+    let valuesOfBiggestPositions = sortedValues.slice(0, 9);
+    let valuesOfRemainingPositions = sortedValues.slice(9, sortedValues.length);
+    valuesOfRemainingPositions = valuesOfRemainingPositions.map(positionIdAndValues => {
+        return trimDataUntilDate(positionIdAndValues[1], startDay);
 
     });
 
-    let valuesNivo = biggestValues.map(positionValues => {
+    let values = valuesOfBiggestPositions.map(positionValues => {
         let row = {
             id: positionsMap.get(positionValues[0]).security.symbol,
-            data: positionValues[1].slice(0, dataDays).map(elem => {
+            data: trimDataUntilDate(positionValues[1], startDay).map(elem => {
                 let exactDate = new Date(elem[0]);
                 return {
                     x: exactDate.toLocaleDateString('en-gb'),
@@ -121,9 +140,9 @@ export function AccountValue(props) {
         return row;
     });
 
-    let restValues = addAcrossDates(restOfValues, (a, b) => new Date(b) - new Date(a));
+    let remainingValuesCombined = addAcrossDates(valuesOfRemainingPositions, (a, b) => new Date(b) - new Date(a));
 
-    restValues = restValues.map(elem => {
+    remainingValuesCombined = remainingValuesCombined.map(elem => {
         let exactDate = new Date(elem[0]);
         return {
             x: exactDate.toLocaleDateString('en-gb'),
@@ -131,19 +150,17 @@ export function AccountValue(props) {
         };
     });
 
-    if (restValues.length > 0) {
-        valuesNivo.unshift(
+    if (remainingValuesCombined.length > 0) {
+        values.unshift(
             {
                 id: "Other positions combined",
-                data: restValues,
+                data: remainingValuesCombined,
             }
         );
     }
 
-
-    if (valuesNivo.length > 0) {
+    if (values.length > 0) {
         return (<div>
-            <h2>Hello!</h2>
 
             <div className="position-card-charts-header">
                 <h3>Charts</h3>
@@ -151,7 +168,10 @@ export function AccountValue(props) {
             </div>
 
             <div style={{ height: 600 }}>
-                <AreaChart data={valuesNivo} startDay={startDay} />
+                <ErrorBoundary>
+
+                    <AreaChart data={values}/>
+                </ErrorBoundary>
             </div>
         </div>);
     } else {
