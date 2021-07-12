@@ -63,7 +63,12 @@ class Account(models.Model):
     def value_history_per_position(self, from_date, to_date):
         results = []
         for position in self.positions.all():
-            results.append((position.pk, position.value_history_in_account_currency(from_date, to_date)))
+            results.append(
+                (
+                    position.pk,
+                    position.value_history_in_account_currency(from_date, to_date),
+                )
+            )
         return results
 
 
@@ -224,21 +229,23 @@ class Position(models.Model):
         prices = self.security.pricehistory_set.order_by("-date").filter(
             date__gte=from_date, date__lte=to_date
         )
-
-
         price_tuples = [(price.date, price.value) for price in prices]
 
-        if prices.last().date > from_date:
-            day_before_first_date = prices.last().date - datetime.timedelta(days=1)
-            additional_dates = utils.generate_datetime_intervals(from_date, day_before_first_date, output_period=output_period)
-            price_tuples.extend([(date, 0) for date in additional_dates])
+        first_price = prices.last()
+        if isinstance(first_price, PriceHistory):
+            if first_price.date > from_date:
+                day_before_first_date = first_price.date - datetime.timedelta(days=1)
+                additional_dates = utils.generate_date_intervals(
+                    from_date, day_before_first_date, output_period=output_period
+                )
+                price_tuples.extend([(date, decimal.Decimal('0')) for date in additional_dates])
         return multiply_at_matching_dates(price_tuples, quantity_history)
 
     def value_history_in_account_currency(
         self,
-        from_date,
-        to_date=None,
-        output_period=datetime.timedelta(days=1),
+        from_date: datetime.date,
+        to_date: Optional[datetime.date] = None,
+        output_period: datetime.timedelta = datetime.timedelta(days=1),
     ):
         to_currency = self.account.currency
         from_currency = self.security.currency
@@ -249,17 +256,20 @@ class Position(models.Model):
         if to_currency == from_currency:
             return value_history
 
-        exchange_rate_tuples = get_exchange_rates(from_date, to_date, from_currency, to_currency)
+        exchange_rate_tuples = get_exchange_rates(
+            from_date, to_date, from_currency, to_currency
+        )
         return multiply_at_matching_dates(value_history, exchange_rate_tuples)
+
 
 @functools.lru_cache
 def get_exchange_rates(from_date, to_date, from_currency, to_currency):
     exchange_rates = CurrencyExchangeRate.objects.order_by("-date").filter(
-            date__gte=from_date,
-            date__lte=to_date,
-            from_currency=from_currency,
-            to_currency=to_currency,
-        )
+        date__gte=from_date,
+        date__lte=to_date,
+        from_currency=from_currency,
+        to_currency=to_currency,
+    )
     exchange_rate_tuples = [(rate.date, rate.value) for rate in exchange_rates]
     return exchange_rate_tuples
 
