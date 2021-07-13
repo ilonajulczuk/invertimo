@@ -2,6 +2,25 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 
+
+export function daysFromDurationObject(duration) {
+    if (duration == null) {
+        return null;
+    }
+    let totalDays = 0;
+    if (duration.days) {
+
+        totalDays += duration.days;
+    }
+    if (duration.months) {
+        totalDays += duration.months * 31;
+    }
+    if (duration.years) {
+        totalDays += duration.years * 365;
+    }
+    return totalDays;
+}
+
 export class TimeSelector extends React.Component {
 
     render() {

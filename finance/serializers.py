@@ -11,9 +11,10 @@ from finance.models import (
     Transaction,
 )
 import datetime
+from typing import Any
 
 
-class ExchangeSerializer(serializers.ModelSerializer):
+class ExchangeSerializer(serializers.ModelSerializer[Exchange]):
     class Meta:
         model = Exchange
         fields = ["id", "name"]
@@ -24,7 +25,7 @@ class CurrencyField(serializers.IntegerField):
         return models.currency_string_from_enum(value)
 
 
-class SecuritySerializer(serializers.ModelSerializer):
+class SecuritySerializer(serializers.ModelSerializer[Security]):
     exchange = ExchangeSerializer()
     currency = CurrencyField()
 
@@ -33,7 +34,7 @@ class SecuritySerializer(serializers.ModelSerializer):
         fields = ["id", "isin", "symbol", "name", "exchange", "currency", "country"]
 
 
-class PositionSerializer(serializers.ModelSerializer):
+class PositionSerializer(serializers.ModelSerializer[Position]):
     security = SecuritySerializer()
     latest_price = serializers.DecimalField(max_digits=20, decimal_places=2)
     latest_exchange_rate = serializers.DecimalField(max_digits=20, decimal_places=8)
@@ -52,7 +53,7 @@ class PositionSerializer(serializers.ModelSerializer):
         ]
 
 
-class EmbeddedPositionSerializer(serializers.ModelSerializer):
+class EmbeddedPositionSerializer(serializers.ModelSerializer[Position]):
     security = SecuritySerializer()
 
     class Meta:
@@ -65,7 +66,7 @@ class EmbeddedPositionSerializer(serializers.ModelSerializer):
         ]
 
 
-class EmbeddedTransactionSerializer(serializers.ModelSerializer):
+class EmbeddedTransactionSerializer(serializers.ModelSerializer[Transaction]):
     quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
     price = serializers.DecimalField(max_digits=20, decimal_places=2)
     transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
@@ -84,7 +85,7 @@ class EmbeddedTransactionSerializer(serializers.ModelSerializer):
         ]
 
 
-class TransactionSerializer(serializers.ModelSerializer):
+class TransactionSerializer(serializers.ModelSerializer[Transaction]):
     quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
     price = serializers.DecimalField(max_digits=20, decimal_places=2)
     position = EmbeddedPositionSerializer()
@@ -114,7 +115,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         ]
 
 
-class PositionWithQuantitiesSerializer(serializers.ModelSerializer):
+class PositionWithQuantitiesSerializer(serializers.ModelSerializer[Position]):
     security = SecuritySerializer()
     quantities = serializers.SerializerMethodField()
     values = serializers.SerializerMethodField()
@@ -138,13 +139,17 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer):
         from_date = self.context["from_date"]
         to_date = self.context["to_date"]
         return obj.quantity_history(
-            from_date=from_date, to_date=to_date, output_period=datetime.timedelta(days=1)
+            from_date=from_date,
+            to_date=to_date,
+            output_period=datetime.timedelta(days=1),
         )
 
     def get_values(self, obj):
         from_date = self.context["from_date"]
         to_date = self.context["to_date"]
-        return obj.value_history(from_date, to_date, output_period=datetime.timedelta(days=1))
+        return obj.value_history(
+            from_date, to_date, output_period=datetime.timedelta(days=1)
+        )
 
     def get_values_account_currency(self, obj):
         from_date = self.context["from_date"]
@@ -152,19 +157,19 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer):
         return obj.value_history_in_account_currency(from_date, to_date)
 
 
-class CurrencyExchangeRateSerializer(serializers.ModelSerializer):
+class CurrencyExchangeRateSerializer(serializers.ModelSerializer[CurrencyExchangeRate]):
     class Meta:
         model = CurrencyExchangeRate
         fields = ["date", "value"]
 
 
-class SecurityPriceHistorySerializer(serializers.ModelSerializer):
+class SecurityPriceHistorySerializer(serializers.ModelSerializer[PriceHistory]):
     class Meta:
         model = PriceHistory
         fields = ["date", "value"]
 
 
-class FromToDatesSerializer(serializers.Serializer):
+class FromToDatesSerializer(serializers.Serializer[Any]):
     from_date = serializers.DateField(required=False)
     to_date = serializers.DateField(required=False)
 
@@ -186,26 +191,7 @@ class CurrencyQuerySerializer(FromToDatesSerializer):
             raise serializers.ValidationError(f"{value} is not a valid currency symbol")
 
 
-class AccountSerializer(serializers.ModelSerializer):
-
-    positions_count = serializers.IntegerField()
-    transactions_count = serializers.IntegerField()
-    currency = CurrencyField()
-
-    class Meta:
-        model = Account
-        fields = [
-            "id",
-            "currency",
-            "nickname",
-            "description",
-            "balance",
-            "last_modified",
-            "positions_count",
-            "transactions_count",
-        ]
-
-class AccountSerializer(serializers.ModelSerializer):
+class AccountSerializer(serializers.ModelSerializer[Account]):
 
     positions_count = serializers.IntegerField()
     transactions_count = serializers.IntegerField()
@@ -225,7 +211,7 @@ class AccountSerializer(serializers.ModelSerializer):
         ]
 
 
-class AccountWithValuesSerializer(serializers.ModelSerializer):
+class AccountWithValuesSerializer(serializers.ModelSerializer[Account]):
 
     positions_count = serializers.IntegerField()
     transactions_count = serializers.IntegerField()

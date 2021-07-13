@@ -6,7 +6,7 @@ import {
 
 
 import { filterPointsWithNoChange, filterPoints } from './timeseries_utils.js';
-import { TimeSelector } from './TimeSelector.js';
+import { TimeSelector, daysFromDurationObject } from './TimeSelector.js';
 import { EmbeddedTransactionList } from './TransactionList.js';
 import { AreaChartWithCursor, LineChartWithCursor } from './components/charts.js';
 import { toSymbol } from './currencies';
@@ -15,23 +15,6 @@ import { toSymbol } from './currencies';
 import './position_list.css';
 
 
-function daysFromDurationObject(duration) {
-    if (duration == null) {
-        return null;
-    }
-    let totalDays = 0;
-    if (duration.days) {
-
-        totalDays += duration.days;
-    }
-    if (duration.months) {
-        totalDays += duration.months * 31;
-    }
-    if (duration.years) {
-        totalDays += duration.years * 365;
-    }
-    return totalDays;
-}
 
 export function PositionDetail(props) {
 

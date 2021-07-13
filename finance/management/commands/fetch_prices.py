@@ -17,5 +17,6 @@ class Command(BaseCommand):
         self.stdout.write(f'Will fetch prices for {securities.count()} securities')
 
         for security in securities:
-            prices.collect_prices(security)
-            self.stdout.write(self.style.SUCCESS(f'Collected prices for {security}'))
+            price_records = prices.collect_prices(security)
+            self.stdout.write(self.style.SUCCESS(
+                f'Collected {len(price_records)} prices for {security}'))

@@ -3,6 +3,7 @@ from django.conf import settings
 from finance import models
 import logging
 
+logger = logging.getLogger(__name__)
 
 symbol_to_currency_pair = {
     "USDEUR": {
@@ -71,7 +72,7 @@ def collect_exchange_rates():
         try:
             records = r.json()
         except Exception as e:
-            logging.error("failed fetching %s, because of %s", symbol, e)
+            logger.error("failed fetching %s, because of %s", symbol, e)
 
         for record in records:
             if divide_by_hundred:
@@ -105,8 +106,9 @@ def collect_prices(security):
     try:
         records = r.json()
     except Exception as e:
-        logging.error("failed fetching %s, because of %s", symbol, e)
+        logger.error("failed fetching %s, because of %s", symbol, e)
     prices = []
+    logger.info("Number of new price records: %s", len(records))
     for record in records:
         price, _ = models.PriceHistory.objects.get_or_create(
             date=record["date"],

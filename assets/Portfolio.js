@@ -106,9 +106,9 @@ export class PortfolioOverview extends React.Component {
                 <div className="card">
                     <span className="card-label">Assets</span>
                     <p>
-                        {positionsCount} <a href="">Positions</a> in {accounts.length}  <a href=""> {accounts.length > 1 ? "Accounts" : "Account"}</a>
+                        {positionsCount} <a href="#/positions">Positions</a> in {accounts.length}  <a href=""> {accounts.length > 1 ? "Accounts" : "Account"}</a>
                     </p>
-                    <a className="button">See all Positions</a>
+                    <a className="button" href="/#positions">See all Positions</a>
                     <a className="button">Manage accounts</a>
                 </div>
                 <div className="card">
@@ -167,7 +167,7 @@ export default class Portfolio extends React.Component {
         this.apiClient.getAccounts().then(accounts => {
             this.setState({ "accounts": accounts });
             accounts.forEach(account => {
-                this.apiClient.getAccountDetail(account.id).then(account => {
+                this.apiClient.getAccountDetail(account.id, 4 * 365).then(account => {
                     let accountValues = this.state.accountValues;
                     accountValues.set(account.id, account);
                     this.setState({
@@ -208,10 +208,10 @@ export default class Portfolio extends React.Component {
                             <NavLink to="/" exact={true}>Home</NavLink>
                         </li>
                         <li>
-                            <NavLink to="/transactions">Transactions</NavLink>
+                            <NavLink to="/positions">Positions</NavLink>
                         </li>
                         <li>
-                            <NavLink to="/positions">Positions</NavLink>
+                            <NavLink to="/transactions">Transactions</NavLink>
                         </li>
                     </ul>
                 </nav>

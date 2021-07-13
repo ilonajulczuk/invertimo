@@ -1,7 +1,7 @@
 import datetime
 
 import pytz
-from django.db.models import Count, Sum, Subquery, OuterRef
+from django.db.models import Count, Sum, Subquery, OuterRef, QuerySet
 from django.shortcuts import get_object_or_404, render
 from rest_framework import exceptions, generics, permissions, viewsets, mixins
 from rest_framework.pagination import LimitOffsetPagination
@@ -31,7 +31,7 @@ class AccountsViewSet(
     pagination_class = LimitOffsetPagination
     basename = "account"
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Account]:
         assert isinstance(self.request.user, User)
         queryset = models.Account.objects.filter(user=self.request.user).annotate(
             positions_count=Count("positions", distinct=True),
@@ -39,7 +39,7 @@ class AccountsViewSet(
         )
         return queryset
 
-    def get_serializer_context(self):
+    def get_serializer_context(self) ->  Dict[str, Any]:
         context: Dict[str, Any] = super().get_serializer_context()
         query = FromToDatesSerializer(data=self.request.query_params)
 

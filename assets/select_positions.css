@@ -1,0 +1,13 @@
+.select-positions-li {
+    display: flex;
+    padding: 10px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.display-flex {
+    display: flex;
+    flex-wrap: wrap;
+}
