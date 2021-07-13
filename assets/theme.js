@@ -1,7 +1,7 @@
 import React from 'react';
 
 import PropTypes from 'prop-types';
-import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+import { ThemeProvider, createTheme } from '@material-ui/core/styles';
 
 
 export const themeOptions = {
@@ -39,7 +39,7 @@ export const themeOptions = {
 
 export function MyThemeProvider(props) {
     return (
-        <ThemeProvider theme={createMuiTheme(themeOptions)} {...props}>
+        <ThemeProvider theme={createTheme(themeOptions)} {...props}>
             {props.children}
         </ThemeProvider>
     );

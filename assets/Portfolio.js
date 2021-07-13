@@ -208,10 +208,10 @@ export default class Portfolio extends React.Component {
                             <NavLink to="/" exact={true}>Home</NavLink>
                         </li>
                         <li>
-                            <NavLink to="/transactions">Transactions</NavLink>
+                            <NavLink to="/positions">Positions</NavLink>
                         </li>
                         <li>
-                            <NavLink to="/positions">Positions</NavLink>
+                            <NavLink to="/transactions">Transactions</NavLink>
                         </li>
                     </ul>
                 </nav>

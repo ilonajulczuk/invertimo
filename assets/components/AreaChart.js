@@ -8,7 +8,7 @@ export const AreaChart = ({ data }) => {
 
     return (<ResponsiveLine
         data={data}
-        margin={{ top: 100, right: 110, bottom: 100, left: 80 }}
+        margin={{ top: 40, right: 110, bottom: 40, left: 60 }}
 
         xScale={{
             type: 'time',
@@ -23,7 +23,6 @@ export const AreaChart = ({ data }) => {
         axisRight={null}
         enablePoints={false}
         enableSlices="x"
-        areaOpacity={0.9}
         axisBottom={{
             format: '%b %d',
             legendOffset: 32,
@@ -34,11 +33,10 @@ export const AreaChart = ({ data }) => {
             tickSize: 5,
             tickPadding: 5,
             tickRotation: 0,
-            legend: 'Value',
             legendOffset: -60,
             legendPosition: 'middle'
         }}
-        colors={{ scheme: 'category10' }}
+        colors={{ datum: 'color' }}
         pointColor={{ theme: 'background' }}
         pointBorderWidth={2}
         pointBorderColor={{ from: 'serieColor' }}
@@ -46,7 +44,6 @@ export const AreaChart = ({ data }) => {
         useMesh={true}
         sliceTooltip={({ slice }) => {
 
-            const total = Math.round(slice.points.reduce((previous, current) => previous + current.data.y, 0) * 100) / 100;
             const date = slice.points[0].data.x;
             return (
                 <div
@@ -57,16 +54,16 @@ export const AreaChart = ({ data }) => {
                     }}
                 >
                     <h3>At {date.toISOString().slice(0, 10)}</h3>
-                    <div><strong>Total</strong>: {total}</div>
                     {slice.points.map(point => (
                         <div
                             key={point.id}
                             style={{
-                                color: point.serieColor,
                                 padding: '3px 0',
                             }}
                         >
-                            <strong>{point.serieId}</strong>: {point.data.yFormatted}
+                            <span style={{
+                                color: point.serieColor
+                            }}>#</span><strong>{point.serieId}</strong>: {point.data.yFormatted}
                         </div>
                     ))}
                 </div>

@@ -2,32 +2,7 @@ import React from 'react';
 import { VictoryStack, VictoryLine, VictoryChart, VictoryArea, VictoryCursorContainer, VictoryAxis } from 'victory';
 import { findClosestValue } from '../timeseries_utils.js';
 import PropTypes from 'prop-types';
-import * as d3 from 'd3-scale-chromatic';
-
-
-
-function calculatePoint(i, intervalSize, colorRangeInfo) {
-    let { colorStart, colorEnd, useEndAsStart } = colorRangeInfo;
-    return (useEndAsStart
-        ? (colorEnd - (i * intervalSize))
-        : (colorStart + (i * intervalSize)));
-}
-
-/* Must use an interpolated color scale, which has a range of [0, 1] */
-function interpolateColors(dataLength, colorScale, colorRangeInfo) {
-    let { colorStart, colorEnd } = colorRangeInfo;
-    let colorRange = colorEnd - colorStart;
-    let intervalSize = colorRange / dataLength;
-    let i, colorPoint;
-    let colorArray = [];
-
-    for (i = 0; i < dataLength; i++) {
-        colorPoint = calculatePoint(i, intervalSize, colorRangeInfo);
-        colorArray.push(colorScale(colorPoint));
-    }
-
-    return colorArray;
-}
+import { generateColors } from '../colors.js';
 
 
 
@@ -78,17 +53,8 @@ AreaChartWithCursor.propTypes = {
 
 export function AreChartWithMultipleDatasetsAndCursor(props) {
 
-
-    const colorRangeInfo = {
-        colorStart: 0,
-        colorEnd: 1,
-        useEndAsStart: false,
-    };
-
-    let colorScale = d3.interpolateSpectral;
-
     const dataLength = props.datasets.length;
-    let COLORS = interpolateColors(dataLength, colorScale, colorRangeInfo);
+    let COLORS = generateColors(dataLength);
 
     let areas = [];
     let events = [];
