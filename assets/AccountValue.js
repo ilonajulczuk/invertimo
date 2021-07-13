@@ -5,8 +5,12 @@ import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { ErrorBoundary } from './error_utils.js';
 import { SelectPositions } from './SelectPositions.js';
+import './account_value.css';
 
+import { toSymbol } from './currencies.js';
 import { generateColors } from './colors.js';
+
+
 // TODO: add test for this.
 function sortByFirstValue(positions) {
 
@@ -185,14 +189,20 @@ export function AccountValue(props) {
         let selectedPositions = valuesOfBiggestPositions.map(
             positionIdAndValues => positionsMap.get(positionIdAndValues[0]));
 
+        let positionPercentages = valuesOfBiggestPositions.map(values => {
+
+            return Math.round(
+                values[1][0][1] * 100 * 100 / allValuesCombined[0].y) / 100;
+        });
+        let accountCurrency = toSymbol(props.account.currency);
+
         return (<div className="account-value-charts">
-
+            <h2>Account &gt; <a href="#">{props.account.nickname}</a></h2>
             <div className="position-card-charts-header">
-                <h2>Portfolio Value and Top Positions over time</h2>
-
+                <h3>Portfolio value and top positions over time ({accountCurrency})</h3>
             </div>
 
-            <div style={{ height: 400 }}>
+            <div className="account-value-data-chart">
                 <ErrorBoundary>
                     <AreaChart data={values} />
                 </ErrorBoundary>
@@ -200,7 +210,7 @@ export function AccountValue(props) {
             <div>
                 <TimeSelector activeId={chartTimeSelectorOptionId} onClick={handleChartTimeSelectorChange} />
             </div>
-            <SelectPositions positions={selectedPositions} colors={COLORS} />
+            <SelectPositions positions={selectedPositions} colors={COLORS} positionPercentages={positionPercentages} />
         </div>);
     } else {
         return <div>Loading...</div>;

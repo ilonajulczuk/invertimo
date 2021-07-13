@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 import { generateColors } from '../colors.js';
 
 
-
 export class AreaChartWithCursor extends React.Component {
 
     render() {

@@ -106,9 +106,9 @@ export class PortfolioOverview extends React.Component {
                 <div className="card">
                     <span className="card-label">Assets</span>
                     <p>
-                        {positionsCount} <a href="">Positions</a> in {accounts.length}  <a href=""> {accounts.length > 1 ? "Accounts" : "Account"}</a>
+                        {positionsCount} <a href="#/positions">Positions</a> in {accounts.length}  <a href=""> {accounts.length > 1 ? "Accounts" : "Account"}</a>
                     </p>
-                    <a className="button">See all Positions</a>
+                    <a className="button" href="/#positions">See all Positions</a>
                     <a className="button">Manage accounts</a>
                 </div>
                 <div className="card">
