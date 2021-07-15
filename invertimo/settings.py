@@ -12,7 +12,9 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from pathlib import Path
 from invertimo.secrets import *
+from invertimo import secrets
 from typing import List
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,7 +28,7 @@ SECRET_KEY = "django-insecure-one@)zg@c$lf5z3@fy!o#pnhg(85o9bvu-r0w=0380ip6=h!h(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS : List[str] = []
+ALLOWED_HOSTS: List[str] = []
 
 
 # Application definition
@@ -42,6 +44,7 @@ INSTALLED_APPS = [
     "debug_toolbar",
     "finance.apps.FinanceConfig",
     "rest_framework",
+    "social_django",
 ]
 
 MIDDLEWARE = [
@@ -54,6 +57,20 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
+
+AUTHENTICATION_BACKENDS = (
+    "social_core.backends.google.GoogleOAuth2",
+    "django.contrib.auth.backends.ModelBackend",
+)
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = secrets.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = secrets.SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET
+
+# https://python-social-auth.readthedocs.io/en/latest/configuration/settings.html#urls-options
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/"
+LOGIN_URL = "/login/"
+SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {"prompt": "select_account"}
+
 
 ROOT_URLCONF = "invertimo.urls"
 
@@ -153,21 +170,21 @@ SITENAME = "invertimo.com"
 STATIC_ROOT = f"/var/www/{SITENAME}/static/"
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
         },
-        '': {
-            'handlers': ['console'],
-            'level': 'INFO',
+        "": {
+            "handlers": ["console"],
+            "level": "INFO",
         },
     },
 }

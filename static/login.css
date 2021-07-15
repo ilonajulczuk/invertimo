@@ -1,0 +1,98 @@
+.login-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #fcfcfc;
+    margin-bottom: 20px;
+    -webkit-column-break-inside: avoid;
+    padding: 24px;
+    border: 1px solid #d5d7d7;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.google-btn {
+    display: flex;
+    width: auto;
+    height: 42px;
+    background-color: #4285f4;
+    border-radius: 2px;
+    box-shadow: 0 3px 4px 0 rgba(0, 0, 0, .25);
+    margin-top: 1.2em;
+    margin-bottom: 1.2em;
+    text-align: start;
+}
+
+
+.google-btn a {
+    color: #fff;
+}
+
+.google-btn a:link {
+    text-decoration: none;
+}
+
+.google-btn a:visited {
+    text-decoration: none;
+}
+
+.google-btn :hover {
+    box-shadow: 0 0 6px #4285f4;
+}
+
+.google-btn :active {
+    background: #1669F2;
+}
+
+.google-icon-wrapper {
+    margin-right: 5px;
+    margin-top: 1px;
+    margin-left: 1px;
+    width: 40px;
+    height: 40px;
+    border-radius: 2px;
+    background-color: #fff;
+}
+
+.google-icon {
+    position: absolute;
+    margin-top: 11px;
+    margin-left: 11px;
+    width: 18px;
+    height: 18px;
+}
+
+.btn-text {
+    color: #fff;
+    font-size: 16px;
+    letter-spacing: 0.2px;
+    font-family: "Roboto";
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-right: 20px;
+    padding-left: 20px;
+    display: inline-block;
+}
+
+.main-login {
+    margin: 20px;
+    margin-top: 3em;
+}
+
+@media only screen and (min-width: 600px) {
+    .main-login {
+        width: 40%;
+        margin: auto;
+        margin-top: 5em;
+    }
+}
+
+@media only screen and (min-width: 1200px) {
+
+    .main {
+        width: 1000px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Invertimo</title>
     <link rel="stylesheet" href="{% static 'base.css' %}?version=1">
+    <link rel="stylesheet" href="{% static 'base_internal.css' %}?version=1">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     {% block more_head %}
     {% endblock %}
@@ -13,18 +14,6 @@
 
 <body>
     <div class="grid-container">
-        <div class="header">
-            <div class="header-wrapper">
-                <div class="logo">invertimo</div>
-
-                <ul class="navigation">
-                    <li><a href="{% url 'login' %}">Log In</a></li>
-                    <li><a href="{% url 'signup' %}" class="button button-cta">Sign Up</a></li>
-                </ul>
-            </div>
-
-        </div>
-        <div class="sidebar"></div>
         <div class="main">
 
             {% block content %}

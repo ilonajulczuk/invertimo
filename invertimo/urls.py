@@ -30,12 +30,13 @@ from rest_framework import routers
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 router = routers.DefaultRouter()
-router.register(r'transactions', TransactionsViewSet, basename='transaction')
-router.register(r'accounts', AccountsViewSet, basename='account')
+router.register(r"transactions", TransactionsViewSet, basename="transaction")
+router.register(r"accounts", AccountsViewSet, basename="account")
 urlpatterns = [
     path("", views.index_view, name="index"),
     path("admin/", admin.site.urls),
     path("login/", views.login_view, name="login"),
+    path("signup/", views.login_view, name="signup"),
     path("privacy_policy/", views.privacy_policy_view, name="privacy_policy"),
     path("logout/", views.logout_view, name="logout"),
     path("__debug__/", include(debug_toolbar.urls)),
@@ -49,6 +50,7 @@ urlpatterns = [
         SecurityPricesView.as_view(),
         name="api-securities",
     ),
+    path("", include("social_django.urls", namespace="social")),
 ]
 
 

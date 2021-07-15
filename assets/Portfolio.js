@@ -202,6 +202,10 @@ export default class Portfolio extends React.Component {
         });
         return (
             <div className="main-grid">
+                <header className="main-header"> <div className="logo">invertimo</div>
+
+                <a href="/logout">Log Out</a>
+                </header>
                 <nav className="sidenav">
                     <ul>
                         <li>

@@ -15,6 +15,18 @@ body {
     font: 16px/1.3 Open Sans, sans-serif;
 }
 
+.logo {
+    font-size: 30px;
+    letter-spacing: 4px;
+    font-weight: normal;
+}
+
+
+.navigation a {
+    display: inline-block;
+    text-decoration: none;
+}
+
 * {
     box-sizing: border-box;
 }
@@ -88,21 +100,22 @@ h1, h2, h3, h4, h5 {
 }
 
 .header {
-    grid-area: 'header';
-    background: #1b98a1;
+    grid-area: header;
+    /* background: #1b98a1; */
 }
 
 .header-wrapper {
     display: flex;
     height: 100%;
     flex-direction: column;
-    align-items: center;
+    align-items: baseline;
     justify-content: space-between;
     padding-left: 1em;
     padding-right: 1em;
     font-family: comfortaa;
     font-size: 1.1rem;
     font-weight: bold;
+    color: #1b98a1;
 }
 
 a, a:hover {
@@ -110,14 +123,14 @@ a, a:hover {
 }
 
 .main {
-    grid-area: 'main';
+    grid-area: main;
     color: #404747;
     padding: 1em;
     height: 100%;
 }
 
 .footer {
-    grid-area: 'footer';
+    grid-area: footer;
     background: #40494d;
     text-align: center;
     display: flex;
@@ -131,6 +144,7 @@ a, a:hover {
 
 .navigation {
     display: flex;
+    align-items: baseline;
 }
 
 .logo {
@@ -173,26 +187,15 @@ ul.features {
 
 @media only screen and (min-width: 350px) {
     .grid-container {
-        grid-template-rows: 60px 1fr 120px;
+        grid-template-rows: 100px 1fr 120px;
     }
     .header-wrapper {
         flex-direction: row;
     }
 }
 
-.main-grid {
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    grid-template-areas: "sidenav main-content";
-}
 
-.sidenav {
-    padding: 5px;
-    position: fixed;
-    grid-area: sidenav;
-    height: 100%;
-    width: 200px;
-}
+
 .main-content {
     grid-area: main-content;
 }
@@ -201,6 +204,7 @@ nav a {
     display: block;
     margin-bottom: 0.5em;
 }
+
 nav a.active {
     position: relative;
 }
@@ -215,7 +219,6 @@ nav a.active::before {
     z-index: -1;
 }
 
-
 @media only screen and (min-width: 1200px) {
     .header-wrapper {
         width: 80%;
@@ -225,7 +228,6 @@ nav a.active::before {
         width: 80%;
         margin: auto;
     }
-
     ul.features {
         list-style-type: none;
         margin: 0;

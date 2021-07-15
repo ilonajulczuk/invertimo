@@ -1,0 +1,16 @@
+.grid-container {
+    grid-template-rows: 1fr 120px;
+    grid-template-areas: 'main' 'footer';
+}
+
+
+.main-grid {
+    display: grid;
+    grid-template-rows: 80px 1fr;
+    grid-template-columns: 200px 1fr;
+    grid-template-areas: "header header" "sidenav main-content";
+}
+
+.main {
+    padding-top: 0;
+}
