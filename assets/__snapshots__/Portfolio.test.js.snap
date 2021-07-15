@@ -11,7 +11,7 @@ exports[`portfolio tests shows portfolio overview with one account 1`] = `
     </ul>
   </div>
   <div class=\\"card\\"><span class=\\"card-label\\">Assets</span>
-    <p>3 <a href=\\"\\">Positions</a> in 1 <a href=\\"\\"> Account</a></p><a class=\\"button\\">See all Positions</a><a class=\\"button\\">Manage accounts</a>
+    <p>3 <a href=\\"#/positions\\">Positions</a> in 1 <a href=\\"\\"> Account</a></p><a class=\\"button\\" href=\\"/#positions\\">See all Positions</a><a class=\\"button\\">Manage accounts</a>
   </div>
   <div class=\\"card\\"><span class=\\"card-label\\">Events</span>
     <div>15 <a href=\\"\\">Transactions</a></div>
@@ -37,7 +37,7 @@ exports[`portfolio tests shows portfolio overview with two accounts 1`] = `
     </ul>
   </div>
   <div class=\\"card\\"><span class=\\"card-label\\">Assets</span>
-    <p>5 <a href=\\"\\">Positions</a> in 2 <a href=\\"\\"> Accounts</a></p><a class=\\"button\\">See all Positions</a><a class=\\"button\\">Manage accounts</a>
+    <p>5 <a href=\\"#/positions\\">Positions</a> in 2 <a href=\\"\\"> Accounts</a></p><a class=\\"button\\" href=\\"/#positions\\">See all Positions</a><a class=\\"button\\">Manage accounts</a>
   </div>
   <div class=\\"card\\"><span class=\\"card-label\\">Events</span>
     <div>20 <a href=\\"\\">Transactions</a></div>
@@ -50,7 +50,7 @@ exports[`portfolio tests shows portfolio overview without any accounts 1`] = `
 "<div class=\\"portfolio-overview\\">
   <div class=\\"portfolio-overview-card card\\"><span class=\\"card-label\\">At a glance</span></div>
   <div class=\\"card\\"><span class=\\"card-label\\">Assets</span>
-    <p>0 <a href=\\"\\">Positions</a> in 0 <a href=\\"\\"> Account</a></p><a class=\\"button\\">See all Positions</a><a class=\\"button\\">Manage accounts</a>
+    <p>0 <a href=\\"#/positions\\">Positions</a> in 0 <a href=\\"\\"> Account</a></p><a class=\\"button\\" href=\\"/#positions\\">See all Positions</a><a class=\\"button\\">Manage accounts</a>
   </div>
   <div class=\\"card\\"><span class=\\"card-label\\">Events</span>
     <div>0 <a href=\\"\\">Transactions</a></div>
