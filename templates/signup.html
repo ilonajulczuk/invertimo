@@ -10,10 +10,8 @@
 <div class="main-login">
 
     <div class="login-card">
-        <h2>Welcome to invertimo</h2>
-        <p>
-            Let's see how your investments are doing...
-        </p>
+        <h2>Let's get you set up!</h2>
+        <p>Your account will be created when you sign in for the first time.</p>
         <a href='{% url "social:begin" "google-oauth2" %}' class="google-btn">
             <div class="google-icon-wrapper">
                 <img class="google-icon"
@@ -24,7 +22,11 @@
                 Google
             </span>
             </a>
+
         </div>
+
+        <p>By signing in you are agreeing to the <a href="{% url 'privacy_policy' %}" target="_blank">privacy
+            policy</a>.</p>
     </div>
 </div>
 

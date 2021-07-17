@@ -12,5 +12,9 @@
 }
 
 .main {
-    padding-top: 0;
+    padding: 0;
+}
+
+.button {
+    padding: 10px;
 }

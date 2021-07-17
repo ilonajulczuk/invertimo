@@ -23,33 +23,12 @@ h1 {
 }
 
 .sidenav {
-    padding: 5px;
+    padding: 20px;
+    margin-top: 5em;
     position: fixed;
     grid-area: sidenav;
     height: 100%;
     width: 200px;
-}
-
-header {
-    grid-area: header;
-    border-bottom: 4px solid #1b98a1;
-    margin-bottom: 1em;
-    font-size: 20px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: baseline;
-}
-
-.logo {
-    font-size: 20px;
-}
-.main-grid header a {
-    font-weight: normal;
-}
-
-.sidenav {
-    padding-top: 5em;
 }
 
 .sidenav a {
@@ -59,6 +38,29 @@ header {
 .sidenav>ul {
     padding-left: 10px;
     border-left: 4px solid #1b98a147;
+}
+
+header {
+    grid-area: header;
+    border-bottom: 2px solid #1b98a1;
+    margin-bottom: 1em;
+    padding-left: 20px;
+    padding-right: 20px;
+    font-size: 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+    box-shadow: #d0d8d7 3px 3px 5px 2px;
+}
+
+.main-grid a.logo {
+    font-size: 20px;
+    color: black;
+}
+
+.main-grid header a {
+    font-weight: normal;
 }
 
 .card {
@@ -77,7 +79,7 @@ header {
 }
 
 .main-grid a {
-    color: #1b98a1;
+    color: #09666d;
     font-weight: bold;
     text-decoration: none;
 }

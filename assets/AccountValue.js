@@ -195,7 +195,6 @@ export function AccountValue(props) {
                 values[1][0][1] * 100 * 100 / allValuesCombined[0].y) / 100;
         });
         let accountCurrency = toSymbol(props.account.currency);
-
         return (<div className="account-value-charts">
             <h2>Account &gt; <a href="#">{props.account.nickname}</a></h2>
             <div className="position-card-charts-header">

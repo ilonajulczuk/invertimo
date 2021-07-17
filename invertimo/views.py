@@ -17,7 +17,7 @@ def login_view(request: HttpRequest):
 
 def signup_view(request: HttpRequest):
     context : Dict[str, Any] = {}
-    return render(request, "login.html", context)
+    return render(request, "signup.html", context)
 
 def privacy_policy_view(request: HttpRequest)-> HttpResponse:
     context : Dict[str, Any] = {}

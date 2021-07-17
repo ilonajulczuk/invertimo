@@ -288,6 +288,11 @@ describe('portfolio tests', () => {
     // setup a DOM element as a render target
     container = document.createElement("div");
     document.body.appendChild(container);
+
+    let data = document.createElement("script");
+    data.id = "userEmail";
+    data.innerHTML = `"username@email.com"`;
+    document.body.appendChild(data);
   });
 
   afterEach(() => {

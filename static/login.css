@@ -12,21 +12,26 @@
     text-align: center;
 }
 
-.google-btn {
+a.google-btn {
     display: flex;
-    width: auto;
-    height: 42px;
-    background-color: #4285f4;
+    /* width: 240px; */
+    height: 52px;
+    align-items: center;
+    justify-content: space-between;
+    text-decoration: none;
+    /* background-color: #4285f4; */
     border-radius: 2px;
-    box-shadow: 0 3px 4px 0 rgba(0, 0, 0, .25);
+    box-shadow: 0 3px 4px 0 rgba(0, 0, 0, .15);
     margin-top: 1.2em;
     margin-bottom: 1.2em;
     text-align: start;
+    color: black;
+    border: 1px solid gray;
 }
 
 
 .google-btn a {
-    color: #fff;
+    color: black;
 }
 
 .google-btn a:link {
@@ -37,12 +42,12 @@
     text-decoration: none;
 }
 
-.google-btn :hover {
-    box-shadow: 0 0 6px #4285f4;
+.google-btn:hover {
+    box-shadow: 0 3px 4px 0 rgba(0, 0, 0, .25);
 }
 
-.google-btn :active {
-    background: #1669F2;
+.google-btn:active {
+    box-shadow: 0 3px 4px 0 rgba(0, 0, 0, .25);
 }
 
 .google-icon-wrapper {
@@ -51,7 +56,7 @@
     margin-left: 1px;
     width: 40px;
     height: 40px;
-    border-radius: 2px;
+    border-radius: 20px;
     background-color: #fff;
 }
 
@@ -64,14 +69,14 @@
 }
 
 .btn-text {
-    color: #fff;
+    color: black;
     font-size: 16px;
     letter-spacing: 0.2px;
     font-family: "Roboto";
     padding-top: 10px;
     padding-bottom: 10px;
-    padding-right: 20px;
-    padding-left: 20px;
+    padding-right: 18px;
+    padding-left: 0px;
     display: inline-block;
 }
 

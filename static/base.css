@@ -21,7 +21,6 @@ body {
     font-weight: normal;
 }
 
-
 .navigation a {
     display: inline-block;
     text-decoration: none;
@@ -73,9 +72,12 @@ h1, h2, h3, h4, h5 {
 }
 
 .button {
-    padding: 1em;
+    padding: 0.8em;
+    padding-left: 1em;
+    padding-right: 1em;
     display: inline-block;
     background: #e96158;
+    background: hsl(4deg 61% 51%);
     color: white;
     font-weight: bold;
     margin-top: 0.5em;
@@ -84,19 +86,21 @@ h1, h2, h3, h4, h5 {
 }
 
 .button-secondary {
-    padding: 1em;
+    padding: 0.8em;
+    padding-left: 1em;
+    padding-right: 1em;
     display: inline-block;
     background: white;
-    color: #e96158;
+    color: hsl(4deg 61% 51%);
     font-weight: bold;
     margin-top: 0.5em;
     text-align: center;
-    border: 2px solid #e96158;
+    border: 2px solid hsl(4deg 61% 51%);
 }
 
 .button:hover {
     color: white;
-    background: #d64b41;
+    background: hsl(4deg 61% 45%);
 }
 
 .header {
@@ -149,6 +153,7 @@ a, a:hover {
 
 .logo {
     padding: 20px 5px 20px 5px;
+    text-decoration: none;
 }
 
 .navigation li {
@@ -193,8 +198,6 @@ ul.features {
         flex-direction: row;
     }
 }
-
-
 
 .main-content {
     grid-area: main-content;

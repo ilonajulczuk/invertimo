@@ -36,7 +36,7 @@ urlpatterns = [
     path("", views.index_view, name="index"),
     path("admin/", admin.site.urls),
     path("login/", views.login_view, name="login"),
-    path("signup/", views.login_view, name="signup"),
+    path("signup/", views.signup_view, name="signup"),
     path("privacy_policy/", views.privacy_policy_view, name="privacy_policy"),
     path("logout/", views.logout_view, name="logout"),
     path("__debug__/", include(debug_toolbar.urls)),

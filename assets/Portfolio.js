@@ -3,6 +3,7 @@ import './portfolio.css';
 import { PositionList } from './PositionList.js';
 import { TransactionList } from './TransactionList.js';
 import { AccountValue } from './AccountValue.js';
+import { Header } from './Header.js';
 import { APIClient } from './api_utils.js';
 import PropTypes from 'prop-types';
 import {
@@ -189,6 +190,8 @@ export default class Portfolio extends React.Component {
 
     render() {
 
+        const userEmail = JSON.parse(document.getElementById('userEmail').textContent);
+
         let accountValues = this.state.accounts.map((account) => {
 
             let accountDetail = this.state.accountValues.get(account.id);
@@ -202,10 +205,7 @@ export default class Portfolio extends React.Component {
         });
         return (
             <div className="main-grid">
-                <header className="main-header"> <div className="logo">invertimo</div>
-
-                <a href="/logout">Log Out</a>
-                </header>
+                <Header email={userEmail}/>
                 <nav className="sidenav">
                     <ul>
                         <li>
