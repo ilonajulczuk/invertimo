@@ -354,11 +354,11 @@ describe('portfolio tests', () => {
 
     const positions = _ACCOUNT_POSITIONS.concat(_ACCOUNT_POSITIONS_USD);
     const positionsByAccount = divideByAccount(accounts, positions);
-    expect(positionsByAccount).toHaveLength(2);
-    expect(positionsByAccount[0].account.nickname).toBe("test account");
-    expect(positionsByAccount[0].positions).toHaveLength(3);
-    expect(positionsByAccount[1].account.nickname).toBe("second account");
-    expect(positionsByAccount[1].positions).toHaveLength(2);
+    expect(Array.from(positionsByAccount.values())).toHaveLength(2);
+    expect(positionsByAccount.get(3).account.nickname).toBe("test account");
+    expect(positionsByAccount.get(3).positions).toHaveLength(3);
+    expect(positionsByAccount.get(4).account.nickname).toBe("second account");
+    expect(positionsByAccount.get(4).positions).toHaveLength(2);
   });
 
   it("shows portfolio overview with two accounts", async () => {

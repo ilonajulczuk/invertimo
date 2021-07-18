@@ -73,7 +73,7 @@ export function divideByAccount(accounts, positions) {
 }
 
 
-function PortfolioOverview(props) {
+export function PortfolioOverview(props) {
 
     let positionsCount = 0;
     let transactionsCount = 0;
