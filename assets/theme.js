@@ -31,6 +31,10 @@ export const themeOptions = {
         h5: {
             fontFamily: 'comfortaa',
         },
+        button: {
+            textTransform: 'none',
+            fontWeight: 'bold',
+        }
     },
     shape: {
         borderRadius: 0,

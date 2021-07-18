@@ -24,6 +24,8 @@ ul.position-list {
     background: #8282820d;
     border: 1px solid #384a5052;
     border-left: 5px solid #1b98a1;
+    border-bottom: 5px solid #384a5052;
+    margin-bottom: 2em;
     display: flex;
     flex-direction: column;
 }
