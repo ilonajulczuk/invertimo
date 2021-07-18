@@ -11,7 +11,7 @@ export const themeOptions = {
             main: '#1b98a1',
         },
         secondary: {
-            main: '#e96158',
+            main: 'hsl(4deg 61% 51%)',
         },
     },
     typography: {

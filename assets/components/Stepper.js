@@ -7,24 +7,26 @@ import StepLabel from '@material-ui/core/StepLabel';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 
+import PropTypes from 'prop-types';
+
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    width: '100%',
-    '& .MuiStepper-root': {
-        paddingLeft: "0px",
+    root: {
+        width: '100%',
+        '& .MuiStepper-root': {
+            paddingLeft: "0px",
+        },
+        '& .MuiStep-root:first-child': {
+            paddingLeft: "0px",
+        },
     },
-    '& .MuiStep-root:first-child': {
-        paddingLeft: "0px",
+    button: {
+        marginRight: theme.spacing(1),
     },
-  },
-  button: {
-    marginRight: theme.spacing(1),
-  },
-  instructions: {
-    marginTop: theme.spacing(1),
-    marginBottom: theme.spacing(1),
-  },
+    instructions: {
+        marginTop: theme.spacing(2),
+        marginBottom: theme.spacing(2),
+    },
 }));
 
 
@@ -44,95 +46,105 @@ export function Stepper(props) {
     };
 
     const isStepSkipped = (step) => {
-      return skipped.has(step);
+        return skipped.has(step);
     };
 
     const handleNext = () => {
-      let newSkipped = skipped;
-      if (isStepSkipped(activeStep)) {
-        newSkipped = new Set(newSkipped.values());
-        newSkipped.delete(activeStep);
-      }
+        let newSkipped = skipped;
+        if (isStepSkipped(activeStep)) {
+            newSkipped = new Set(newSkipped.values());
+            newSkipped.delete(activeStep);
+        }
 
-      setActiveStep((prevActiveStep) => prevActiveStep + 1);
-      setSkipped(newSkipped);
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
+        setSkipped(newSkipped);
     };
 
     const handleBack = () => {
-      setActiveStep((prevActiveStep) => prevActiveStep - 1);
+        setActiveStep((prevActiveStep) => prevActiveStep - 1);
     };
 
     const handleSkip = () => {
-      if (!isStepOptional(activeStep)) {
-        // You probably want to guard against something like this,
-        // it should never occur unless someone's actively trying to break something.
-        throw new Error("You can't skip a step that isn't optional.");
-      }
+        if (!isStepOptional(activeStep)) {
+            // You probably want to guard against something like this,
+            // it should never occur unless someone's actively trying to break something.
+            throw new Error("You can't skip a step that isn't optional.");
+        }
 
-      setActiveStep((prevActiveStep) => prevActiveStep + 1);
-      setSkipped((prevSkipped) => {
-        const newSkipped = new Set(prevSkipped.values());
-        newSkipped.add(activeStep);
-        return newSkipped;
-      });
+        setActiveStep((prevActiveStep) => prevActiveStep + 1);
+        setSkipped((prevSkipped) => {
+            const newSkipped = new Set(prevSkipped.values());
+            newSkipped.add(activeStep);
+            return newSkipped;
+        });
     };
 
     return (
-      <div className={classes.root}>
-        <MuiStepper activeStep={activeStep}>
-          {steps.map((step, index) => {
-            const stepProps = {};
-            const labelProps = {};
-            if (isStepOptional(index)) {
-              labelProps.optional = <Typography variant="caption">Optional</Typography>;
-            }
-            if (isStepSkipped(index)) {
-              stepProps.completed = false;
-            }
-            return (
-              <Step key={step.label} {...stepProps}>
-                <StepLabel {...labelProps}>{step.label}</StepLabel>
-              </Step>
-            );
-          })}
-        </MuiStepper>
-        <div>
-          {activeStep === steps.length ? (
+        <div className={classes.root}>
+            <MuiStepper activeStep={activeStep}>
+                {steps.map((step, index) => {
+                    const stepProps = {};
+                    const labelProps = {};
+                    if (isStepOptional(index)) {
+                        labelProps.optional = <Typography variant="caption">Optional</Typography>;
+                    }
+                    if (isStepSkipped(index)) {
+                        stepProps.completed = false;
+                    }
+                    return (
+                        <Step key={step.label} {...stepProps}>
+                            <StepLabel {...labelProps}>{step.label}</StepLabel>
+                        </Step>
+                    );
+                })}
+            </MuiStepper>
             <div>
-              <Typography className={classes.instructions}>
-                All steps completed - you&apos;re finished
+                {activeStep === steps.length ? (
+                    <div>
+                        <Typography className={classes.instructions}>
+                            All steps completed - you&apos;re finished
               </Typography>
-            </div>
-          ) : (
-            <div>
-              <Typography className={classes.instructions}>{getStepContent(activeStep)}</Typography>
-              <div>
-                <Button disabled={activeStep === 0} onClick={handleBack} className={classes.button} variant="outlined"
-                    >
-                  Back
+                    </div>
+                ) : (
+                    <div>
+                        <div className={classes.instructions}>
+                            {getStepContent(activeStep)}
+                        </div>
+                        <div>
+                            <Button disabled={activeStep === 0} onClick={handleBack} className={classes.button} variant="outlined"
+                            >
+                                Back
                 </Button>
-                {isStepOptional(activeStep) && (
-                  <Button
-                    variant="outlined"
-                    onClick={handleSkip}
-                    className={classes.button}
-                  >
-                    Skip
-                  </Button>
-                )}
+                            {isStepOptional(activeStep) && (
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleSkip}
+                                    className={classes.button}
+                                >
+                                    Skip
+                                </Button>
+                            )}
 
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleNext}
-                  className={classes.button}
-                >
-                  {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
-                </Button>
-              </div>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleNext}
+                                className={classes.button}
+                            >
+                                {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
-          )}
         </div>
-      </div>
     );
-  }
+}
+
+Stepper.propTypes = {
+    steps: PropTypes.arrayOf(PropTypes.shape({
+        label: PropTypes.string.isRequired,
+        content: PropTypes.any.isRequired,
+        optional: PropTypes.bool,
+    }))
+};
