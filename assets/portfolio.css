@@ -84,6 +84,13 @@ header {
     text-decoration: none;
 }
 
+.main-grid a.MuiButton-contained {
+    color: white;
+}
+
+.main-grid a.MuiButton-contained.Mui-disabled {
+    color: gray;
+}
 a.button {
     color: white;
 }

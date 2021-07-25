@@ -32,10 +32,9 @@ const useStyles = makeStyles((theme) => ({
 
 export function Stepper(props) {
     const classes = useStyles();
-    const [activeStep, setActiveStep] = React.useState(0);
-    const [skipped, setSkipped] = React.useState(new Set());
     const steps = props.steps;
 
+    let activeStep = props.activeStep;
 
     const getStepContent = stepNumber => {
         return steps[stepNumber].content;
@@ -45,52 +44,14 @@ export function Stepper(props) {
         return steps[stepNumber].optional == true;
     };
 
-    const isStepSkipped = (step) => {
-        return skipped.has(step);
-    };
-
-    const handleNext = () => {
-        let newSkipped = skipped;
-        if (isStepSkipped(activeStep)) {
-            newSkipped = new Set(newSkipped.values());
-            newSkipped.delete(activeStep);
-        }
-
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-        setSkipped(newSkipped);
-    };
-
-    const handleBack = () => {
-        setActiveStep((prevActiveStep) => prevActiveStep - 1);
-    };
-
-    const handleSkip = () => {
-        if (!isStepOptional(activeStep)) {
-            // You probably want to guard against something like this,
-            // it should never occur unless someone's actively trying to break something.
-            throw new Error("You can't skip a step that isn't optional.");
-        }
-
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-        setSkipped((prevSkipped) => {
-            const newSkipped = new Set(prevSkipped.values());
-            newSkipped.add(activeStep);
-            return newSkipped;
-        });
-    };
+    const lastStep = activeStep === steps.length - 1;
 
     return (
         <div className={classes.root}>
             <MuiStepper activeStep={activeStep}>
-                {steps.map((step, index) => {
+                {steps.map(step => {
                     const stepProps = {};
                     const labelProps = {};
-                    if (isStepOptional(index)) {
-                        labelProps.optional = <Typography variant="caption">Optional</Typography>;
-                    }
-                    if (isStepSkipped(index)) {
-                        stepProps.completed = false;
-                    }
                     return (
                         <Step key={step.label} {...stepProps}>
                             <StepLabel {...labelProps}>{step.label}</StepLabel>
@@ -111,14 +72,14 @@ export function Stepper(props) {
                             {getStepContent(activeStep)}
                         </div>
                         <div>
-                            <Button disabled={activeStep === 0} onClick={handleBack} className={classes.button} variant="outlined"
+                            <Button disabled={activeStep === 0} className={classes.button} variant="outlined"
+                            href={props.baseUrl + props.steps[activeStep].previous}
                             >
                                 Back
                 </Button>
                             {isStepOptional(activeStep) && (
                                 <Button
                                     variant="outlined"
-                                    onClick={handleSkip}
                                     className={classes.button}
                                 >
                                     Skip
@@ -128,10 +89,11 @@ export function Stepper(props) {
                             <Button
                                 variant="contained"
                                 color="primary"
-                                onClick={handleNext}
                                 className={classes.button}
+                                disabled={props.steps[activeStep].nextDisabled}
+                                href={ lastStep ? props.finishUrl : props.baseUrl + props.steps[activeStep].next}
                             >
-                                {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                                {lastStep ? 'Finish' : 'Next'}
                             </Button>
                         </div>
                     </div>
@@ -146,5 +108,11 @@ Stepper.propTypes = {
         label: PropTypes.string.isRequired,
         content: PropTypes.any.isRequired,
         optional: PropTypes.bool,
-    }))
+        nextDisabled: PropTypes.bool,
+        next: PropTypes.string,
+        previous: PropTypes.string,
+    })),
+    baseUrl: PropTypes.string.isRequired,
+    finishUrl: PropTypes.string.isRequired,
+    activeStep: PropTypes.number.isRequired,
 };

@@ -280,12 +280,12 @@ export default class Portfolio extends React.Component {
                                 <PositionList positions={this.state.positions} accounts={this.state.accounts} getPositionDetail={this.getPositionDetail} />
                             </ErrorBoundary>
                         </Route>
-                        <Route path="/start">
+                        <Route path="/start/:stepName">
                             <Onboarding accounts={this.state.accounts} handleAddAccount={this.handleAddAccount}/>
                         </Route>
                         <Route path="/">
 
-                            {newUser ? <Redirect to="/start" /> : <div>
+                            {newUser ? <Redirect to="/start/investment_accounts" /> : <div>
                                 <h1>Portfolio</h1>
 
                                 <ErrorBoundary>

@@ -212,6 +212,9 @@ export function AccountValue(props) {
             <SelectPositions positions={selectedPositions} colors={COLORS} positionPercentages={positionPercentages} />
         </div>);
     } else {
+        if (props.positions.length == 0) {
+            return <div>No positions yet, go add some transactions first!</div>;
+        }
         return <div>Loading...</div>;
     }
 
