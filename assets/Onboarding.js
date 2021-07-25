@@ -12,7 +12,6 @@ import {
 export function Onboarding(props) {
     let { stepName } = useParams();
 
-    console.log(stepName);
     let existingAccounts = props.accounts.map(account => (
     <p key={account.id}>{account.nickname} - {account.currency}</p>)
     );
@@ -54,8 +53,24 @@ export function Onboarding(props) {
             nextDisabled: !hasAccounts,
         },
         {
-            label: 'Transactions, positions, dividends and so on',
-            content: 'Stuff',
+            label: 'Transactions and positions',
+            content: (
+                <div>
+                    <h3>Transactions</h3>
+                    <p>When you buy or sell any asset you are making transactions. The same
+                        goes to transferring money to or from your investment account.
+                        To correctly reflect the state of your account you need to
+                        record all the transactions.
+                    </p>
+                    <h3>Positions</h3>
+                    <p>A position is the amount of a security, asset, or property that is owned. The app will automatically create a position if you record a transaction for it.</p>
+                    <p>Once you have a position you can track how much of it you own of it over time, your transactions associated with it, gains and dividends.
+                         If the position is an asset on a supported exchange, invertimo will automatically pull in a closing price for the last day, so you can track the performance of the position in your portfolio automatically. </p>
+                    <p>A position is closed when you sell all of it and there is nothing left.
+                         We will still show it in invertimo, because there might be a tax implication.</p>
+                </div>
+
+            ),
             path: 'transactions_intro',
             previous: 'create_account',
             next: 'add_transaction',
