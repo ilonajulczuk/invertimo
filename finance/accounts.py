@@ -7,6 +7,11 @@ class AccountRepository:
     def get(self, user, id):
         return models.Account.objects.get(user=user, id=id)
 
+    def create(self, nickname, currency, description, user):
+        return models.Account.objects.create(
+            user=user, nickname=nickname, description=description, currency=currency
+        )
+
     def add_transaction(
         self,
         account,

@@ -24,6 +24,9 @@ class CurrencyField(serializers.IntegerField):
     def to_representation(self, value):
         return models.currency_string_from_enum(value)
 
+    def to_internal_value(self, value):
+        return models.currency_enum_from_string(value)
+
 
 class SecuritySerializer(serializers.ModelSerializer[Security]):
     exchange = ExchangeSerializer()
@@ -209,6 +212,33 @@ class AccountSerializer(serializers.ModelSerializer[Account]):
             "positions_count",
             "transactions_count",
         ]
+
+class AccountEditSerializer(serializers.ModelSerializer[Account]):
+
+    # Currency needs to be changed from string to enum.
+    currency = CurrencyField()
+
+    class Meta:
+        model = Account
+        fields = [
+            "id",
+            "currency",
+            "nickname",
+            "description",
+        ]
+
+    def validate_nickname(self, value):
+        # If user was also included in the serializer then unique_together
+        # constraint would be automatically evaluated, but
+        # since user is not included in the serializer the validation is
+        # done manually.
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            user = request.user
+            if Account.objects.filter(user=user, nickname=value).count() > 0:
+                raise serializers.ValidationError(
+                    f"User already has an account with name: '{value}'")
+        return value
 
 
 class AccountWithValuesSerializer(serializers.ModelSerializer[Account]):

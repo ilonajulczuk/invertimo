@@ -61,11 +61,15 @@ export function CreateAccountForm(props) {
         validationSchema: validationSchema,
         onSubmit: async (values, { setErrors, resetForm }) => {
             try {
-                const errors = await props.handleSubmit(values);
-                setErrors(errors);
-                if (Object.keys(errors).length == 0) {
-
+                const result = await props.handleSubmit(values);
+                if (result.ok) {
                     resetForm();
+                } else {
+                    if (result.errors) {
+                        setErrors(result.errors);
+                    } else if (result.message) {
+                        alert(result.message);
+                    }
                 }
             } catch (e) {
                 alert(e);

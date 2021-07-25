@@ -49,7 +49,7 @@ class Account(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     currency = models.IntegerField(choices=Currency.choices, default=Currency.EURO)
     nickname = models.CharField(max_length=200)
-    description = models.TextField()
+    description = models.TextField(blank=True)
 
     balance = models.DecimalField(max_digits=12, decimal_places=5, default=0)
     last_modified = models.DateTimeField(auto_now=True, null=True)
@@ -70,6 +70,9 @@ class Account(models.Model):
                 )
             )
         return results
+
+    class Meta:
+        unique_together = [['user', 'nickname']]
 
 
 class Exchange(models.Model):

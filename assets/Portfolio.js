@@ -144,40 +144,15 @@ export default class Portfolio extends React.Component {
     }
 
     async handleAddAccount(accountData) {
-        // Let's make a fake add account for now and do the backend part later.
-
-        console.log("in handle account", accountData);
-        let nameConflict = false;
-        for (let account of this.state.accounts) {
-            if (account.nickname == accountData.name) {
-                nameConflict = true;
-                break;
-            }
-        }
-
-        if (nameConflict) {
-            return {
-                name: "Account with such name already exists"
-            };
-        }
-        let fake =     {
-            "id": this.state.accounts.length + 100,
-            "currency": accountData.currency,
-            "nickname": accountData.name,
-            "description": "",
-            "balance": "0",
-            "last_modified": "2021-06-06T16:59:02.458510Z",
-            "positions_count": 0,
-            "transactions_count": 0,
+        const data = {
+            nickname: accountData.name,
+            currency: accountData.currency,
+            description: "",
         };
-
-        let accounts = this.state.accounts.slice();
-        accounts.push(fake);
-        this.setState({
-            "accounts": accounts,
-        });
-        console.log("in handle account done", accountData);
-        return {};
+        let result = await this.apiClient.createAccount(data);
+        // Reload all the data, e.g. accounts, positions, etc.
+        this.refreshFromServer();
+        return result;
     }
 
     async getPositionDetail(positionId) {
@@ -201,6 +176,10 @@ export default class Portfolio extends React.Component {
     }
 
     async componentDidMount() {
+        this.refreshFromServer();
+    }
+
+    refreshFromServer() {
         this.apiClient.getAccounts().then(accounts => {
             this.setState({ "accounts": accounts });
             accounts.forEach(account => {
@@ -223,7 +202,6 @@ export default class Portfolio extends React.Component {
                 this.setState({ "transactions": transactions });
             });
     }
-
     render() {
 
         const userEmail = JSON.parse(document.getElementById('userEmail').textContent);
@@ -238,7 +216,8 @@ export default class Portfolio extends React.Component {
         // If the accounts are loaded, but there is nothing there, start an onboarding wizard.
         const newUser = this.state.accounts.length == 0;
 
-        let accountValues = this.state.accounts.map((account) => {
+        let accountValues = this.state.accounts.filter(account =>
+            this.state.accountValues.get(account.id)).map((account) => {
 
             let accountDetail = this.state.accountValues.get(account.id);
             let values = [];

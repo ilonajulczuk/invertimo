@@ -1,5 +1,6 @@
 import datetime
 
+from rest_framework import status
 import pytz
 from django.db.models import Count, Sum, Subquery, OuterRef, QuerySet
 from django.shortcuts import get_object_or_404, render
@@ -12,6 +13,7 @@ from finance import accounts, models
 from finance.models import CurrencyExchangeRate, Position, PriceHistory, Transaction
 from finance.serializers import (
     AccountSerializer,
+    AccountEditSerializer,
     AccountWithValuesSerializer,
     CurrencyExchangeRateSerializer,
     CurrencyQuerySerializer,
@@ -23,9 +25,7 @@ from finance.serializers import (
 )
 
 
-class AccountsViewSet(
-    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
-):
+class AccountsViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AccountSerializer
     pagination_class = LimitOffsetPagination
@@ -53,6 +53,12 @@ class AccountsViewSet(
             context["to_date"] = self.query_data.get("to_date", datetime.date.today())
         return context
 
+    def get_serializer_class(self):
+        if self.action in ('create', 'update'):
+            return AccountEditSerializer
+
+        return AccountSerializer
+
     def retrieve(self, request, pk=None):
         queryset = self.get_queryset()
         queryset = queryset.prefetch_related("positions__security")
@@ -61,6 +67,14 @@ class AccountsViewSet(
             account, context=self.get_serializer_context()
         )
         return Response(serializer.data)
+
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        accounts.AccountRepository().create(user=self.request.user, **serializer.validated_data)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class PositionsView(generics.ListAPIView):
