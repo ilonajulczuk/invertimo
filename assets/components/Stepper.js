@@ -40,10 +40,6 @@ export function Stepper(props) {
         return steps[stepNumber].content;
     };
 
-    const isStepOptional = stepNumber => {
-        return steps[stepNumber].optional == true;
-    };
-
     const lastStep = activeStep === steps.length - 1;
 
     return (
@@ -73,25 +69,17 @@ export function Stepper(props) {
                         </div>
                         <div>
                             <Button disabled={activeStep === 0} className={classes.button} variant="outlined"
-                            href={props.baseUrl + props.steps[activeStep].previous}
+                                href={props.baseUrl + props.steps[activeStep].previous}
                             >
                                 Back
-                </Button>
-                            {isStepOptional(activeStep) && (
-                                <Button
-                                    variant="outlined"
-                                    className={classes.button}
-                                >
-                                    Skip
-                                </Button>
-                            )}
+                            </Button>
 
                             <Button
                                 variant="contained"
                                 color="primary"
                                 className={classes.button}
                                 disabled={props.steps[activeStep].nextDisabled}
-                                href={ lastStep ? props.finishUrl : props.baseUrl + props.steps[activeStep].next}
+                                href={lastStep ? props.finishUrl : props.baseUrl + props.steps[activeStep].next}
                             >
                                 {lastStep ? 'Finish' : 'Next'}
                             </Button>
@@ -107,7 +95,6 @@ Stepper.propTypes = {
     steps: PropTypes.arrayOf(PropTypes.shape({
         label: PropTypes.string.isRequired,
         content: PropTypes.any.isRequired,
-        optional: PropTypes.bool,
         nextDisabled: PropTypes.bool,
         next: PropTypes.string,
         previous: PropTypes.string,
