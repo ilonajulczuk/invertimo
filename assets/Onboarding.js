@@ -1,89 +1,15 @@
 
 import React from 'react';
 import { Stepper } from './components/Stepper.js';
-import TextField from '@material-ui/core/TextField';
-import FormHelperText from '@material-ui/core/FormHelperText';
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import { makeStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
+import { CreateAccountForm } from './CreateAccountForm.js';
+import PropTypes from 'prop-types';
 
 
-const useStyles = makeStyles((theme) => ({
-    form: {
-        display: "flex",
-        flexWrap: "wrap",
-        flexDirection: "column",
-    },
-    formControl: {
-        margin: theme.spacing(1),
-        minWidth: 120,
-        maxWidth: 300,
-    },
-}));
+export function Onboarding(props) {
 
+    let existingAccounts = props.accounts.map(account => <p key={account.id}>{account.nickname}</p>);
 
-export function CreateAccountForm() {
-
-    const classes = useStyles();
-
-  const [currency, setCurrency] = React.useState('EUR');
-
-  const handleChange = (event) => {
-    setCurrency(event.target.value);
-  };
-
-
-    return (<div>
-        <form className={classes.form}>
-            <div>
-                <TextField
-                    id="account-name"
-                    label="Account Name"
-                    helperText="account name like 'degiro'"
-
-                    className={classes.formControl}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
-
-                <FormControl className={classes.formControl}>
-                    <InputLabel id="currency-select-label">Currency</InputLabel>
-                    <Select
-                        labelId="currency-select-label"
-                        id="currency-select"
-                        value={currency}
-                        onChange={handleChange}
-                    >
-                        <MenuItem value={"USD"}>$ USD</MenuItem>
-                        <MenuItem value={"EUR"}>€ EUR</MenuItem>
-                        <MenuItem value={"GBP"}>£ GBP</MenuItem>
-                    </Select>
-                    <FormHelperText>Main currency used by this account (some positions, e.g. stocks might trade in different currencies)</FormHelperText>
-                </FormControl>
-            </div>
-
-            <div>
-                <Button
-                    type="submit"
-                    variant="outlined"
-                    color="secondary"
-                >
-                    Create account
-            </Button>
-            </div>
-
-
-
-        </form>
-    </div>);
-}
-
-export function Onboarding() {
-
+    const hasAccounts = props.accounts.length > 0;
     const steps = [
         {
             label: 'Investment accounts',
@@ -102,7 +28,14 @@ export function Onboarding() {
         {
             label: 'Create an account',
             content: (
-                <CreateAccountForm />
+                <>
+                <h3>{ hasAccounts ?  "Your accounts:" : "You don't have any accounts" }
+                </h3>
+                {existingAccounts}
+                <CreateAccountForm
+                    handleSubmit={props.handleAddAccount}
+                    hasAccounts={hasAccounts} />
+                </>
             ),
         },
         {
@@ -124,4 +57,6 @@ export function Onboarding() {
 }
 
 Onboarding.propTypes = {
+    accounts: PropTypes.array.isRequired,
+    handleAddAccount: PropTypes.func.isRequired,
 };

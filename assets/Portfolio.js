@@ -126,6 +126,7 @@ PortfolioOverview.propTypes = {
     accounts: PropTypes.array.isRequired,
 };
 
+
 export default class Portfolio extends React.Component {
 
     constructor(props) {
@@ -139,6 +140,44 @@ export default class Portfolio extends React.Component {
         };
         this.apiClient = new APIClient('./api');
         this.getPositionDetail = this.getPositionDetail.bind(this);
+        this.handleAddAccount = this.handleAddAccount.bind(this);
+    }
+
+    async handleAddAccount(accountData) {
+        // Let's make a fake add account for now and do the backend part later.
+
+        console.log("in handle account", accountData);
+        let nameConflict = false;
+        for (let account of this.state.accounts) {
+            if (account.nickname == accountData.name) {
+                nameConflict = true;
+                break;
+            }
+        }
+
+        if (nameConflict) {
+            return {
+                name: "Account with such name already exists"
+            };
+        }
+        let fake =     {
+            "id": this.state.accounts.length + 100,
+            "currency": accountData.currency,
+            "nickname": accountData.name,
+            "description": "",
+            "balance": "0",
+            "last_modified": "2021-06-06T16:59:02.458510Z",
+            "positions_count": 0,
+            "transactions_count": 0,
+        };
+
+        let accounts = this.state.accounts.slice();
+        accounts.push(fake);
+        this.setState({
+            "accounts": accounts,
+        });
+        console.log("in handle account done", accountData);
+        return {};
     }
 
     async getPositionDetail(positionId) {
@@ -242,7 +281,7 @@ export default class Portfolio extends React.Component {
                             </ErrorBoundary>
                         </Route>
                         <Route path="/start">
-                            <Onboarding />
+                            <Onboarding accounts={this.state.accounts} handleAddAccount={this.handleAddAccount}/>
                         </Route>
                         <Route path="/">
 
