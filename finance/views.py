@@ -8,7 +8,7 @@ from rest_framework import exceptions, generics, permissions, viewsets, mixins
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from typing import Any, Dict
+from typing import Any, Dict, Union, Type
 from finance import accounts, models
 from finance.models import CurrencyExchangeRate, Position, PriceHistory, Transaction
 from finance.serializers import (
@@ -55,7 +55,11 @@ class AccountsViewSet(viewsets.ModelViewSet):
             context["to_date"] = self.query_data.get("to_date", datetime.date.today())
         return context
 
-    def get_serializer_class(self):
+    def get_serializer_class(
+        self,
+    ) -> Type[
+        Union[AccountEditSerializer, AccountWithValuesSerializer, AccountSerializer]
+    ]:
         if self.action in ("create", "update"):
             return AccountEditSerializer
         if self.action == "retrieve":
@@ -75,6 +79,7 @@ class AccountsViewSet(viewsets.ModelViewSet):
             data=request.data, context=self.get_serializer_context()
         )
         serializer.is_valid(raise_exception=True)
+        assert isinstance(self.request.user, User)
         accounts.AccountRepository().create(
             user=self.request.user, **serializer.validated_data
         )

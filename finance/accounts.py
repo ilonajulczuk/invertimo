@@ -1,5 +1,6 @@
 from finance import models
 from finance import exchanges
+from django.contrib.auth.models import User
 import decimal
 
 
@@ -7,7 +8,9 @@ class AccountRepository:
     def get(self, user, id):
         return models.Account.objects.get(user=user, id=id)
 
-    def create(self, nickname, currency, description, user):
+    def create(
+        self, nickname: str, currency: models.Currency, description: str, user: User
+    ) -> models.Account:
         return models.Account.objects.create(
             user=user, nickname=nickname, description=description, currency=currency
         )
