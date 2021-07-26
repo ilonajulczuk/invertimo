@@ -39,8 +39,10 @@ class AccountsViewSet(viewsets.ModelViewSet):
         )
         return queryset
 
-    def get_serializer_context(self) ->  Dict[str, Any]:
+    def get_serializer_context(self) -> Dict[str, Any]:
         context: Dict[str, Any] = super().get_serializer_context()
+        context["request"] = self.request
+
         query = FromToDatesSerializer(data=self.request.query_params)
 
         if query.is_valid(raise_exception=True):
@@ -54,8 +56,10 @@ class AccountsViewSet(viewsets.ModelViewSet):
         return context
 
     def get_serializer_class(self):
-        if self.action in ('create', 'update'):
+        if self.action in ("create", "update"):
             return AccountEditSerializer
+        if self.action == "retrieve":
+            return AccountWithValuesSerializer
 
         return AccountSerializer
 
@@ -63,18 +67,21 @@ class AccountsViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         queryset = queryset.prefetch_related("positions__security")
         account = get_object_or_404(queryset, pk=pk)
-        serializer = AccountWithValuesSerializer(
-            account, context=self.get_serializer_context()
-        )
+        serializer = self.get_serializer(account, context=self.get_serializer_context())
         return Response(serializer.data)
 
-
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
+        )
         serializer.is_valid(raise_exception=True)
-        accounts.AccountRepository().create(user=self.request.user, **serializer.validated_data)
+        accounts.AccountRepository().create(
+            user=self.request.user, **serializer.validated_data
+        )
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
 
 class PositionsView(generics.ListAPIView):

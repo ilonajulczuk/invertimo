@@ -213,6 +213,7 @@ class AccountSerializer(serializers.ModelSerializer[Account]):
             "transactions_count",
         ]
 
+
 class AccountEditSerializer(serializers.ModelSerializer[Account]):
 
     # Currency needs to be changed from string to enum.
@@ -237,7 +238,8 @@ class AccountEditSerializer(serializers.ModelSerializer[Account]):
             user = request.user
             if Account.objects.filter(user=user, nickname=value).count() > 0:
                 raise serializers.ValidationError(
-                    f"User already has an account with name: '{value}'")
+                    f"User already has an account with name: '{value}'"
+                )
         return value
 
 
