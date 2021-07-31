@@ -1,5 +1,6 @@
 import datetime
 
+from rest_framework import status
 import pytz
 from django.db.models import Count, Sum, Subquery, OuterRef, QuerySet
 from django.shortcuts import get_object_or_404, render
@@ -7,11 +8,12 @@ from rest_framework import exceptions, generics, permissions, viewsets, mixins
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from typing import Any, Dict
+from typing import Any, Dict, Union, Type
 from finance import accounts, models
 from finance.models import CurrencyExchangeRate, Position, PriceHistory, Transaction
 from finance.serializers import (
     AccountSerializer,
+    AccountEditSerializer,
     AccountWithValuesSerializer,
     CurrencyExchangeRateSerializer,
     CurrencyQuerySerializer,
@@ -23,9 +25,7 @@ from finance.serializers import (
 )
 
 
-class AccountsViewSet(
-    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
-):
+class AccountsViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AccountSerializer
     pagination_class = LimitOffsetPagination
@@ -39,8 +39,10 @@ class AccountsViewSet(
         )
         return queryset
 
-    def get_serializer_context(self) ->  Dict[str, Any]:
+    def get_serializer_context(self) -> Dict[str, Any]:
         context: Dict[str, Any] = super().get_serializer_context()
+        context["request"] = self.request
+
         query = FromToDatesSerializer(data=self.request.query_params)
 
         if query.is_valid(raise_exception=True):
@@ -53,14 +55,38 @@ class AccountsViewSet(
             context["to_date"] = self.query_data.get("to_date", datetime.date.today())
         return context
 
+    def get_serializer_class(
+        self,
+    ) -> Type[
+        Union[AccountEditSerializer, AccountWithValuesSerializer, AccountSerializer]
+    ]:
+        if self.action in ("create", "update"):
+            return AccountEditSerializer
+        if self.action == "retrieve":
+            return AccountWithValuesSerializer
+
+        return AccountSerializer
+
     def retrieve(self, request, pk=None):
         queryset = self.get_queryset()
         queryset = queryset.prefetch_related("positions__security")
         account = get_object_or_404(queryset, pk=pk)
-        serializer = AccountWithValuesSerializer(
-            account, context=self.get_serializer_context()
-        )
+        serializer = self.get_serializer(account, context=self.get_serializer_context())
         return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        assert isinstance(self.request.user, User)
+        accounts.AccountRepository().create(
+            user=self.request.user, **serializer.validated_data
+        )
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
 
 class PositionsView(generics.ListAPIView):

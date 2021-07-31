@@ -11,7 +11,7 @@ export const themeOptions = {
             main: '#1b98a1',
         },
         secondary: {
-            main: '#e96158',
+            main: 'hsl(4deg 61% 51%)',
         },
     },
     typography: {
@@ -31,6 +31,10 @@ export const themeOptions = {
         h5: {
             fontFamily: 'comfortaa',
         },
+        button: {
+            textTransform: 'none',
+            fontWeight: 'bold',
+        }
     },
     shape: {
         borderRadius: 0,

@@ -212,7 +212,14 @@ export function AccountValue(props) {
             <SelectPositions positions={selectedPositions} colors={COLORS} positionPercentages={positionPercentages} />
         </div>);
     } else {
-        return <div>Loading...</div>;
+
+        return (
+            <div className="account-value-charts">
+                <h2>Account &gt; <a href="#">{props.account.nickname}</a></h2>
+                <div>No positions yet, go add some transactions first!</div>
+            </div>
+        );
+
     }
 
 }

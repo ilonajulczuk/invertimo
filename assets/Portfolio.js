@@ -9,13 +9,14 @@ import PropTypes from 'prop-types';
 import {
     Switch,
     Route,
-    NavLink
+    NavLink,
+    Redirect,
 } from "react-router-dom";
 import { toSymbol } from './currencies.js';
 
 
 import { ErrorBoundary } from './error_utils.js';
-
+import { Onboarding } from './Onboarding.js';
 
 
 class AccountStats extends React.Component {
@@ -59,75 +60,72 @@ AccountStats.propTypes = {
 
 
 export function divideByAccount(accounts, positions) {
-    const positionsByAccount = [];
-    for (let account of accounts) {
-        const positionsForAccount = [];
-        for (let position of positions) {
-            if (position.account == account.id) {
-                positionsForAccount.push(position);
-            }
+    const positionsByAccount = new Map();
+    accounts.forEach(account => positionsByAccount.set(account.id, { account: account, positions: [] }));
+    positions.forEach(position => {
+        const accountEntry = positionsByAccount.get(position.account);
+        if (accountEntry) {
+            accountEntry.positions.push(position);
         }
-        positionsByAccount.push(
-            { account: account, positions: positionsForAccount }
-        );
-    }
+
+    });
     return positionsByAccount;
 }
 
 
-export class PortfolioOverview extends React.Component {
+export function PortfolioOverview(props) {
 
-    render() {
-        let positionsCount = 0;
-        let transactionsCount = 0;
-        let accountEventCount = "?";
+    let positionsCount = 0;
+    let transactionsCount = 0;
+    let accountEventCount = "?";
 
-        let accounts = this.props.accounts;
+    let accounts = props.accounts;
 
-        const accountStatsEntries = divideByAccount(accounts, this.props.positions).map(entry => {
-            return (
-                <AccountStats
-                    key={entry.account.id}
-                    account={entry.account}
-                    positions={entry.positions}
-                />
-            );
-        });
-        for (let account of accounts) {
-            positionsCount += account.positions_count;
-            transactionsCount += account.transactions_count;
-        }
-
+    const positionsByAccount = divideByAccount(accounts, props.positions);
+    const accountStatsEntries = Array.from(positionsByAccount).map(([, entry]) => {
         return (
-            <div className="portfolio-overview">
-                <div className="portfolio-overview-card card">
-                    <span className="card-label">At a glance</span>
-                    {accountStatsEntries}
-                </div>
-                <div className="card">
-                    <span className="card-label">Assets</span>
-                    <p>
-                        {positionsCount} <a href="#/positions">Positions</a> in {accounts.length}  <a href=""> {accounts.length > 1 ? "Accounts" : "Account"}</a>
-                    </p>
-                    <a className="button" href="/#positions">See all Positions</a>
-                    <a className="button">Manage accounts</a>
-                </div>
-                <div className="card">
-                    <span className="card-label">Events</span>
-                    <div>{transactionsCount} <a href="">Transactions</a></div>
-                    <div>{accountEventCount} <a href="">Account Events</a></div>
-                    <a className="button">Manage transactions</a>
-                    <a className="button">Manage events</a>
-                </div>
-            </div>
+            <AccountStats
+                key={entry.account.id}
+                account={entry.account}
+                positions={entry.positions}
+            />
         );
+    });
+    for (let account of accounts) {
+        positionsCount += account.positions_count;
+        transactionsCount += account.transactions_count;
     }
+
+    return (
+        <div className="portfolio-overview">
+            <div className="portfolio-overview-card card">
+                <span className="card-label">At a glance</span>
+                {accountStatsEntries}
+            </div>
+            <div className="card">
+                <span className="card-label">Assets</span>
+                <p>
+                    {positionsCount} <a href="#/positions">Positions</a> in {accounts.length}  <a href=""> {accounts.length > 1 ? "Accounts" : "Account"}</a>
+                </p>
+                <a className="button" href="/#positions">See all Positions</a>
+                <a className="button">Manage accounts</a>
+            </div>
+            <div className="card">
+                <span className="card-label">Events</span>
+                <div>{transactionsCount} <a href="">Transactions</a></div>
+                <div>{accountEventCount} <a href="">Account Events</a></div>
+                <a className="button">Manage transactions</a>
+                <a className="button">Manage events</a>
+            </div>
+        </div>
+    );
 }
 
 PortfolioOverview.propTypes = {
     positions: PropTypes.array.isRequired,
     accounts: PropTypes.array.isRequired,
 };
+
 
 export default class Portfolio extends React.Component {
 
@@ -136,12 +134,25 @@ export default class Portfolio extends React.Component {
         this.state = {
             "positions": [],
             "positionDetails": new Map(),
-            "accounts": [],
+            "accounts": null,
             "transactions": [],
             "accountValues": new Map(),
         };
         this.apiClient = new APIClient('./api');
         this.getPositionDetail = this.getPositionDetail.bind(this);
+        this.handleAddAccount = this.handleAddAccount.bind(this);
+    }
+
+    async handleAddAccount(accountData) {
+        const data = {
+            nickname: accountData.name,
+            currency: accountData.currency,
+            description: "",
+        };
+        let result = await this.apiClient.createAccount(data);
+        // Reload all the data, e.g. accounts, positions, etc.
+        this.refreshFromServer();
+        return result;
     }
 
     async getPositionDetail(positionId) {
@@ -165,6 +176,10 @@ export default class Portfolio extends React.Component {
     }
 
     async componentDidMount() {
+        this.refreshFromServer();
+    }
+
+    refreshFromServer() {
         this.apiClient.getAccounts().then(accounts => {
             this.setState({ "accounts": accounts });
             accounts.forEach(account => {
@@ -187,12 +202,22 @@ export default class Portfolio extends React.Component {
                 this.setState({ "transactions": transactions });
             });
     }
-
     render() {
 
         const userEmail = JSON.parse(document.getElementById('userEmail').textContent);
 
-        let accountValues = this.state.accounts.map((account) => {
+        // If there are no accounts loaded yet, there isn't much to show.
+        if (this.state.accounts == null) {
+            return (<div className="main-grid">
+                <Header email={userEmail} />
+            </div>);
+        }
+
+        // If the accounts are loaded, but there is nothing there, start an onboarding wizard.
+        const newUser = this.state.accounts.length == 0;
+
+        let accountValues = this.state.accounts.filter(account =>
+            this.state.accountValues.get(account.id)).map((account) => {
 
             let accountDetail = this.state.accountValues.get(account.id);
             let values = [];
@@ -203,9 +228,10 @@ export default class Portfolio extends React.Component {
                 <AccountValue key={account.id} account={account} positions={this.state.positions} values={values} />
             );
         });
+
         return (
             <div className="main-grid">
-                <Header email={userEmail}/>
+                <Header email={userEmail} />
                 <nav className="sidenav">
                     <ul>
                         <li>
@@ -233,14 +259,23 @@ export default class Portfolio extends React.Component {
                                 <PositionList positions={this.state.positions} accounts={this.state.accounts} getPositionDetail={this.getPositionDetail} />
                             </ErrorBoundary>
                         </Route>
-
-                        <Route path="/"><h1>Portfolio</h1>
-                            <ErrorBoundary>
-                                <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
-                                {accountValues}
-                            </ErrorBoundary>
-
+                        <Route path="/start/:stepName">
+                            <Onboarding accounts={this.state.accounts} handleAddAccount={this.handleAddAccount}/>
                         </Route>
+                        <Route path="/">
+
+                            {newUser ? <Redirect to="/start/investment_accounts" /> : <div>
+                                <h1>Portfolio</h1>
+
+                                <ErrorBoundary>
+                                    <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
+                                    {accountValues}
+                                </ErrorBoundary>
+                            </div>
+
+                            }
+                        </Route>
+
                     </Switch>
                 </div>
             </div>

@@ -12,34 +12,20 @@ from finance import utils
 import functools
 
 
+# TODO: add tests for these two functions.
 def currency_enum_from_string(currency: str) -> "Currency":
-    if currency == "USD":
-        return Currency.USD
-    elif currency == "EUR":
-        return Currency.EURO
-    elif currency == "GBX":
-        return Currency.GBX
-    elif currency == "GBP":
-        return Currency.GBP
-    else:
-        raise ValueError("Unsupported currency")
+    try:
+        return Currency[currency]
+    except KeyError:
+        raise ValueError("Unsupported currency '%s'" % currency)
 
 
 def currency_string_from_enum(currency: "Currency") -> str:
-    if currency == Currency.USD:
-        return "USD"
-    elif currency == Currency.EURO:
-        return "EUR"
-    elif currency == Currency.GBX:
-        return "GBX"
-    elif currency == Currency.GBP:
-        return "GBP"
-    else:
-        raise ValueError("Unsupported currency")
+    return Currency(currency).label
 
 
 class Currency(models.IntegerChoices):
-    EURO = 1, _("EUR")
+    EUR = 1, _("EUR")
     GBP = 2, _("GBP")
     USD = 3, _("USD")
     GBX = 4, _("GBX")
@@ -47,9 +33,9 @@ class Currency(models.IntegerChoices):
 
 class Account(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    currency = models.IntegerField(choices=Currency.choices, default=Currency.EURO)
+    currency = models.IntegerField(choices=Currency.choices, default=Currency.EUR)
     nickname = models.CharField(max_length=200)
-    description = models.TextField()
+    description = models.TextField(blank=True)
 
     balance = models.DecimalField(max_digits=12, decimal_places=5, default=0)
     last_modified = models.DateTimeField(auto_now=True, null=True)
@@ -70,6 +56,9 @@ class Account(models.Model):
                 )
             )
         return results
+
+    class Meta:
+        unique_together = [["user", "nickname"]]
 
 
 class Exchange(models.Model):
@@ -238,7 +227,9 @@ class Position(models.Model):
                 additional_dates = utils.generate_date_intervals(
                     from_date, day_before_first_date, output_period=output_period
                 )
-                price_tuples.extend([(date, decimal.Decimal('0')) for date in additional_dates])
+                price_tuples.extend(
+                    [(date, decimal.Decimal("0")) for date in additional_dates]
+                )
         return multiply_at_matching_dates(price_tuples, quantity_history)
 
     def value_history_in_account_currency(

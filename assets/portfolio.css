@@ -20,6 +20,7 @@ h1 {
 
 .main-content {
     width: 80%;
+    margin-bottom: 2em;
 }
 
 .sidenav {
@@ -50,7 +51,7 @@ header {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: center;
     box-shadow: #d0d8d7 3px 3px 5px 2px;
 }
 
@@ -84,6 +85,13 @@ header {
     text-decoration: none;
 }
 
+.main-grid a.MuiButton-contained {
+    color: white;
+}
+
+.main-grid a.MuiButton-contained.Mui-disabled {
+    color: gray;
+}
 a.button {
     color: white;
 }
