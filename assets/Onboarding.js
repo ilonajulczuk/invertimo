@@ -3,17 +3,68 @@ import React from 'react';
 import { Stepper } from './components/Stepper.js';
 import { CreateAccountForm } from './CreateAccountForm.js';
 import PropTypes from 'prop-types';
+import Card from '@material-ui/core/Card';
+import CardContent from '@material-ui/core/CardContent';
 import {
     useParams,
 } from "react-router-dom";
 
+import { makeStyles } from '@material-ui/core/styles';
+
+import Typography from '@material-ui/core/Typography';
+
+const useStyles = makeStyles({
+    root: {
+        minWidth: 275,
+    },
+    title: {
+        fontSize: 14,
+    },
+    pos: {
+        marginBottom: 12,
+    },
+    accountCards: {
+        display: "flex",
+        gap: "10px",
+        flexWrap: "wrap",
+    }
+});
+
+
+function AccountCard(props) {
+    const classes = useStyles();
+
+    return (
+        <Card className={classes.root} variant="outlined">
+            <CardContent>
+                <Typography className={classes.title} color="textSecondary" gutterBottom>
+                    Account
+                </Typography>
+                <Typography variant="h5" component="h5">
+                    {props.nickname}
+                </Typography>
+                <Typography className={classes.pos} color="textSecondary">
+                    Main currency: {props.currency}
+                </Typography>
+            </CardContent>
+
+        </Card>
+    );
+}
+
+
+AccountCard.propTypes = {
+    nickname: PropTypes.string.isRequired,
+    currency: PropTypes.string.isRequired,
+};
 
 
 export function Onboarding(props) {
+    const classes = useStyles();
     let { stepName } = useParams();
 
     let existingAccounts = props.accounts.map(account => (
-    <p key={account.id}>{account.nickname} - {account.currency}</p>)
+        <AccountCard key={account.id} nickname={account.nickname} currency={account.currency} />)
     );
 
 
@@ -42,12 +93,14 @@ export function Onboarding(props) {
             next: 'transactions_intro',
             content: (
                 <>
-                <h3>{ hasAccounts ?  "Your accounts:" : "You don't have any accounts" }
-                </h3>
-                {existingAccounts}
-                <CreateAccountForm
-                    handleSubmit={props.handleAddAccount}
-                    hasAccounts={hasAccounts} />
+                    <h3>{hasAccounts ? "Your accounts" : "You don't have any accounts"}
+                    </h3>
+                    <div className={classes.accountCards}>
+                        {existingAccounts}
+                    </div>
+                    <CreateAccountForm
+                        handleSubmit={props.handleAddAccount}
+                        hasAccounts={hasAccounts} />
                 </>
             ),
             nextDisabled: !hasAccounts,
@@ -58,9 +111,9 @@ export function Onboarding(props) {
                 <div>
                     <h3>Transactions</h3>
                     <p>When you buy or sell any asset you are making transactions. The same
-                        goes to transferring money to or from your investment account.
-                        To correctly reflect the state of your account you need to
-                        record all the transactions.
+                    goes to transferring money to or from your investment account.
+                    To correctly reflect the state of your account you need to
+                    record all the transactions.
                     </p>
                     <h3>Positions</h3>
                     <p>A position is the amount of a security, asset, or property that is owned. The app will automatically create a position if you record a transaction for it.</p>
@@ -78,7 +131,7 @@ export function Onboarding(props) {
         },
         {
             label: 'Add a transaction',
-            content: 'Stuff',
+            content: 'Will be added later, stay tuned!',
             path: 'add_transaction',
             previous: 'transactions_intro',
         }

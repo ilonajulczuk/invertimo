@@ -25,7 +25,7 @@ def currency_string_from_enum(currency: "Currency") -> str:
 
 
 class Currency(models.IntegerChoices):
-    EURO = 1, _("EUR")
+    EUR = 1, _("EUR")
     GBP = 2, _("GBP")
     USD = 3, _("USD")
     GBX = 4, _("GBX")
@@ -33,7 +33,7 @@ class Currency(models.IntegerChoices):
 
 class Account(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    currency = models.IntegerField(choices=Currency.choices, default=Currency.EURO)
+    currency = models.IntegerField(choices=Currency.choices, default=Currency.EUR)
     nickname = models.CharField(max_length=200)
     description = models.TextField(blank=True)
 

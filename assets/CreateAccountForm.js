@@ -34,18 +34,20 @@ const useStyles = makeStyles((theme) => ({
         display: "flex",
         flexWrap: "wrap",
         flexDirection: "column",
+        marginTop: "20px",
+        marginBottom: "20px",
     },
     formControl: {
-        margin: theme.spacing(1),
         minWidth: 120,
         maxWidth: 300,
     },
-    formControlLeft: {
-        margin: theme.spacing(1),
-        marginLeft: 0,
-        minWidth: 120,
-        maxWidth: 300,
-    },
+    inputs: {
+        marginTop: theme.spacing(1),
+        marginBottom: theme.spacing(1),
+        display: "flex",
+        flexWrap: "wrap",
+        gap: "10px",
+    }
 }));
 
 
@@ -81,7 +83,7 @@ export function CreateAccountForm(props) {
 
     return (
         <form className={classes.form} onSubmit={formik.handleSubmit}>
-            <div>
+            <div className={classes.inputs}>
                 <TextField
                     id="account-name"
                     label="Name"
@@ -90,7 +92,7 @@ export function CreateAccountForm(props) {
                     onChange={formik.handleChange}
                     error={formik.touched.name && Boolean(formik.errors.name)}
                     helperText={(formik.touched.name && formik.errors.name) || "Name like 'degiro'"}
-                    className={classes.formControlLeft}
+                    className={classes.formControl}
                     InputLabelProps={{
                         shrink: true,
                     }}
@@ -125,7 +127,7 @@ export function CreateAccountForm(props) {
                     disabled={formik.isSubmitting}
                 >
                     {submitButtonText}
-            </Button>
+                </Button>
             </div>
 
         </form>

@@ -29,7 +29,7 @@ def datestr_to_datetime(datestr) -> datetime.datetime:
 
 def _add_dummy_account_and_security(user, isin):
     account = models.Account.objects.create(
-        user=user, currency=models.Currency.EURO, nickname="test account"
+        user=user, currency=models.Currency.EUR, nickname="test account"
     )
     exchange = models.Exchange.objects.create(name="my US stocks", country="USA")
     security = models.Security.objects.create(
