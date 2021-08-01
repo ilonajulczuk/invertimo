@@ -9,14 +9,11 @@ import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import { makeStyles } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
-
+import { currencyValues } from '../currencies.js';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 
 
-const currencyValues = [
-    "EUR", "USD", "GBP"
-];
 
 const validationSchema = yup.object({
     name: yup

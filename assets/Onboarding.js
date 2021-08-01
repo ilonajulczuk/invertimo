@@ -1,17 +1,19 @@
-
 import React from 'react';
 import { Stepper } from './components/Stepper.js';
-import { CreateAccountForm } from './CreateAccountForm.js';
-import PropTypes from 'prop-types';
+import { CreateAccountForm } from './forms/CreateAccountForm.js';
+import { RecordTransactionForm } from './forms/RecordTransactionForm.js';
+
+import { makeStyles } from '@material-ui/core/styles';
+import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
+
 import {
     useParams,
 } from "react-router-dom";
 
-import { makeStyles } from '@material-ui/core/styles';
+import PropTypes from 'prop-types';
 
-import Typography from '@material-ui/core/Typography';
 
 const useStyles = makeStyles({
     root: {
@@ -67,6 +69,10 @@ export function Onboarding(props) {
         <AccountCard key={account.id} nickname={account.nickname} currency={account.currency} />)
     );
 
+    const handleAddTransaction = values => {
+        console.log(values);
+        return {ok: true};
+    };
 
     const hasAccounts = props.accounts.length > 0;
     const steps = [
@@ -131,7 +137,16 @@ export function Onboarding(props) {
         },
         {
             label: 'Add a transaction',
-            content: 'Will be added later, stay tuned!',
+            content: (
+                <div>
+                    <h3>Record transaction</h3>
+                    <p>You will be able to later edit or delete this transaction.</p>
+                    <RecordTransactionForm accounts={props.accounts} hasTransactions={false} handleSubmit={handleAddTransaction} />
+                </div>
+
+
+
+            ),
             path: 'add_transaction',
             previous: 'transactions_intro',
         }
