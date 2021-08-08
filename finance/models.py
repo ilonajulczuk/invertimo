@@ -12,23 +12,22 @@ from finance import utils
 import functools
 
 
-# TODO: add tests for these two functions.
-def currency_enum_from_string(currency: str) -> "Currency":
+class Currency(models.IntegerChoices):
+    EUR = 1, _("EUR")
+    GBP = 2, _("GBP")
+    USD = 3, _("USD")
+    GBX = 4, _("GBX")
+
+
+def currency_enum_from_string(currency: str) -> Currency:
     try:
         return Currency[currency]
     except KeyError:
         raise ValueError("Unsupported currency '%s'" % currency)
 
 
-def currency_string_from_enum(currency: "Currency") -> str:
+def currency_string_from_enum(currency: Currency) -> str:
     return Currency(currency).label
-
-
-class Currency(models.IntegerChoices):
-    EUR = 1, _("EUR")
-    GBP = 2, _("GBP")
-    USD = 3, _("USD")
-    GBX = 4, _("GBX")
 
 
 class Account(models.Model):
