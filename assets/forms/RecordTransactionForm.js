@@ -108,47 +108,52 @@ const validationSchema = yup.object({
     fees: yup
         .number()
         .required('Fees are required'),
+        executedAt: yup
+        .date()
+        .required('Date when transaction was executed is required'),
 });
-
 
 export function RecordTransactionForm(props) {
 
     const classes = useStyles();
 
-    const formik = useFormik({
-        initialValues: {
-            currency: "EUR",
-            name: "",
-            feesCurrency: "EUR",
-            tradeType: "buy",
-            executedAt: new Date(),
-            account: props.accounts[0],
-            exchange: "",
-            assetType: "stock",
-            price: "",
-            quantity: "",
-            totalCostAccountCurrency: "",
-            fees: "",
-        },
-        validationSchema: validationSchema,
-        onSubmit: async (values, { setErrors, resetForm }) => {
-            try {
-                const result = await props.handleSubmit(values);
-                if (result.ok) {
-                    resetForm();
-                } else {
-                    if (result.errors) {
-                        setErrors(result.errors);
-                    } else if (result.message) {
-                        alert(result.message);
-                    }
-                }
-            } catch (e) {
-                alert(e);
-            }
-        }
-    });
+    const initialValues = {
+        currency: "EUR",
+        name: "",
+        feesCurrency: "EUR",
+        tradeType: "buy",
+        executedAt: new Date(),
+        account: props.accounts[0],
+        exchange: "",
+        assetType: "stock",
+        price: "",
+        quantity: "",
+        totalCostAccountCurrency: "",
+        fees: "",
+    };
 
+    const onSubmit = async (values, { setErrors, resetForm }) => {
+        try {
+            const result = await props.handleSubmit(values);
+            if (result.ok) {
+                resetForm();
+            } else {
+                if (result.errors) {
+                    setErrors(result.errors);
+                } else if (result.message) {
+                    alert(result.message);
+                }
+            }
+        } catch (e) {
+            alert(e);
+        }
+    };
+
+    const formik = useFormik({
+        initialValues: initialValues,
+        validationSchema: validationSchema,
+        onSubmit: onSubmit,
+    });
 
     let accountOptions = props.accounts.map(account => {
         return (
@@ -372,7 +377,10 @@ export function RecordTransactionForm(props) {
                         name="executedAt"
                         label="When"
                         value={formik.values.executedAt}
-                        onChange={formik.handleChange}
+                        autoOk={true}
+                        onChange={(name, value) => {
+                            formik.setFieldValue('executedAt', value);
+                        }}
                         KeyboardButtonProps={{
                             'aria-label': 'change date',
                         }}
