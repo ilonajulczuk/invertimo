@@ -108,8 +108,9 @@ const validationSchema = yup.object({
     fees: yup
         .number()
         .required('Fees are required'),
-        executedAt: yup
+    executedAt: yup
         .date()
+        .typeError("Provide a date in YYYY/MM/DD format")
         .required('Date when transaction was executed is required'),
 });
 
@@ -375,16 +376,19 @@ export function RecordTransactionForm(props) {
                         margin="normal"
                         id="executedAt"
                         name="executedAt"
-                        label="When"
+                        label="Executed at"
                         value={formik.values.executedAt}
                         autoOk={true}
+                        error={ Boolean(formik.errors.executedAt)}
                         onChange={(name, value) => {
                             formik.setFieldValue('executedAt', value);
                         }}
+                        helperText={formik.errors.executedAt}
                         KeyboardButtonProps={{
                             'aria-label': 'change date',
                         }}
                     />
+
                 </MuiPickersUtilsProvider>
 
                 <FormControl className={classes.formControl}>
