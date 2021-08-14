@@ -32,8 +32,6 @@ const useStyles = makeStyles((theme) => ({
         display: "flex",
         flexWrap: "wrap",
         flexDirection: "column",
-        marginTop: "20px",
-        marginBottom: "20px",
     },
     formControl: {
         minWidth: 120,
@@ -80,8 +78,7 @@ const useStyles = makeStyles((theme) => ({
 
 const validationSchema = yup.object({
     symbol: yup
-        .string('Enter the name, symbol or ISIN of the asset, e.g. \'DIS\'')
-        .required('Asset name is required'),
+        .lazy(value => typeof value === 'string' ? yup.string().required() : yup.object().required()),
     exchange: yup
         .string('Enter the exchange name like \'XET\'')
         .required('Exchange is required'),
@@ -166,8 +163,10 @@ export function RecordTransactionForm(props) {
 
 
     let valueBlock = null;
+    let totalCostBlock = null;
 
-    if (formik.values.account.currency != formik.values.currency) {
+    const sameCurrency = formik.values.account.currency == formik.values.currency;
+    if (!sameCurrency) {
 
         valueBlock = <>
             <h4>Value</h4>
@@ -190,10 +189,7 @@ export function RecordTransactionForm(props) {
                 >Use default exchange rate for that day</Button>
             </div>
         </>;
-    }
-    let totalCostBlock = null;
 
-    if (formik.values.account.currency != formik.values.currency) {
         totalCostBlock = (<><h4>Total cost</h4>
             <div className={classes.inputs}>
                 <TextField
@@ -281,7 +277,7 @@ export function RecordTransactionForm(props) {
 
     }
 
-    const selectAssetBlock = <SelectAssetFormFragment formik={formik}/>;
+    const selectAssetBlock = <SelectAssetFormFragment formik={formik} />;
 
 
     return (
@@ -360,7 +356,7 @@ export function RecordTransactionForm(props) {
 
                 <TextField
                     id="price"
-                    label="Price in asset currency"
+                    label={sameCurrency ? "Price" : "Price in asset currency"}
                     name="price"
                     type="number"
                     value={formik.values.price}

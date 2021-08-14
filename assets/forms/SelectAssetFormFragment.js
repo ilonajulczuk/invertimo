@@ -8,7 +8,17 @@ import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogActions from '@material-ui/core/DialogActions';
+import Button from '@material-ui/core/Button';
+
+
 import { makeStyles } from '@material-ui/core/styles';
+
+
 import PropTypes from 'prop-types';
 
 
@@ -49,6 +59,29 @@ export function SelectAssetFormFragment(props) {
   const formik = props.formik;
   const classes = useStyles();
 
+  const [openFill, toggleOpenFill] = React.useState(false);
+
+  const handleFill = () => {
+    const newValue = formik.values.symbol;
+    formik.setFieldValue('currency', newValue.currency);
+    // TODO: support more than one asset type.
+    formik.setFieldValue('assetType', "stock");
+    formik.setFieldValue('exchange', newValue.exchange.name);
+    toggleOpenFill(false);
+  };
+
+  const handleSkip = () => {
+
+    toggleOpenFill(false);
+  };
+
+
+  const [openNotTracked, toggleOpenNotTracked] = React.useState(false);
+
+  const handleCloseNotTracked = () => {
+    toggleOpenNotTracked(false);
+  };
+
   return (
     <>
       <div className={classes.inputs}>
@@ -63,18 +96,12 @@ export function SelectAssetFormFragment(props) {
             if (typeof newValue !== 'string') {
               if (newValue != null) {
                 if (newValue.newOption) {
-                  alert("We don't seem to have this asset supported right now, it won't be automatically synced.");
                   formik.setFieldValue('symbol', newValue.inputValue);
+                  toggleOpenNotTracked(true);
                   return;
                 }
-                const fillOtherValues = confirm('Autofill fields like currency and exchange?');
                 formik.setFieldValue('symbol', newValue);
-                if (fillOtherValues) {
-                  formik.setFieldValue('currency', newValue.currency);
-                  // TODO: support more than one asset type.
-                  formik.setFieldValue('assetType', "stock");
-                  formik.setFieldValue('exchange', newValue.exchange.name);
-                }
+                toggleOpenFill(true);
               } else {
                 formik.setFieldValue('symbol', '');
               }
@@ -123,8 +150,8 @@ export function SelectAssetFormFragment(props) {
           renderInput={(params) => (
             <TextField {...params}
               label="Symbol or Name"
-              error={formik.touched.name && Boolean(formik.errors.name)}
-              helperText={(formik.touched.name && formik.errors.name) || "Stock symbol like 'DIS' or ISIN"} />
+              error={formik.touched.symbol && Boolean(formik.errors.symbol)}
+              helperText={(formik.touched.symbol && formik.errors.symbol) || "Stock symbol like 'DIS' or ISIN"} />
           )}
         />
 
@@ -181,6 +208,47 @@ export function SelectAssetFormFragment(props) {
           <FormHelperText>{(formik.touched.currency && formik.errors.currency)}</FormHelperText>
         </FormControl>
       </div>
+
+      <Dialog
+        open={openFill}
+        onClose={handleSkip}
+        aria-labelledby="asset-confirmation-dialog-title"
+        aria-describedby="asset-confirmation-dialog-description"
+      >
+        <DialogTitle id="asset-confirmation-dialog-title">{"Fill in other asset fields?"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="asset-confirmation-dialog-description">
+            The values might be overriden.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleSkip} color="secondary">
+            Skip
+          </Button>
+          <Button onClick={handleFill} color="primary" autoFocus>
+            Fill the fields
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openNotTracked}
+        onClose={handleCloseNotTracked}
+        aria-labelledby="asset-confirmation-dialog-title"
+        aria-describedby="asset-confirmation-dialog-description"
+      >
+        <DialogTitle id="asset-confirmation-dialog-title">{"This asset price won't be automatically updated"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="asset-confirmation-dialog-description">
+            We don&apos;t have this asset in our database and we will not be able to fetch and update its price automatically.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseNotTracked} color="primary" autoFocus>
+            Ok
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
