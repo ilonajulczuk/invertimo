@@ -17,7 +17,7 @@ import { green, red } from '@material-ui/core/colors';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-
+import { SelectAssetFormFragment } from './SelectAssetFormFragment.js';
 
 import 'date-fns';
 import DateFnsUtils from '@date-io/date-fns';
@@ -79,9 +79,9 @@ const useStyles = makeStyles((theme) => ({
 
 
 const validationSchema = yup.object({
-    name: yup
-        .string('Enter the name for the account, like \'degiro\'')
-        .required('Account name is required'),
+    symbol: yup
+        .string('Enter the name, symbol or ISIN of the asset, e.g. \'DIS\'')
+        .required('Asset name is required'),
     exchange: yup
         .string('Enter the exchange name like \'XET\'')
         .required('Exchange is required'),
@@ -120,7 +120,7 @@ export function RecordTransactionForm(props) {
 
     const initialValues = {
         currency: "EUR",
-        name: "",
+        symbol: "",
         feesCurrency: "EUR",
         tradeType: "buy",
         executedAt: new Date(),
@@ -181,7 +181,7 @@ export function RecordTransactionForm(props) {
                     onChange={formik.handleChange}
                     error={formik.touched.totalValueAccountCurrency && Boolean(formik.errors.totalValueAccountCurrency)}
                     helperText={(formik.touched.totalValueAccountCurrency && formik.errors.totalValueAccountCurrency)}
-                    className={classes.narrowInput}
+                    className={classes.formControl}
                     InputLabelProps={{
                         shrink: true,
                     }}
@@ -281,82 +281,15 @@ export function RecordTransactionForm(props) {
 
     }
 
+    const selectAssetBlock = <SelectAssetFormFragment formik={formik}/>;
+
+
     return (
         <form className={classes.form} onSubmit={formik.handleSubmit}>
-            <h4>What did you trade?</h4>
-            <div className={classes.inputs}>
-                <TextField
-                    id="account-name"
-                    label="Name"
-                    name="name"
-                    value={formik.values.name}
-                    onChange={formik.handleChange}
-                    error={formik.touched.name && Boolean(formik.errors.name)}
-                    helperText={(formik.touched.name && formik.errors.name) || "Stock symbol like 'DIS' or ISIN"}
-                    className={classes.symbolInput}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
+            <h4>Asset details</h4>
+            {selectAssetBlock}
 
-                <FormControl className={classes.formControl}>
-                    <InputLabel id="asset-type-label">Asset type</InputLabel>
-                    <Select
-                        name="asset-type"
-                        labelId="asset-type-label"
-                        id="asset-type"
-                        value={formik.values.assetType}
-                        onChange={formik.handleChange}
-                        error={formik.touched.assetType && Boolean(formik.errors.assetType)}
-                        className={classes.formControl}
-                    >
-                        <MenuItem value={"stock"}>Stock</MenuItem>
-                        <MenuItem value={"fund"}>Fund</MenuItem>
-                        <MenuItem value={"bond"}>Bond</MenuItem>
-                    </Select>
-                    <FormHelperText>{(formik.touched.assetType && formik.errors.assetType) ||
-                        `Different types of assets are supported`}</FormHelperText>
-                </FormControl>
-            </div>
-
-            <div className={classes.inputs}>
-                <TextField
-                    id="exchange"
-                    label="Exchange"
-                    name="exchange"
-                    value={formik.values.exchange}
-                    onChange={formik.handleChange}
-                    error={formik.touched.exchange && Boolean(formik.errors.exchange)}
-                    helperText={(formik.touched.exchange && formik.errors.exchange) || "Exchange name like 'XETRA'"}
-                    className={classes.formControl}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
-
-                <FormControl className={classes.narrowInput}>
-                    <InputLabel id="currency-select-label">Currency</InputLabel>
-                    <Select
-                        name="currency"
-                        labelId="currency-select-label"
-                        id="currency"
-                        value={formik.values.currency}
-                        onChange={formik.handleChange}
-                        error={formik.touched.currency && Boolean(formik.errors.currency)}
-                        className={classes.narrowInput}
-                    >
-                        <MenuItem value={"USD"}>$ USD</MenuItem>
-                        <MenuItem value={"EUR"}>€ EUR</MenuItem>
-                        <MenuItem value={"GBP"}>£ GBP</MenuItem>
-                    </Select>
-                    <FormHelperText>{(formik.touched.currency && formik.errors.currency)}</FormHelperText>
-                </FormControl>
-            </div>
-
-            <p>Looking for it...</p>
-
-
-            <h4>Tell us more about that trade</h4>
+            <h4>Trade details</h4>
             <div className={classes.inputs}>
 
                 <FormControl className={classes.formControl}>
@@ -379,7 +312,7 @@ export function RecordTransactionForm(props) {
                         label="Executed at"
                         value={formik.values.executedAt}
                         autoOk={true}
-                        error={ Boolean(formik.errors.executedAt)}
+                        error={Boolean(formik.errors.executedAt)}
                         onChange={(name, value) => {
                             formik.setFieldValue('executedAt', value);
                         }}
