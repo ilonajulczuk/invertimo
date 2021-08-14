@@ -60,6 +60,7 @@ export function SelectAssetFormFragment(props) {
   const classes = useStyles();
 
   const [openFill, toggleOpenFill] = React.useState(false);
+  const [otherFieldsDisabled, toggleDisable] = React.useState(false);
 
   const handleFill = () => {
     const newValue = formik.values.symbol;
@@ -67,11 +68,15 @@ export function SelectAssetFormFragment(props) {
     // TODO: support more than one asset type.
     formik.setFieldValue('assetType', "stock");
     formik.setFieldValue('exchange', newValue.exchange.name);
+    toggleDisable(true);
     toggleOpenFill(false);
   };
 
   const handleSkip = () => {
-
+    // We are not using a preselected asset now so it's open for modification.
+    // We will treat it as if it was custom.
+    formik.setFieldValue('symbol', formik.values.symbol.symbol);
+    toggleDisable(false);
     toggleOpenFill(false);
   };
 
@@ -79,6 +84,7 @@ export function SelectAssetFormFragment(props) {
   const [openNotTracked, toggleOpenNotTracked] = React.useState(false);
 
   const handleCloseNotTracked = () => {
+    toggleDisable(false);
     toggleOpenNotTracked(false);
   };
 
@@ -97,12 +103,14 @@ export function SelectAssetFormFragment(props) {
               if (newValue != null) {
                 if (newValue.newOption) {
                   formik.setFieldValue('symbol', newValue.inputValue);
+
                   toggleOpenNotTracked(true);
                   return;
                 }
                 formik.setFieldValue('symbol', newValue);
                 toggleOpenFill(true);
               } else {
+                toggleDisable(false);
                 formik.setFieldValue('symbol', '');
               }
             }
@@ -158,13 +166,14 @@ export function SelectAssetFormFragment(props) {
         <FormControl className={classes.formControl}>
           <InputLabel id="asset-type-label">Asset type</InputLabel>
           <Select
-            name="asset-type"
+            name="assetType"
             labelId="asset-type-label"
             id="asset-type"
             value={formik.values.assetType}
             onChange={formik.handleChange}
             error={formik.touched.assetType && Boolean(formik.errors.assetType)}
             className={classes.formControl}
+            disabled={otherFieldsDisabled}
           >
             <MenuItem value={"stock"}>Stock</MenuItem>
             <MenuItem value={"fund"}>Fund</MenuItem>
@@ -185,6 +194,7 @@ export function SelectAssetFormFragment(props) {
           error={formik.touched.exchange && Boolean(formik.errors.exchange)}
           helperText={(formik.touched.exchange && formik.errors.exchange) || "Exchange name like 'XETRA'"}
           className={classes.formControl}
+          disabled={otherFieldsDisabled}
           InputLabelProps={{
             shrink: true,
           }}
@@ -200,6 +210,7 @@ export function SelectAssetFormFragment(props) {
             onChange={formik.handleChange}
             error={formik.touched.currency && Boolean(formik.errors.currency)}
             className={classes.narrowInput}
+            disabled={otherFieldsDisabled}
           >
             <MenuItem value={"USD"}>$ USD</MenuItem>
             <MenuItem value={"EUR"}>€ EUR</MenuItem>
