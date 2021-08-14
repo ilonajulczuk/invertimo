@@ -69,12 +69,8 @@ export function Onboarding(props) {
         <AccountCard key={account.id} nickname={account.nickname} currency={account.currency} />)
     );
 
-    const handleAddTransaction = values => {
-        console.log(values);
-        return {ok: true};
-    };
-
     const hasAccounts = props.accounts.length > 0;
+    const hasTransactions = props.hasTransactions;
     const steps = [
         {
             label: 'Investment accounts',
@@ -141,14 +137,12 @@ export function Onboarding(props) {
                 <div>
                     <h3>Record transaction</h3>
                     <p>You will be able to later edit or delete this transaction.</p>
-                    <RecordTransactionForm accounts={props.accounts} hasTransactions={false} handleSubmit={handleAddTransaction} />
+                    <RecordTransactionForm accounts={props.accounts} hasTransactions={hasTransactions} handleSubmit={props.handleAddTransaction} />
                 </div>
-
-
-
             ),
             path: 'add_transaction',
             previous: 'transactions_intro',
+            nextDisabled: !hasTransactions,
         }
     ];
 
@@ -168,5 +162,7 @@ export function Onboarding(props) {
 
 Onboarding.propTypes = {
     accounts: PropTypes.array.isRequired,
+    hasTransactions: PropTypes.bool.isRequired,
     handleAddAccount: PropTypes.func.isRequired,
+    handleAddTransaction: PropTypes.func.isRequired,
 };

@@ -80,7 +80,6 @@ export function SelectAssetFormFragment(props) {
     toggleOpenFill(false);
   };
 
-
   const [openNotTracked, toggleOpenNotTracked] = React.useState(false);
 
   const handleCloseNotTracked = () => {

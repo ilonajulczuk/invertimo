@@ -22,6 +22,7 @@ from finance.serializers import (
     PositionWithQuantitiesSerializer,
     SecurityPriceHistorySerializer,
     TransactionSerializer,
+    AddTransactionKnownAssetSerializer,
 )
 
 
@@ -215,7 +216,7 @@ class PositionView(generics.RetrieveAPIView):
 
 
 class TransactionsViewSet(
-    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+    mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet
 ):
     model = Transaction
     serializer_class = TransactionSerializer
@@ -231,4 +232,38 @@ class TransactionsViewSet(
             .select_related("position")
             .select_related("position__security")
             .select_related("position__security__exchange")
+        )
+
+    def get_serializer_class(
+        self,
+    ) -> Type[
+        Union[TransactionSerializer, AddTransactionKnownAssetSerializer]
+    ]:
+        if self.action in ("create", "update"):
+            return AddTransactionKnownAssetSerializer
+
+        return TransactionSerializer
+
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        assert isinstance(self.request.user, User)
+        account_repository = accounts.AccountRepository()
+        account = account_repository.get(
+            user=self.request.user,
+            id=serializer.validated_data["account"])
+
+        arguments = serializer.validated_data.copy()
+        arguments.pop("account")
+        asset_id = arguments.pop("asset")
+        arguments["asset_id"] = asset_id
+        accounts.AccountRepository().add_transaction_known_asset(
+            account, **arguments
+        )
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )

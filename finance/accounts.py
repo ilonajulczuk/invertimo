@@ -54,6 +54,46 @@ class AccountRepository:
 
         return transaction
 
+    def add_transaction_known_asset(self, account, asset_id, executed_at,
+        quantity,
+        price,
+        transaction_costs,
+        local_value,
+        value_in_account_currency,
+        total_in_account_currency,
+        order_id):
+
+        position = self._get_or_create_position_for_asset(account, asset_id)
+
+        transaction, created = models.Transaction.objects.get_or_create(
+            executed_at=executed_at,
+            position=position,
+            quantity=quantity,
+            price=price,
+            transaction_costs=transaction_costs,
+            local_value=local_value,
+            value_in_account_currency=value_in_account_currency,
+            total_in_account_currency=total_in_account_currency,
+            order_id=order_id,
+        )
+        if created:
+            position.quantity += quantity
+            position.save()
+            account.balance += total_in_account_currency
+            account.save()
+
+        return transaction
+
+    def add_tranaction_custom_asset(self, account, asset_details, executed_at,
+        quantity,
+        price,
+        transaction_costs,
+        local_value,
+        value_in_account_currency,
+        total_in_account_currency,
+        order_id):
+        pass
+
     def add_event(self, account):
         pass
 
@@ -70,3 +110,14 @@ class AccountRepository:
             return models.Position.objects.create(account=account, security=security)
         else:
             return None
+
+    def _get_or_create_position_for_asset(
+        self, account: models.Account, asset_id: int
+    ):
+        positions = models.Position.objects.filter(
+            account=account, security__pk=asset_id
+        )
+        if positions:
+            return positions[0]
+        security = models.Security.objects.get(pk=asset_id)
+        return models.Position.objects.create(account=account, security=security)

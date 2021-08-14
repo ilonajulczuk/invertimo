@@ -172,7 +172,7 @@ export function RecordTransactionForm(props) {
         );
     });
 
-    const submitButtonText = props.hasTransactions ? "Record another account" : "Record transaction";
+    const submitButtonText = props.hasTransactions ? "Record another transaction" : "Record transaction";
 
 
     let valueBlock = null;

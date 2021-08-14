@@ -271,6 +271,7 @@ class Transaction(models.Model):
     )
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     price = models.DecimalField(max_digits=12, decimal_places=5)
+
     transaction_costs = models.DecimalField(max_digits=12, decimal_places=5, null=True)
 
     # The currency is stored with the security.
@@ -282,7 +283,7 @@ class Transaction(models.Model):
     total_in_account_currency = models.DecimalField(max_digits=12, decimal_places=5)
     # value_in_account_currency + transaction cost == total cost.
 
-    order_id = models.CharField(max_length=200, null=True)
+    order_id = models.CharField(max_length=200, null=True, blank=True)
 
     last_modified = models.DateTimeField(auto_now=True)
 

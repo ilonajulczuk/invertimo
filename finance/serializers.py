@@ -118,6 +118,39 @@ class TransactionSerializer(serializers.ModelSerializer[Transaction]):
         ]
 
 
+class AddTransactionKnownAssetSerializer(serializers.ModelSerializer[Transaction]):
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
+    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+
+
+    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
+    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    value_in_account_currency = serializers.DecimalField(
+        max_digits=20, decimal_places=2
+    )
+    total_in_account_currency = serializers.DecimalField(
+        max_digits=20, decimal_places=2
+    )
+    account = serializers.IntegerField()
+    asset = serializers.IntegerField()
+
+    class Meta:
+        model = Transaction
+        fields = [
+            "id",
+            "executed_at",
+            "account",
+            "asset",
+            "quantity",
+            "price",
+            "transaction_costs",
+            "local_value",
+            "value_in_account_currency",
+            "total_in_account_currency",
+            "order_id",
+        ]
+
+
 class PositionWithQuantitiesSerializer(serializers.ModelSerializer[Position]):
     security = SecuritySerializer()
     quantities = serializers.SerializerMethodField()
