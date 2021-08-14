@@ -99,9 +99,21 @@ const validationSchema = yup.object({
     quantity: yup
         .number()
         .required('Quantity is required'),
+    account: yup
+        .object()
+        .required('Account needs to be selected'),
     totalCostAccountCurrency: yup
         .number()
         .required('Total is required'),
+    // This value is only required if currency of the asset and account don't match.
+    totalValueAccountCurrency: yup
+        .number().when(['currency', 'account'], {
+            is: (currency, account) => currency !== account.currency,
+            then: yup.number().required(
+                'Total value in account currency has to be provided if the' +
+                ' asset currency is different than the account currency.'),
+            otherwise: yup.number(),
+        }),
     fees: yup
         .number()
         .required('Fees are required'),
@@ -127,6 +139,7 @@ export function RecordTransactionForm(props) {
         price: "",
         quantity: "",
         totalCostAccountCurrency: "",
+        totalValueAccountCurrency: "",
         fees: "",
     };
 
@@ -176,6 +189,7 @@ export function RecordTransactionForm(props) {
                     id="value-account-currency"
                     label="Total value in account currency"
                     name="totalValueAccountCurrency"
+                    type="number"
                     value={formik.values.totalValueAccountCurrency}
                     onChange={formik.handleChange}
                     error={formik.touched.totalValueAccountCurrency && Boolean(formik.errors.totalValueAccountCurrency)}
