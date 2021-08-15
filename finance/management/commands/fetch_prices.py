@@ -10,7 +10,7 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args, **options):
-        securities = models.Security.objects.all()
+        securities = models.Asset.objects.all()
         self.stdout.write(f'Will fetch currency exchange rates')
         prices.collect_exchange_rates()
         self.stdout.write(self.style.SUCCESS(f'Collected exchange rates'))

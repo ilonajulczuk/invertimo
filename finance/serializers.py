@@ -7,7 +7,7 @@ from finance.models import (
     Exchange,
     Position,
     PriceHistory,
-    Security,
+    Asset,
     Transaction,
 )
 import datetime
@@ -25,20 +25,23 @@ class CurrencyField(serializers.IntegerField):
         return models.currency_string_from_enum(value)
 
     def to_internal_value(self, value):
-        return models.currency_enum_from_string(value)
+        try:
+            return models.currency_enum_from_string(value)
+        except ValueError:
+            raise serializers.ValidationError(f"Invalid value to resprent currency")
 
 
-class SecuritySerializer(serializers.ModelSerializer[Security]):
+class AssetSerializer(serializers.ModelSerializer[Asset]):
     exchange = ExchangeSerializer()
     currency = CurrencyField()
 
     class Meta:
-        model = Security
+        model = Asset
         fields = ["id", "isin", "symbol", "name", "exchange", "currency", "country"]
 
 
 class PositionSerializer(serializers.ModelSerializer[Position]):
-    security = SecuritySerializer()
+    asset = AssetSerializer()
     latest_price = serializers.DecimalField(max_digits=20, decimal_places=2)
     latest_exchange_rate = serializers.DecimalField(max_digits=20, decimal_places=8)
     latest_price_date = serializers.DateField()
@@ -48,7 +51,7 @@ class PositionSerializer(serializers.ModelSerializer[Position]):
         fields = [
             "id",
             "account",
-            "security",
+            "asset",
             "quantity",
             "latest_price",
             "latest_price_date",
@@ -57,14 +60,14 @@ class PositionSerializer(serializers.ModelSerializer[Position]):
 
 
 class EmbeddedPositionSerializer(serializers.ModelSerializer[Position]):
-    security = SecuritySerializer()
+    asset = AssetSerializer()
 
     class Meta:
         model = Position
         fields = [
             "id",
             "account",
-            "security",
+            "asset",
             "quantity",
         ]
 
@@ -118,8 +121,50 @@ class TransactionSerializer(serializers.ModelSerializer[Transaction]):
         ]
 
 
+class AddTransactionKnownAssetSerializer(serializers.ModelSerializer[Transaction]):
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
+    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+
+    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
+    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    value_in_account_currency = serializers.DecimalField(
+        max_digits=20, decimal_places=2
+    )
+    total_in_account_currency = serializers.DecimalField(
+        max_digits=20, decimal_places=2
+    )
+    account = serializers.IntegerField()
+    asset = serializers.IntegerField()
+
+    def validate_account(self, value):
+        if not models.Account.objects.filter(user=self.context["request"].user, pk=value).exists():
+            raise serializers.ValidationError(f"User doesn't have account with id: '{value}'")
+        return value
+
+    def validate_asset(self, value):
+        if not models.Asset.objects.filter(pk=value).exists():
+            raise serializers.ValidationError(f"There is no asset with id: '{value}'")
+        return value
+
+    class Meta:
+        model = Transaction
+        fields = [
+            "id",
+            "executed_at",
+            "account",
+            "asset",
+            "quantity",
+            "price",
+            "transaction_costs",
+            "local_value",
+            "value_in_account_currency",
+            "total_in_account_currency",
+            "order_id",
+        ]
+
+
 class PositionWithQuantitiesSerializer(serializers.ModelSerializer[Position]):
-    security = SecuritySerializer()
+    asset = AssetSerializer()
     quantities = serializers.SerializerMethodField()
     values = serializers.SerializerMethodField()
     values_account_currency = serializers.SerializerMethodField()
@@ -130,7 +175,7 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer[Position]):
         fields = [
             "id",
             "account",
-            "security",
+            "asset",
             "quantity",
             "quantities",
             "transactions",
@@ -166,7 +211,7 @@ class CurrencyExchangeRateSerializer(serializers.ModelSerializer[CurrencyExchang
         fields = ["date", "value"]
 
 
-class SecurityPriceHistorySerializer(serializers.ModelSerializer[PriceHistory]):
+class AssetPriceHistorySerializer(serializers.ModelSerializer[PriceHistory]):
     class Meta:
         model = PriceHistory
         fields = ["date", "value"]

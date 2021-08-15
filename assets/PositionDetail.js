@@ -55,19 +55,19 @@ export function PositionDetail(props) {
     }
 
     const accountCurrency = toSymbol(account.currency);
-    const positionCurrency = toSymbol(basicData.security.currency);
+    const positionCurrency = toSymbol(basicData.asset.currency);
     const value = Math.round(100 * basicData.quantity * basicData.latest_price) / 100;
-    let displayConvertedValue = (basicData.security.currency != account.currency && basicData.latest_exchange_rate);
+    let displayConvertedValue = (basicData.asset.currency != account.currency && basicData.latest_exchange_rate);
     let basicHeader = (
         <div className="position-card">
             <div className="position-name">
-                <span className="card-label">{basicData.security.isin}</span>
-                <span className="position-symbol">{basicData.security.symbol}</span>
-                <span>{basicData.security.name}</span>
+                <span className="card-label">{basicData.asset.isin}</span>
+                <span className="position-symbol">{basicData.asset.symbol}</span>
+                <span>{basicData.asset.name}</span>
             </div>
 
             <div>
-                {basicData.security.exchange.name}
+                {basicData.asset.exchange.name}
             </div>
             <div>
                 Quantity: {basicData.quantity}
@@ -93,7 +93,7 @@ export function PositionDetail(props) {
         </div>
     );
     if (data === 0) {
-        return <div> <h2><a href="../#positions/">Positions</a> / {basicData.security.symbol}</h2>
+        return <div> <h2><a href="../#positions/">Positions</a> / {basicData.asset.symbol}</h2>
             {basicHeader}
             <div>Loading...</div></div>;
     } else if (data == null) {
@@ -138,7 +138,7 @@ export function PositionDetail(props) {
     return (
         <div>
 
-            <h2><a href="../#positions/">Positions</a> / {data.security.symbol}</h2>
+            <h2><a href="../#positions/">Positions</a> / {data.asset.symbol}</h2>
             {basicHeader}
             <div className="position-card-expanded-content">
                 <div className="position-card-charts-header">

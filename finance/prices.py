@@ -87,12 +87,12 @@ def collect_exchange_rates():
             )
 
 
-def collect_prices(security):
-    symbol = security.symbol
-    exchange_code = security.exchange.identifiers.get(id_type=models.ExchangeIDType.CODE).value
+def collect_prices(asset):
+    symbol = asset.symbol
+    exchange_code = asset.exchange.identifiers.get(id_type=models.ExchangeIDType.CODE).value
     from_date = "2020-01-01"
     last_record = (
-        models.PriceHistory.objects.filter(security=security)
+        models.PriceHistory.objects.filter(asset=asset)
         .order_by("date")
         .last()
     )
@@ -113,7 +113,7 @@ def collect_prices(security):
         price, _ = models.PriceHistory.objects.get_or_create(
             date=record["date"],
             value=record["close"],
-            security=security,
+            asset=asset,
         )
         prices.append(price)
     return prices

@@ -141,6 +141,7 @@ export default class Portfolio extends React.Component {
         this.apiClient = new APIClient('./api');
         this.getPositionDetail = this.getPositionDetail.bind(this);
         this.handleAddAccount = this.handleAddAccount.bind(this);
+        this.handleAddTransaction = this.handleAddTransaction.bind(this);
     }
 
     async handleAddAccount(accountData) {
@@ -153,6 +154,17 @@ export default class Portfolio extends React.Component {
         // Reload all the data, e.g. accounts, positions, etc.
         this.refreshFromServer();
         return result;
+    }
+
+    async handleAddTransaction(data) {
+        if (data.symbol.id) {
+            let result = await this.apiClient.addTransaction(data);
+            // Reload all the data, e.g. accounts, positions, etc.
+            this.refreshFromServer();
+            return result;
+        } else {
+            return { ok: false, message: "Only supporting known assets for now..." };
+        }
     }
 
     async getPositionDetail(positionId) {
@@ -219,15 +231,16 @@ export default class Portfolio extends React.Component {
         let accountValues = this.state.accounts.filter(account =>
             this.state.accountValues.get(account.id)).map((account) => {
 
-            let accountDetail = this.state.accountValues.get(account.id);
-            let values = [];
-            if (accountDetail) {
-                values = accountDetail.values;
-            }
-            return (
-                <AccountValue key={account.id} account={account} positions={this.state.positions} values={values} />
-            );
-        });
+                let accountDetail = this.state.accountValues.get(account.id);
+                let values = [];
+                if (accountDetail) {
+                    values = accountDetail.values;
+                }
+                return (
+                    <AccountValue key={account.id} account={account}
+                        positions={this.state.positions} values={values} />
+                );
+            });
 
         return (
             <div className="main-grid">
@@ -251,16 +264,22 @@ export default class Portfolio extends React.Component {
                         <Route path="/transactions">
                             <h2>Transactions</h2>
                             <ErrorBoundary>
-                                <TransactionList transactions={this.state.transactions} accounts={this.state.accounts} />
+                                <TransactionList transactions={this.state.transactions}
+                                    accounts={this.state.accounts} />
                             </ErrorBoundary>
                         </Route>
                         <Route path="/positions">
                             <ErrorBoundary>
-                                <PositionList positions={this.state.positions} accounts={this.state.accounts} getPositionDetail={this.getPositionDetail} />
+                                <PositionList positions={this.state.positions}
+                                    accounts={this.state.accounts} getPositionDetail={this.getPositionDetail} />
                             </ErrorBoundary>
                         </Route>
                         <Route path="/start/:stepName">
-                            <Onboarding accounts={this.state.accounts} handleAddAccount={this.handleAddAccount}/>
+                            <Onboarding accounts={this.state.accounts}
+                                handleAddAccount={this.handleAddAccount}
+                                handleAddTransaction={this.handleAddTransaction}
+                                hasTransactions={this.state.transactions.length > 0}
+                                />
                         </Route>
                         <Route path="/">
 

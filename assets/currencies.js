@@ -1,3 +1,10 @@
+
+
+export const currencyValues = [
+    "EUR", "USD", "GBP"
+];
+
+
 export const CURRENCY_TO_SYMBOL = new Map(
     [
         ["USD", "$"],

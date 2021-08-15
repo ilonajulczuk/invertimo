@@ -4,7 +4,6 @@ import decimal
 from django.contrib.auth.models import User
 from django.db.models import Sum
 from django.test import SimpleTestCase, TestCase
-from django.urls import reverse
 
 from finance import accounts, degiro_parser, exchanges, models, utils
 
@@ -27,19 +26,19 @@ def datestr_to_datetime(datestr) -> datetime.datetime:
     return datetime.datetime.strptime(datestr, DATE_FORMAT)
 
 
-def _add_dummy_account_and_security(user, isin):
+def _add_dummy_account_and_asset(user, isin):
     account = models.Account.objects.create(
         user=user, currency=models.Currency.EUR, nickname="test account"
     )
     exchange = models.Exchange.objects.create(name="my US stocks", country="USA")
-    security = models.Security.objects.create(
+    asset = models.Asset.objects.create(
         isin=isin,
         symbol="MOONIES",
         name="a stock",
         currency=models.Currency.USD,
         exchange=exchange,
     )
-    return account, exchange, security
+    return account, exchange, asset
 
 
 def _add_transaction(account, isin, exchange, executed_at, quantity, price):
@@ -110,7 +109,7 @@ class TestDegiroParser(TestCase):
         self.assertAlmostEqual(total_value, account_balance)
 
 
-class TestUtils(TestCase):
+class TestUtils(SimpleTestCase):
     def test_generate_datetime_intervals_from_end(self):
         expected_dates = [
             "2021-05-05 13:00Z",
@@ -187,7 +186,7 @@ class TestPosition(TestCase):
         self.user = User.objects.create(username="testuser", email="test@example.com")
         self.client.force_login(self.user)
         self.isin = "US1234"
-        self.account, self.exchange, self.security = _add_dummy_account_and_security(
+        self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
             self.user, isin=self.isin
         )
 
@@ -256,7 +255,7 @@ class TestPosition(TestCase):
             models.PriceHistory.objects.create(
                 date=date,
                 value=100 + (i % 3) * 10,
-                security=self.security,
+                asset=self.asset,
             )
         position = models.Position.objects.first()
         self.assertEqual(position.quantity, 20)
@@ -304,7 +303,7 @@ class TestPosition(TestCase):
             models.PriceHistory.objects.create(
                 date=date,
                 value=100 + (i % 3) * 10,
-                security=self.security,
+                asset=self.asset,
             )
         position = models.Position.objects.first()
         self.assertEqual(position.quantity, 20)
@@ -333,231 +332,3 @@ class TestPosition(TestCase):
             for (date, value) in expected_value_history
         ]
         self.assertEqual(value_history, expected_value_history)
-
-
-class ViewTestBase:
-    """ViewTestVase is meant to be used as a base class with the django.test.TestCase
-
-    It offers basic tests for views, so that they don't have to be reimplemented each time.
-    It doesn't inherit from TestCase because we don't want those tests to run, we only want them
-    to be run in the child classes.
-    """
-
-    URL = None
-    VIEW_NAME = None
-    DETAIL_VIEW = False
-    QUERY_PARAMS = "?"
-    # Change to None if the view is fine to access while not authenticated.
-    UNAUTHENTICATED_CODE = 302  # Redirect by default.
-
-    def setUp(self):
-        self.user = User.objects.create(username="testuser", email="test@example.com")
-        self.client.force_login(self.user)
-
-    def get_url(self):
-        return self.URL
-
-    def get_reversed_url(self):
-        return reverse(self.VIEW_NAME)
-
-    def test_url_exists(self):
-        response = self.client.get(self.get_url() + self.QUERY_PARAMS)
-        self.assertEqual(response.status_code, 200)
-
-    def test_view_accessible_by_name(self):
-        response = self.client.get(self.get_reversed_url() + self.QUERY_PARAMS)
-        self.assertEqual(response.status_code, 200)
-
-    def test_cant_access_without_logging_in(self):
-        self.client.logout()
-        response = self.client.get(self.get_reversed_url() + self.QUERY_PARAMS)
-        # If UNAUTHENTICATE_CODE is overriden to None, it means that it shouldn't
-        # be disallowed.
-        if self.UNAUTHENTICATED_CODE:
-            self.assertEquals(response.status_code, self.UNAUTHENTICATED_CODE)
-
-    def test_cant_access_objects_of_other_users(self):
-        if self.DETAIL_VIEW:
-            user2 = User.objects.create(
-                username="anotheruser", email="test2@example.com"
-            )
-            self.client.force_login(user2)
-            response = self.client.get(self.get_reversed_url() + self.QUERY_PARAMS)
-            self.assertEquals(response.status_code, 404)
-
-
-class TestPositionsView(ViewTestBase, TestCase):
-    URL = "/api/positions/"
-    VIEW_NAME = "api-positions"
-    DETAIL_VIEW = False
-    QUERY_PARAMS = "?"
-    UNAUTHENTICATED_CODE = 403
-
-    def setUp(self):
-        super().setUp()
-
-        self.isin = "USA123"
-        self.account, self.exchange, self.security = _add_dummy_account_and_security(
-            self.user, isin=self.isin
-        )
-        for transaction in _FAKE_TRANSACTIONS:
-            _add_transaction(
-                self.account,
-                self.isin,
-                self.exchange,
-                transaction[0],
-                transaction[1],
-                transaction[2],
-            )
-
-    def test_valid_content(self):
-        from_date = datetime.date.fromisoformat("2021-04-25")
-        to_date = datetime.date.fromisoformat("2021-05-04")
-
-        dates = utils.generate_date_intervals(from_date, to_date)
-        for i, date in enumerate(dates):
-            # Simulate some prices missing (e.g. weekend).
-            if i % 5 == 0:
-                continue
-            models.PriceHistory.objects.create(
-                date=date,
-                value=100 + (i % 3) * 10,
-                security=self.security,
-            )
-        for i, date in enumerate(dates):
-            models.CurrencyExchangeRate.objects.create(
-                date=date,
-                value=1 + (i % 3) / 10,
-                from_currency=self.security.currency,
-                to_currency=self.account.currency,
-            )
-
-        response = self.client.get(self.get_url() + self.QUERY_PARAMS)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "USA123")
-        self.assertContains(response, '"latest_price":"1')
-        self.assertContains(response, '"latest_exchange_rate":"1')
-
-
-class TestPositionDetailView(ViewTestBase, TestCase):
-    URL = "/api/positions/%s/"
-    VIEW_NAME = "api-position"
-    DETAIL_VIEW = True
-    QUERY_PARAMS = "?"
-    UNAUTHENTICATED_CODE = 403
-
-    def setUp(self):
-        super().setUp()
-        self.isin = "123"
-        self.account, self.exchange, self.security = _add_dummy_account_and_security(
-            self.user, isin=self.isin
-        )
-        for transaction in _FAKE_TRANSACTIONS:
-            _add_transaction(
-                self.account,
-                self.isin,
-                self.exchange,
-                transaction[0],
-                transaction[1],
-                transaction[2],
-            )
-        self.position = models.Position.objects.first()
-
-    def get_url(self):
-        return self.URL % self.position.pk
-
-    def get_reversed_url(self):
-        return reverse(self.VIEW_NAME, args=[self.position.pk])
-
-
-class TestAccountsView(ViewTestBase, TestCase):
-    URL = "/api/accounts/"
-    VIEW_NAME = "account-list"
-    DETAIL_VIEW = False
-    QUERY_PARAMS = "?"
-    UNAUTHENTICATED_CODE = 403
-
-    def setUp(self):
-        super().setUp()
-
-        self.isin = "USA123"
-        self.account, _, _ = _add_dummy_account_and_security(self.user, isin=self.isin)
-
-
-class TestDetailAccountsView(ViewTestBase, TestCase):
-    URL = "/api/accounts/%s/"
-    VIEW_NAME = "account-detail"
-    DETAIL_VIEW = True
-    QUERY_PARAMS = "?"
-    UNAUTHENTICATED_CODE = 403
-
-    def setUp(self):
-        super().setUp()
-
-        self.isin = "USA123"
-        self.account, _, _ = _add_dummy_account_and_security(self.user, isin=self.isin)
-
-    def get_url(self):
-        return self.URL % self.account.pk
-
-    def get_reversed_url(self):
-        return reverse(self.VIEW_NAME, args=[self.account.pk])
-
-
-class TestTransactionsView(ViewTestBase, TestCase):
-    URL = "/api/transactions/"
-    VIEW_NAME = "transaction-list"
-    DETAIL_VIEW = False
-    QUERY_PARAMS = "?"
-    UNAUTHENTICATED_CODE = 403
-
-    def setUp(self):
-        super().setUp()
-
-        self.isin = "USA123"
-        self.account, self.exchange, self.security = _add_dummy_account_and_security(
-            self.user, isin=self.isin
-        )
-        for transaction in _FAKE_TRANSACTIONS:
-            _add_transaction(
-                self.account,
-                self.isin,
-                self.exchange,
-                transaction[0],
-                transaction[1],
-                transaction[2],
-            )
-
-
-class TestTransactionsDetailView(ViewTestBase, TestCase):
-    URL = "/api/transactions/%s/"
-    VIEW_NAME = "transaction-detail"
-    DETAIL_VIEW = True
-    QUERY_PARAMS = "?"
-    UNAUTHENTICATED_CODE = 403
-
-    def setUp(self):
-        super().setUp()
-
-        self.isin = "USA123"
-        self.account, self.exchange, self.security = _add_dummy_account_and_security(
-            self.user, isin=self.isin
-        )
-        for transaction in _FAKE_TRANSACTIONS:
-            _add_transaction(
-                self.account,
-                self.isin,
-                self.exchange,
-                transaction[0],
-                transaction[1],
-                transaction[2],
-            )
-
-        self.transaction = models.Transaction.objects.first()
-
-    def get_url(self):
-        return self.URL % self.transaction.pk
-
-    def get_reversed_url(self):
-        return reverse(self.VIEW_NAME, args=[self.transaction.pk])

@@ -12,7 +12,7 @@ export function SelectPositions(props) {
                 <span style={{
                     color: props.colors[i]
                 }}>#</span>
-                {position.security.symbol} - {props.positionPercentages[i]}% (<a className="display-flex"
+                {position.asset.symbol} - {props.positionPercentages[i]}% (<a className="display-flex"
                     href={"#/positions/" + position.id}>details <Icon>north_east</Icon></a>)
 
             </li>);

@@ -73,14 +73,14 @@ class SecurityRepository:
         self.exchange = exchange
 
     def get(self, isin: str):
-        securities = models.Security.objects.filter(isin=isin, exchange=self.exchange)
-        if securities:
-            return securities[0]
+        assets = models.Asset.objects.filter(isin=isin, exchange=self.exchange)
+        if assets:
+            return assets[0]
 
     def add(
         self, isin: str, symbol: str, currency: models.Currency, country: str, name: str
     ):
-        security = models.Security(
+        asset = models.Asset(
             exchange=self.exchange,
             isin=isin,
             symbol=symbol,
@@ -88,36 +88,36 @@ class SecurityRepository:
             country=country,
             name=name,
         )
-        security.save()
-        return security
+        asset.save()
+        return asset
 
 
-def get_or_create_security(isin: str, exchange: models.Exchange):
+def get_or_create_asset(isin: str, exchange: models.Exchange):
     repository = SecurityRepository(exchange)
-    security = repository.get(isin)
-    if security:
-        return security
+    asset = repository.get(isin)
+    if asset:
+        return asset
     exchange_code = exchange.identifiers.get(id_type=models.ExchangeIDType.CODE).value
-    security_records = query_security(isin)
-    for record in security_records:
+    asset_records = query_asset(isin)
+    for record in asset_records:
 
         if record["Exchange"] == exchange_code:
 
             currency = models.currency_enum_from_string(record["Currency"])
-            security = repository.add(
+            asset = repository.add(
                 isin=isin,
                 symbol=record["Code"],
                 currency=currency,
                 country=record["Country"],
                 name=record["Name"],
             )
-            print("created security")
-            return security
+            print("created asset")
+            return asset
     else:
         print(f"failed to find stock data for isin: {isin}, exchange: {exchange}")
 
 
-def query_security(isin : str):
+def query_asset(isin : str):
     URL = f"https://eodhistoricaldata.com/api/search/{isin}?api_token={settings.EOD_APIKEY}"
     response = requests.get(URL)
     return response.json()

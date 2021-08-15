@@ -12,23 +12,22 @@ from finance import utils
 import functools
 
 
-# TODO: add tests for these two functions.
-def currency_enum_from_string(currency: str) -> "Currency":
+class Currency(models.IntegerChoices):
+    EUR = 1, _("EUR")
+    GBP = 2, _("GBP")
+    USD = 3, _("USD")
+    GBX = 4, _("GBX")
+
+
+def currency_enum_from_string(currency: str) -> Currency:
     try:
         return Currency[currency]
     except KeyError:
         raise ValueError("Unsupported currency '%s'" % currency)
 
 
-def currency_string_from_enum(currency: "Currency") -> str:
+def currency_string_from_enum(currency: Currency) -> str:
     return Currency(currency).label
-
-
-class Currency(models.IntegerChoices):
-    EUR = 1, _("EUR")
-    GBP = 2, _("GBP")
-    USD = 3, _("USD")
-    GBX = 4, _("GBX")
 
 
 class Account(models.Model):
@@ -100,12 +99,12 @@ class ExchangeIdentifier(models.Model):
         )
 
 
-class Security(models.Model):
+class Asset(models.Model):
     isin = models.CharField(max_length=30)
     symbol = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
     exchange = models.ForeignKey(
-        Exchange, on_delete=models.CASCADE, related_name="securities"
+        Exchange, on_delete=models.CASCADE, related_name="assets"
     )
     currency = models.IntegerField(choices=Currency.choices, default=Currency.USD)
     country = models.CharField(max_length=200, null=True)
@@ -116,7 +115,7 @@ class Security(models.Model):
 
     def __str__(self):
         return (
-            f"<Security exchange: {self.exchange.name}, isin: "
+            f"<Asset exchange: {self.exchange.name}, isin: "
             f"{self.isin}, symbol: {self.symbol}, name: {self.name}, "
             f"currency: {self.get_currency_display()}, country: {self.country}>"
         )
@@ -151,15 +150,15 @@ class Position(models.Model):
     account = models.ForeignKey(
         Account, on_delete=models.CASCADE, related_name="positions"
     )
-    security = models.ForeignKey(
-        Security, on_delete=models.CASCADE, related_name="positions"
+    asset = models.ForeignKey(
+        Asset, on_delete=models.CASCADE, related_name="positions"
     )
 
     quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"<Position account: {self.account}, " f"security: {self.security}>"
+        return f"<Position account: {self.account}, " f"asset: {self.asset}>"
 
     @functools.lru_cache
     def quantity_history(
@@ -215,7 +214,7 @@ class Position(models.Model):
 
         if to_date is None:
             to_date = datetime.date.today()
-        prices = self.security.pricehistory_set.order_by("-date").filter(
+        prices = self.asset.pricehistory_set.order_by("-date").filter(
             date__gte=from_date, date__lte=to_date
         )
         price_tuples = [(price.date, price.value) for price in prices]
@@ -239,7 +238,7 @@ class Position(models.Model):
         output_period: datetime.timedelta = datetime.timedelta(days=1),
     ):
         to_currency = self.account.currency
-        from_currency = self.security.currency
+        from_currency = self.asset.currency
         if to_date is None:
             to_date = datetime.date.today()
 
@@ -272,9 +271,10 @@ class Transaction(models.Model):
     )
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     price = models.DecimalField(max_digits=12, decimal_places=5)
+
     transaction_costs = models.DecimalField(max_digits=12, decimal_places=5, null=True)
 
-    # The currency is stored with the security.
+    # The currency is stored with the asset.
     local_value = models.DecimalField(max_digits=12, decimal_places=5)
     # The main currency is stored within the account.
     value_in_account_currency = models.DecimalField(max_digits=12, decimal_places=5)
@@ -283,7 +283,7 @@ class Transaction(models.Model):
     total_in_account_currency = models.DecimalField(max_digits=12, decimal_places=5)
     # value_in_account_currency + transaction cost == total cost.
 
-    order_id = models.CharField(max_length=200, null=True)
+    order_id = models.CharField(max_length=200, null=True, blank=True)
 
     last_modified = models.DateTimeField(auto_now=True)
 
@@ -323,7 +323,7 @@ class CurrencyExchangeRate(models.Model):
 
 
 class PriceHistory(models.Model):
-    security = models.ForeignKey(Security, on_delete=models.CASCADE)
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     value = models.DecimalField(max_digits=12, decimal_places=5)
     date = models.DateField()
 

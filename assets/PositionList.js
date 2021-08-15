@@ -37,24 +37,24 @@ export function PositionList(props) {
         const price = data.latest_price;
         const value = Math.round(100 * quantity * price) / 100;
 
-        let displayConvertedValue = (data.security.currency != account.currency && data.latest_exchange_rate);
+        let displayConvertedValue = (data.asset.currency != account.currency && data.latest_exchange_rate);
 
         positionRow.product = {
             displayValue: (
                 <div className="position-name">
-                    <span className="card-label">{data.security.isin}</span>
-                    <span className="position-symbol">{data.security.symbol}</span>
-                    <span>{data.security.name}</span>
+                    <span className="card-label">{data.asset.isin}</span>
+                    <span className="position-symbol">{data.asset.symbol}</span>
+                    <span>{data.asset.name}</span>
                 </div>
             ),
-            comparisonKey: data.security.symbol,
+            comparisonKey: data.asset.symbol,
         };
-        positionRow.exchange = data.security.exchange.name;
+        positionRow.exchange = data.asset.exchange.name;
         positionRow.quantity = quantity;
         positionRow.price = {
             displayValue: (<div className="column-stack">
                 <span className="card-label">As of {data.latest_price_date}</span>
-                {price}{toSymbol(data.security.currency)}</div>),
+                {price}{toSymbol(data.asset.currency)}</div>),
             comparisonKey: Number(price),
         };
 
@@ -65,7 +65,7 @@ export function PositionList(props) {
         positionRow.value = {
             displayValue: (<div className="column-stack">
                 <span>
-                    {value}{toSymbol(data.security.currency)}
+                    {value}{toSymbol(data.asset.currency)}
                 </span>
                 <span>
                     {displayConvertedValue ? Math.round(100 * value * data.latest_exchange_rate) / 100 : ""}

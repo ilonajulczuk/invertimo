@@ -13,7 +13,7 @@ const TEST_DATA = {
         {
             "id": 31,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 1,
                 "isin": "US2546871060",
                 "symbol": "DIS",
@@ -30,7 +30,7 @@ const TEST_DATA = {
         {
             "id": 32,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 2,
                 "isin": "US0378331005",
                 "symbol": "AAPL",
@@ -47,7 +47,7 @@ const TEST_DATA = {
         {
             "id": 33,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 3,
                 "isin": "US4781601046",
                 "symbol": "JNJ",
@@ -64,7 +64,7 @@ const TEST_DATA = {
         {
             "id": 34,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 4,
                 "isin": "US31428X1063",
                 "symbol": "FDX",
@@ -81,7 +81,7 @@ const TEST_DATA = {
         {
             "id": 35,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 5,
                 "isin": "US1912161007",
                 "symbol": "KO",
@@ -98,7 +98,7 @@ const TEST_DATA = {
         {
             "id": 36,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 6,
                 "isin": "IE00BF4RFH31",
                 "symbol": "IUSN",
@@ -115,7 +115,7 @@ const TEST_DATA = {
         {
             "id": 37,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 7,
                 "isin": "US58733R1023",
                 "symbol": "MELI",
@@ -132,7 +132,7 @@ const TEST_DATA = {
         {
             "id": 38,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 8,
                 "isin": "US01609W1027",
                 "symbol": "BABA",
@@ -149,7 +149,7 @@ const TEST_DATA = {
         {
             "id": 39,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 9,
                 "isin": "US00507V1098",
                 "symbol": "ATVI",
@@ -166,7 +166,7 @@ const TEST_DATA = {
         {
             "id": 40,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 10,
                 "isin": "GB00B18JK166",
                 "symbol": "JETG",
@@ -183,7 +183,7 @@ const TEST_DATA = {
         {
             "id": 41,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 11,
                 "isin": "GB0008829292",
                 "symbol": "TEM",
@@ -200,7 +200,7 @@ const TEST_DATA = {
         {
             "id": 42,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 12,
                 "isin": "US7170811035",
                 "symbol": "PFE",
@@ -217,7 +217,7 @@ const TEST_DATA = {
         {
             "id": 43,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 13,
                 "isin": "IE00B52MJY50",
                 "symbol": "SXR1",
@@ -234,7 +234,7 @@ const TEST_DATA = {
         {
             "id": 44,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 14,
                 "isin": "CA11284V1058",
                 "symbol": "BEPC",
@@ -251,7 +251,7 @@ const TEST_DATA = {
         {
             "id": 45,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 15,
                 "isin": "US0970231058",
                 "symbol": "BA",
@@ -268,7 +268,7 @@ const TEST_DATA = {
         {
             "id": 46,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 16,
                 "isin": "DE000A1EWWW0",
                 "symbol": "ADS",
@@ -285,7 +285,7 @@ const TEST_DATA = {
         {
             "id": 47,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 17,
                 "isin": "US46625H1005",
                 "symbol": "JPM",
@@ -302,7 +302,7 @@ const TEST_DATA = {
         {
             "id": 48,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 18,
                 "isin": "US17275R1023",
                 "symbol": "CSCO",
@@ -319,7 +319,7 @@ const TEST_DATA = {
         {
             "id": 49,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 19,
                 "isin": "US0605051046",
                 "symbol": "BAC",
@@ -336,7 +336,7 @@ const TEST_DATA = {
         {
             "id": 50,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 20,
                 "isin": "US7427181091",
                 "symbol": "PG",
@@ -353,7 +353,7 @@ const TEST_DATA = {
         {
             "id": 51,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 21,
                 "isin": "US92826C8394",
                 "symbol": "V",
@@ -370,7 +370,7 @@ const TEST_DATA = {
         {
             "id": 52,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 22,
                 "isin": "US0231351067",
                 "symbol": "AMZN",
@@ -387,7 +387,7 @@ const TEST_DATA = {
         {
             "id": 53,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 23,
                 "isin": "US5949181045",
                 "symbol": "MSFT",
@@ -404,7 +404,7 @@ const TEST_DATA = {
         {
             "id": 54,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 24,
                 "isin": "GB00BMXWN182",
                 "symbol": "JMG",
@@ -421,7 +421,7 @@ const TEST_DATA = {
         {
             "id": 55,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 25,
                 "isin": "US70450Y1038",
                 "symbol": "PYPL",
@@ -438,7 +438,7 @@ const TEST_DATA = {
         {
             "id": 56,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 26,
                 "isin": "US30303M1027",
                 "symbol": "FB",
@@ -455,7 +455,7 @@ const TEST_DATA = {
         {
             "id": 57,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 27,
                 "isin": "US1985161066",
                 "symbol": "COLM",
@@ -472,7 +472,7 @@ const TEST_DATA = {
         {
             "id": 58,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 28,
                 "isin": "US2561631068",
                 "symbol": "DOCU",
@@ -489,7 +489,7 @@ const TEST_DATA = {
         {
             "id": 59,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 29,
                 "isin": "DE0005190003",
                 "symbol": "BMW",
@@ -506,7 +506,7 @@ const TEST_DATA = {
         {
             "id": 60,
             "account": 2,
-            "security": {
+            "asset": {
                 "id": 30,
                 "isin": "US0846707026",
                 "symbol": "BRK-B",

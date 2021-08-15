@@ -99,10 +99,10 @@ export class APIClient {
     async getPositionDetail(positionId) {
         let positionsUrl = this.baseUrl + `/positions/${positionId}/`;
         let positionDetail = await fetchDetailResult(positionsUrl);
-        const securityId = positionDetail.security.id;
-        let securityUrl = this.baseUrl + `/securities/${securityId}/prices/`;
-        let securityPrices = await fetchDetailResult(securityUrl);
-        positionDetail.prices = securityPrices;
+        const assetId = positionDetail.asset.id;
+        let assetUrl = this.baseUrl + `/assets/${assetId}/prices/`;
+        let assetPrices = await fetchDetailResult(assetUrl);
+        positionDetail.prices = assetPrices;
         return positionDetail;
     }
 
@@ -118,5 +118,34 @@ export class APIClient {
 
     async createAccount(accountData) {
         return await postData(this.baseUrl + '/accounts/', accountData);
+    }
+
+    async addTransaction(transactionData) {
+
+        let data = {...transactionData};
+        data["account"] = data["account"].id;
+        data["asset"] = data["symbol"].id;
+        data["transaction_costs"] = data["fees"];
+        // TODO: transaction cost might be in a different currency!!!
+        data["local_value"] = data["price"] * data["quantity"];
+        let value = data["totalValueAccountCurrency"];
+        data["value_in_account_currency"] = value === "" ? data["local_value"] : value;
+        data["total_in_account_currency"] = data["totalCostAccountCurrency"];
+        data["order_id"] = "";
+        let executedAt = data["executedAt"];
+
+        // Date from the datepicker will not have time and the time is actually required.
+        if (typeof executedAt === "string") {
+            executedAt = new Date(executedAt);
+        }
+        data["executed_at"] = executedAt;
+
+        return await postData(this.baseUrl + '/transactions/', data);
+    }
+
+    async addTransactionWithNewAsset(transactionData) {
+        // account: id
+
+        return await postData(this.baseUrl + '/transactions/create_with_new_asset', transactionData);
     }
 }

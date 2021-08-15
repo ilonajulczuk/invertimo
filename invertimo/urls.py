@@ -23,7 +23,7 @@ from finance.views import (
     PositionsView,
     TransactionsViewSet,
     CurrencyExchangeRateView,
-    SecurityPricesView,
+    AssetPricesView,
 )
 from rest_framework import routers
 
@@ -46,9 +46,9 @@ urlpatterns = [
     path("api/positions/<int:pk>/", PositionView.as_view(), name="api-position"),
     path("api/currencies/", CurrencyExchangeRateView.as_view(), name="api-currencies"),
     path(
-        "api/securities/<int:security_pk>/prices/",
-        SecurityPricesView.as_view(),
-        name="api-securities",
+        "api/assets/<int:asset_pk>/prices/",
+        AssetPricesView.as_view(),
+        name="api-assets",
     ),
     path("", include("social_django.urls", namespace="social")),
 ]
