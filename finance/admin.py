@@ -6,7 +6,7 @@ from .models import (
     Exchange,
     ExchangeIdentifier,
     Position,
-    Security,
+    Asset,
     Transaction,
 )
 
@@ -15,5 +15,5 @@ admin.site.register(AccountEvent)
 admin.site.register(Exchange)
 admin.site.register(ExchangeIdentifier)
 admin.site.register(Position)
-admin.site.register(Security)
+admin.site.register(Asset)
 admin.site.register(Transaction)

@@ -74,19 +74,19 @@ export class TransactionList extends React.Component {
             let position = transactionCopy.position;
             let positionField = (
                 <div className="position-name">
-                    <span className="card-label">{position.security.isin}</span>
-                    <span className="position-symbol">{position.security.symbol}</span>
-                    <span>{position.security.name}</span>
+                    <span className="card-label">{position.asset.isin}</span>
+                    <span className="position-symbol">{position.asset.symbol}</span>
+                    <span>{position.asset.name}</span>
                 </div>
             );
             transactionCopy.position = {
                 displayValue: positionField,
-                comparisonKey: position.security.symbol,
+                comparisonKey: position.asset.symbol,
             };
 
             let account = accountsById.get(transaction.position.account);
             const accountCurrencySymbol = toSymbol(account.currency);
-            const positionCurrencySymbol = toSymbol(transaction.position.security.currency);
+            const positionCurrencySymbol = toSymbol(transaction.position.asset.currency);
 
             transactionCopy.price = {
                 displayValue: transactionCopy.price + positionCurrencySymbol,

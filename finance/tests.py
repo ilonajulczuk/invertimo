@@ -27,19 +27,19 @@ def datestr_to_datetime(datestr) -> datetime.datetime:
     return datetime.datetime.strptime(datestr, DATE_FORMAT)
 
 
-def _add_dummy_account_and_security(user, isin):
+def _add_dummy_account_and_asset(user, isin):
     account = models.Account.objects.create(
         user=user, currency=models.Currency.EUR, nickname="test account"
     )
     exchange = models.Exchange.objects.create(name="my US stocks", country="USA")
-    security = models.Security.objects.create(
+    asset = models.Asset.objects.create(
         isin=isin,
         symbol="MOONIES",
         name="a stock",
         currency=models.Currency.USD,
         exchange=exchange,
     )
-    return account, exchange, security
+    return account, exchange, asset
 
 
 def _add_transaction(account, isin, exchange, executed_at, quantity, price):
@@ -187,7 +187,7 @@ class TestPosition(TestCase):
         self.user = User.objects.create(username="testuser", email="test@example.com")
         self.client.force_login(self.user)
         self.isin = "US1234"
-        self.account, self.exchange, self.security = _add_dummy_account_and_security(
+        self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
             self.user, isin=self.isin
         )
 
@@ -256,7 +256,7 @@ class TestPosition(TestCase):
             models.PriceHistory.objects.create(
                 date=date,
                 value=100 + (i % 3) * 10,
-                security=self.security,
+                asset=self.asset,
             )
         position = models.Position.objects.first()
         self.assertEqual(position.quantity, 20)
@@ -304,7 +304,7 @@ class TestPosition(TestCase):
             models.PriceHistory.objects.create(
                 date=date,
                 value=100 + (i % 3) * 10,
-                security=self.security,
+                asset=self.asset,
             )
         position = models.Position.objects.first()
         self.assertEqual(position.quantity, 20)
@@ -397,7 +397,7 @@ class TestPositionsView(ViewTestBase, TestCase):
         super().setUp()
 
         self.isin = "USA123"
-        self.account, self.exchange, self.security = _add_dummy_account_and_security(
+        self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
             self.user, isin=self.isin
         )
         for transaction in _FAKE_TRANSACTIONS:
@@ -422,13 +422,13 @@ class TestPositionsView(ViewTestBase, TestCase):
             models.PriceHistory.objects.create(
                 date=date,
                 value=100 + (i % 3) * 10,
-                security=self.security,
+                asset=self.asset,
             )
         for i, date in enumerate(dates):
             models.CurrencyExchangeRate.objects.create(
                 date=date,
                 value=1 + (i % 3) / 10,
-                from_currency=self.security.currency,
+                from_currency=self.asset.currency,
                 to_currency=self.account.currency,
             )
 
@@ -450,7 +450,7 @@ class TestPositionDetailView(ViewTestBase, TestCase):
     def setUp(self):
         super().setUp()
         self.isin = "123"
-        self.account, self.exchange, self.security = _add_dummy_account_and_security(
+        self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
             self.user, isin=self.isin
         )
         for transaction in _FAKE_TRANSACTIONS:
@@ -482,7 +482,7 @@ class TestAccountsView(ViewTestBase, TestCase):
         super().setUp()
 
         self.isin = "USA123"
-        self.account, _, _ = _add_dummy_account_and_security(self.user, isin=self.isin)
+        self.account, _, _ = _add_dummy_account_and_asset(self.user, isin=self.isin)
 
 
 class TestDetailAccountsView(ViewTestBase, TestCase):
@@ -496,7 +496,7 @@ class TestDetailAccountsView(ViewTestBase, TestCase):
         super().setUp()
 
         self.isin = "USA123"
-        self.account, _, _ = _add_dummy_account_and_security(self.user, isin=self.isin)
+        self.account, _, _ = _add_dummy_account_and_asset(self.user, isin=self.isin)
 
     def get_url(self):
         return self.URL % self.account.pk
@@ -516,7 +516,7 @@ class TestTransactionsView(ViewTestBase, TestCase):
         super().setUp()
 
         self.isin = "USA123"
-        self.account, self.exchange, self.security = _add_dummy_account_and_security(
+        self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
             self.user, isin=self.isin
         )
         for transaction in _FAKE_TRANSACTIONS:
@@ -541,7 +541,7 @@ class TestTransactionsDetailView(ViewTestBase, TestCase):
         super().setUp()
 
         self.isin = "USA123"
-        self.account, self.exchange, self.security = _add_dummy_account_and_security(
+        self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
             self.user, isin=self.isin
         )
         for transaction in _FAKE_TRANSACTIONS:

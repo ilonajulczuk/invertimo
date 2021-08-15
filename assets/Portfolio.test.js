@@ -15,7 +15,7 @@ const _ACCOUNT_POSITIONS = [
   {
     id: 91,
     account: 3,
-    security: {
+    asset: {
       id: 1,
       isin: "US2546871060",
       symbol: "DIS",
@@ -35,7 +35,7 @@ const _ACCOUNT_POSITIONS = [
   {
     id: 93,
     account: 3,
-    security: {
+    asset: {
       id: 3,
       isin: "US4781601046",
       symbol: "JNJ",
@@ -55,7 +55,7 @@ const _ACCOUNT_POSITIONS = [
   {
     id: 96,
     account: 3,
-    security: {
+    asset: {
       id: 6,
       isin: "IE00BF4RFH31",
       symbol: "IUSN",
@@ -78,7 +78,7 @@ const _ACCOUNT_POSITIONS_USD = [
   {
     id: 121,
     account: 4,
-    security: {
+    asset: {
       id: 1,
       isin: "US2546871060",
       symbol: "DIS",
@@ -98,7 +98,7 @@ const _ACCOUNT_POSITIONS_USD = [
   {
     id: 122,
     account: 4,
-    security: {
+    asset: {
       id: 2,
       isin: "US0378331005",
       symbol: "AAPL",
@@ -126,7 +126,7 @@ const _ACCOUNT_TRANSACTIONS = [
     "position": {
       "id": 121,
       "account": 4,
-      "security": {
+      "asset": {
         "id": 1,
         "isin": "US2546871060",
         "symbol": "DIS",
@@ -155,7 +155,7 @@ const _ACCOUNT_TRANSACTIONS = [
     "position": {
       "id": 91,
       "account": 3,
-      "security": {
+      "asset": {
         "id": 1,
         "isin": "US2546871060",
         "symbol": "DIS",
@@ -184,7 +184,7 @@ const _ACCOUNT_TRANSACTIONS = [
     "position": {
       "id": 92,
       "account": 3,
-      "security": {
+      "asset": {
         "id": 2,
         "isin": "US0378331005",
         "symbol": "AAPL",

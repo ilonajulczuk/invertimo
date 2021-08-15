@@ -101,13 +101,13 @@ class AccountRepository:
         self, account: models.Account, isin: str, exchange: models.Exchange
     ):
         positions = models.Position.objects.filter(
-            account=account, security__isin=isin, security__exchange=exchange
+            account=account, asset__isin=isin, asset__exchange=exchange
         )
         if positions:
             return positions[0]
-        security = exchanges.get_or_create_security(isin, exchange)
-        if security:
-            return models.Position.objects.create(account=account, security=security)
+        asset = exchanges.get_or_create_asset(isin, exchange)
+        if asset:
+            return models.Position.objects.create(account=account, asset=asset)
         else:
             return None
 
@@ -115,9 +115,9 @@ class AccountRepository:
         self, account: models.Account, asset_id: int
     ):
         positions = models.Position.objects.filter(
-            account=account, security__pk=asset_id
+            account=account, asset__pk=asset_id
         )
         if positions:
             return positions[0]
-        security = models.Security.objects.get(pk=asset_id)
-        return models.Position.objects.create(account=account, security=security)
+        asset = models.Asset.objects.get(pk=asset_id)
+        return models.Position.objects.create(account=account, asset=asset)

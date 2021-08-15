@@ -134,7 +134,7 @@ export function AccountValue(props) {
     const COLORS = generateColors(10);
     let values = valuesOfBiggestPositions.map((positionValues, i) => {
         let row = {
-            id: positionsMap.get(positionValues[0]).security.symbol,
+            id: positionsMap.get(positionValues[0]).asset.symbol,
             color: COLORS[i],
             data: positionValues[1].map(elem => {
                 let exactDate = new Date(elem[0]);
