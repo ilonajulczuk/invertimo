@@ -244,6 +244,10 @@ class TransactionsViewSet(
 
         return TransactionSerializer
 
+    def get_serializer_context(self) -> Dict[str, Any]:
+        context: Dict[str, Any] = super().get_serializer_context()
+        context["request"] = self.request
+        return context
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(

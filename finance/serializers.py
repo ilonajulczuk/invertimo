@@ -25,7 +25,10 @@ class CurrencyField(serializers.IntegerField):
         return models.currency_string_from_enum(value)
 
     def to_internal_value(self, value):
-        return models.currency_enum_from_string(value)
+        try:
+            return models.currency_enum_from_string(value)
+        except ValueError:
+            raise serializers.ValidationError(f"Invalid value to resprent currency")
 
 
 class AssetSerializer(serializers.ModelSerializer[Asset]):
@@ -122,7 +125,6 @@ class AddTransactionKnownAssetSerializer(serializers.ModelSerializer[Transaction
     quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
     price = serializers.DecimalField(max_digits=20, decimal_places=2)
 
-
     transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
     local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
     value_in_account_currency = serializers.DecimalField(
@@ -133,6 +135,16 @@ class AddTransactionKnownAssetSerializer(serializers.ModelSerializer[Transaction
     )
     account = serializers.IntegerField()
     asset = serializers.IntegerField()
+
+    def validate_account(self, value):
+        if not models.Account.objects.filter(user=self.context["request"].user, pk=value).exists():
+            raise serializers.ValidationError(f"User doesn't have account with id: '{value}'")
+        return value
+
+    def validate_asset(self, value):
+        if not models.Asset.objects.filter(pk=value).exists():
+            raise serializers.ValidationError(f"There is no asset with id: '{value}'")
+        return value
 
     class Meta:
         model = Transaction

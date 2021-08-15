@@ -204,18 +204,9 @@ class TestAccountsView(ViewTestBase, HypothesisTestCase):
     QUERY_PARAMS = "?"
     UNAUTHENTICATED_CODE = 403
 
-    # def setup_example(self):
-    #     self._pre_setup()
-
-    # def teardown_example(self, example):
-    #     self._post_teardown()
-
     def __call__(self, result=None):
         testMethod = getattr(self, self._testMethodName)
-        if getattr(testMethod, "is_hypothesis_test", False):
-            return TestCase.__call__(self, result)
-        else:
-            return TestCase.__call__(self, result)
+        return TestCase.__call__(self, result)
 
     def setUp(self):
         super().setUp()
@@ -250,6 +241,52 @@ class TestAccountsView(ViewTestBase, HypothesisTestCase):
             nickname=nickname,
         )
         self.assertEqual(account.user, self.user)
+
+    def test_invalid_currency_fails(self):
+        response = self.client.post(
+            reverse(self.VIEW_NAME),
+            {
+                "currency": "foobar",
+                "nickname": "nickname",
+                "description": "",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+
+
+    def test_empty_currency_fails(self):
+        response = self.client.post(
+            reverse(self.VIEW_NAME),
+            {
+                "currency": "",
+                "nickname": "nickname",
+                "description": "",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_adding_account_with_the_same_nickname_twice_fails(self):
+        response = self.client.post(
+            reverse(self.VIEW_NAME),
+            {
+                "currency": "EUR",
+                "nickname": "nickname",
+                "description": "",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+
+        self.assertEqual(models.Account.objects.count(), 2)
+        response = self.client.post(
+            reverse(self.VIEW_NAME),
+            {
+                "currency": "GBP",
+                "nickname": "nickname",
+                "description": "",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(models.Account.objects.count(), 2)
 
 
 class TestDetailAccountsView(ViewTestBase, TestCase):
@@ -295,6 +332,66 @@ class TestTransactionsView(ViewTestBase, TestCase):
                 transaction[1],
                 transaction[2],
             )
+
+    def test_add_transaction_for_known_asset(self):
+        response = self.client.post(
+            reverse(self.VIEW_NAME),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "asset": self.asset.pk,
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+                "currency": "EUR",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+
+    def test_add_transaction_for_known_asset_that_doesnt_exist_fails(self):
+        response = self.client.post(
+            reverse(self.VIEW_NAME),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "asset": 999,
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+                "currency": "EUR",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_add_transaction_for_known_asset_for_not_owned_account_fails(self):
+
+        self.other_user = User.objects.create(username="billy", email="billy@example.com")
+        self.other_account, _, self.other_asset = _add_dummy_account_and_asset(
+            self.other_user, isin="something"
+        )
+
+        response = self.client.post(
+            reverse(self.VIEW_NAME),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.other_account.pk,
+                "asset": self.other_asset.pk,
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+                "currency": "EUR",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
 
 
 class TestTransactionsDetailView(ViewTestBase, TestCase):

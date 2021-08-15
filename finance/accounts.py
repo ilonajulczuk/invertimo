@@ -5,7 +5,7 @@ import decimal
 
 
 class AccountRepository:
-    def get(self, user, id):
+    def get(self, user: User, id: int) -> models.Account:
         return models.Account.objects.get(user=user, id=id)
 
     def create(
@@ -61,7 +61,7 @@ class AccountRepository:
         local_value,
         value_in_account_currency,
         total_in_account_currency,
-        order_id):
+        order_id=None) -> models.Transaction:
 
         position = self._get_or_create_position_for_asset(account, asset_id)
 
