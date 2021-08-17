@@ -392,6 +392,7 @@ export function RecordTransactionForm(props) {
                     type="submit"
                     variant="outlined"
                     color="secondary"
+                    data-test-id="record-transaction-button"
                     disabled={formik.isSubmitting}
                     className={classes.submitButton}
                 >
@@ -404,7 +405,10 @@ export function RecordTransactionForm(props) {
 }
 
 RecordTransactionForm.propTypes = {
-    accounts: PropTypes.array.isRequired,
+    accounts: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        nickname: PropTypes.string.isRequired,
+    })),
     hasTransactions: PropTypes.bool.isRequired,
     handleSubmit: PropTypes.func.isRequired,
 };
