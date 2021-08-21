@@ -37,6 +37,8 @@
     "@babel/preset-react": "^7.13.13",
     "@nivo/core": "^0.72.0",
     "@nivo/line": "^0.72.0",
+    "@testing-library/dom": "^7.31.2",
+    "@testing-library/user-event": "^13.2.1",
     "babel-jest": "^26.6.3",
     "babel-loader": "^8.2.2",
     "css-loader": "^5.2.4",

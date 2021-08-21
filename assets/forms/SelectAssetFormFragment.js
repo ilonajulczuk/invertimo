@@ -156,6 +156,7 @@ export function SelectAssetFormFragment(props) {
           freeSolo
           renderInput={(params) => (
             <TextField {...params}
+              id="symbol"
               label="Symbol or Name"
               error={formik.touched.symbol && Boolean(formik.errors.symbol)}
               helperText={(formik.touched.symbol && formik.errors.symbol) || "Stock symbol like 'DIS' or ISIN"} />
@@ -205,6 +206,7 @@ export function SelectAssetFormFragment(props) {
             name="currency"
             labelId="currency-select-label"
             id="currency"
+            data-testid="currency"
             value={formik.values.currency}
             onChange={formik.handleChange}
             error={formik.touched.currency && Boolean(formik.errors.currency)}

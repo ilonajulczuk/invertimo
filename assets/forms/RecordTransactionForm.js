@@ -132,7 +132,7 @@ export function RecordTransactionForm(props) {
         symbol: "",
         feesCurrency: "EUR",
         tradeType: "buy",
-        executedAt: new Date(),
+        executedAt: props.executedAtDate || new Date(),
         account: props.accounts[0],
         exchange: "",
         assetType: "stock",
@@ -408,7 +408,9 @@ RecordTransactionForm.propTypes = {
     accounts: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.number.isRequired,
         nickname: PropTypes.string.isRequired,
+        currency: PropTypes.oneOf(['EUR', 'GBP', 'USD']),
     })),
     hasTransactions: PropTypes.bool.isRequired,
     handleSubmit: PropTypes.func.isRequired,
+    executedAtDate: PropTypes.instanceOf(Date),
 };
