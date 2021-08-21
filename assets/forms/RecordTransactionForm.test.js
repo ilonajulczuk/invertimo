@@ -107,15 +107,15 @@ describe('form for recording transactions', () => {
         await act(async () => {
 
             const currencySelector = document.getElementById("currency");
-            await fireEvent.mouseDown(currencySelector);
-            const listbox = screen.getByRole('listbox');
+            fireEvent.mouseDown(currencySelector);
+            const listbox = await screen.findByRole('listbox');
             fireEvent.click(within(listbox).getByText(/USD/i));
 
             userEvent.type(document.getElementById("exchange"), 'my exchange');
             userEvent.type(document.getElementById("quantity"), '13');
             userEvent.type(screen.getByLabelText(/price/i), '1300');
             userEvent.type(screen.getByLabelText(/total cost/i), '1300');
-            userEvent.type(screen.getByLabelText(/fees \/ commissions/i), '0');
+            userEvent.type(screen.getByLabelText(/fees/i), '0');
 
             // Complicated part of the asset selection, can override other fields
             // if confirmed in the dialog.
@@ -168,7 +168,6 @@ describe('form for recording transactions', () => {
                 "country": "USA"
             },
             "fees": 0,
-            "feesCurrency": "EUR",
             "price": 1300,
             "quantity": 13,
 

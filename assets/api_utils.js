@@ -126,7 +126,6 @@ export class APIClient {
         data["account"] = data["account"].id;
         data["asset"] = data["symbol"].id;
         data["transaction_costs"] = data["fees"];
-        // TODO: transaction cost might be in a different currency!!!
         data["local_value"] = data["price"] * data["quantity"];
         let value = data["totalValueAccountCurrency"];
         data["value_in_account_currency"] = value === "" ? data["local_value"] : value;
@@ -140,7 +139,14 @@ export class APIClient {
         }
         data["executed_at"] = executedAt;
 
-        return await postData(this.baseUrl + '/transactions/', data);
+        const response = await postData(this.baseUrl + '/transactions/', data);
+        if (response.errors) {
+            response.errors["totalCostAccountCurrency"] =  response.errors["total_in_account_currency"];
+            response.errors["fees"] = response.errors["transaction_costs"];
+            response.errors["totalValueAccountCurrency"] = response.errors["value_in_account_currency"];
+            response.errors["executedAt"] = response.errors["executed_at"];
+        }
+        return response;
     }
 
     async addTransactionWithNewAsset(transactionData) {

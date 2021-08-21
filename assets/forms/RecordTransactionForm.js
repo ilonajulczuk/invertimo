@@ -9,9 +9,12 @@ import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import { makeStyles } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
-import { currencyValues } from '../currencies.js';
+import { currencyValues, toSymbol } from '../currencies.js';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
+
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
 
 import { green, red } from '@material-ui/core/colors';
 import Radio from '@material-ui/core/Radio';
@@ -26,6 +29,10 @@ import {
     KeyboardDatePicker,
 } from '@material-ui/pickers';
 
+
+function Alert(props) {
+    return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
 
 const useStyles = makeStyles((theme) => ({
     form: {
@@ -75,6 +82,7 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
+const matchNumberUpToTwoDecimalPlaces = (value) => (value + "").match(/^\d*(\.{1}\d{0,2})?$/);
 
 const validationSchema = yup.object({
     symbol: yup
@@ -86,15 +94,14 @@ const validationSchema = yup.object({
         .string('Enter the currency')
         .oneOf(currencyValues)
         .required('Currency is required'),
-    feesCurrency: yup
-        .string('Enter the currency used for fees')
-        .oneOf(currencyValues),
     tradeType: yup
         .string('Bought or sold')
         .oneOf(["buy", "sell"])
         .required('Trade type is required'),
     price: yup
         .number('Price needs to be a number')
+        .test('has-2-or-less-places', "Only up to two decimal places are allowed",
+            matchNumberUpToTwoDecimalPlaces)
         .required('Price is required'),
     quantity: yup
         .number()
@@ -104,18 +111,23 @@ const validationSchema = yup.object({
         .required('Account needs to be selected'),
     totalCostAccountCurrency: yup
         .number()
+        .test('has-2-or-less-places', "Only up to two decimal places are allowed",
+            matchNumberUpToTwoDecimalPlaces)
         .required('Total is required'),
     // This value is only required if currency of the asset and account don't match.
     totalValueAccountCurrency: yup
         .number().when(['currency', 'account'], {
             is: (currency, account) => currency !== account.currency,
-            then: yup.number().required(
+            then: yup.number().test('has-2-or-less-places', "Only up to two decimal places are allowed",
+            matchNumberUpToTwoDecimalPlaces).required(
                 'Total value in account currency has to be provided if the' +
                 ' asset currency is different than the account currency.'),
             otherwise: yup.number(),
         }),
     fees: yup
         .number()
+        .test('has-2-or-less-places', "Only up to two decimal places are allowed",
+            matchNumberUpToTwoDecimalPlaces)
         .required('Fees are required'),
     executedAt: yup
         .date()
@@ -127,10 +139,20 @@ export function RecordTransactionForm(props) {
 
     const classes = useStyles();
 
+    const [snackbarOpen, snackbarSetOpen] = React.useState(false);
+
+    const snackbarHandleClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        snackbarSetOpen(false);
+    };
+
+
     const initialValues = {
         currency: "EUR",
         symbol: "",
-        feesCurrency: "EUR",
         tradeType: "buy",
         executedAt: props.executedAtDate || new Date(),
         account: props.accounts[0],
@@ -148,7 +170,9 @@ export function RecordTransactionForm(props) {
             const result = await props.handleSubmit(values);
             if (result.ok) {
                 resetForm();
+                snackbarSetOpen(true);
             } else {
+                console.log("not ok", result);
                 if (result.errors) {
                     setErrors(result.errors);
                 } else if (result.message) {
@@ -178,6 +202,8 @@ export function RecordTransactionForm(props) {
     let valueBlock = null;
     let totalCostBlock = null;
 
+    let accountCurrency = toSymbol(formik.values.account.currency);
+
     const sameCurrency = formik.values.account.currency == formik.values.currency;
     if (!sameCurrency) {
 
@@ -187,7 +213,7 @@ export function RecordTransactionForm(props) {
 
                 <TextField
                     id="value-account-currency"
-                    label="Total value in account currency"
+                    label={`Total value in ${accountCurrency}`}
                     name="totalValueAccountCurrency"
                     type="number"
                     value={formik.values.totalValueAccountCurrency}
@@ -205,10 +231,11 @@ export function RecordTransactionForm(props) {
         </>;
 
         totalCostBlock = (<><h4>Total cost</h4>
+            <p>Total cost will be deducted from selected account balance and fees will be associated with assets.</p>
             <div className={classes.inputs}>
                 <TextField
                     id="total-cost-account-currency"
-                    label="Total cost in account currency"
+                    label={`Total cost in ${accountCurrency}`}
                     name="totalCostAccountCurrency"
                     value={formik.values.totalCostAccountCurrency}
                     type="number"
@@ -223,40 +250,24 @@ export function RecordTransactionForm(props) {
 
                 <TextField
                     id="fees"
-                    label="Fees / Commissions"
+                    label={`Fees in ${accountCurrency}`}
                     name="fees"
                     type="number"
                     value={formik.values.fees}
                     onChange={formik.handleChange}
                     error={formik.touched.fees && Boolean(formik.errors.fees)}
                     helperText={(formik.touched.fees && formik.errors.fees)}
-                    className={classes.narrowInput}
+                    className={classes.formControl}
                     InputLabelProps={{
                         shrink: true,
                     }}
                 />
 
-                <FormControl className={classes.formControl}>
-                    <InputLabel id="fees-currency-select-label">Fees Currency</InputLabel>
-                    <Select
-                        name="feesCurrency"
-                        labelId="fees-currency-select-label"
-                        id="feesCurrency"
-                        value={formik.values.feesCurrency}
-                        onChange={formik.handleChange}
-                        error={formik.touched.feesCurrency && Boolean(formik.errors.feesCurrency)}
-                        className={classes.formControl}
-                    >
-                        <MenuItem value={"USD"}>$ USD</MenuItem>
-                        <MenuItem value={"EUR"}>€ EUR</MenuItem>
-                        <MenuItem value={"GBP"}>£ GBP</MenuItem>
-                    </Select>
-                    <FormHelperText>{(formik.touched.feesCurrency && formik.errors.feesCurrency)}</FormHelperText>
-                </FormControl>
             </div>
         </>);
     } else {
         totalCostBlock = (<><h4>Total cost</h4>
+            <p>Total cost will be deducted from selected account balance and fees will be associated with assets.</p>
             <div className={classes.inputs}>
                 <TextField
                     id="total-cost-account-currency"
@@ -275,7 +286,7 @@ export function RecordTransactionForm(props) {
 
                 <TextField
                     id="fees"
-                    label="Fees / Commissions"
+                    label="Fees"
                     name="fees"
                     type="number"
                     value={formik.values.fees}
@@ -370,7 +381,7 @@ export function RecordTransactionForm(props) {
 
                 <TextField
                     id="price"
-                    label={sameCurrency ? "Price" : "Price in asset currency"}
+                    label={sameCurrency ? "Price" : `Price in ${toSymbol(formik.values.currency)}`}
                     name="price"
                     type="number"
                     value={formik.values.price}
@@ -400,6 +411,16 @@ export function RecordTransactionForm(props) {
                 </Button>
             </div>
 
+            <Snackbar
+                anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                }}
+                open={snackbarOpen} autoHideDuration={6000} onClose={snackbarHandleClose}>
+                <Alert onClose={snackbarHandleClose} severity="success">
+                    Transaction recorded successfully!
+                </Alert>
+            </Snackbar>
         </form>
     );
 }

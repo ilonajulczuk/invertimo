@@ -216,6 +216,7 @@ export function SelectAssetFormFragment(props) {
             <MenuItem value={"USD"}>$ USD</MenuItem>
             <MenuItem value={"EUR"}>€ EUR</MenuItem>
             <MenuItem value={"GBP"}>£ GBP</MenuItem>
+            <MenuItem value={"GBX"}>GBX</MenuItem>
           </Select>
           <FormHelperText>{(formik.touched.currency && formik.errors.currency)}</FormHelperText>
         </FormControl>
