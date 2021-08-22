@@ -172,7 +172,6 @@ export function RecordTransactionForm(props) {
                 resetForm();
                 snackbarSetOpen(true);
             } else {
-                console.log("not ok", result);
                 if (result.errors) {
                     setErrors(result.errors);
                 } else if (result.message) {

@@ -37,6 +37,7 @@ def _add_dummy_account_and_asset(user, isin):
         name="a stock",
         currency=models.Currency.USD,
         exchange=exchange,
+        tracked=True,
     )
     return account, exchange, asset
 

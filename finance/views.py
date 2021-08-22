@@ -9,6 +9,9 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from typing import Any, Dict, Union, Type
+from rest_framework.decorators import action
+
+
 from finance import accounts, models
 from finance.models import CurrencyExchangeRate, Position, PriceHistory, Transaction
 from finance.serializers import (
@@ -23,6 +26,7 @@ from finance.serializers import (
     AssetPriceHistorySerializer,
     TransactionSerializer,
     AddTransactionKnownAssetSerializer,
+    AddTransactionNewAssetSerializer,
 )
 
 
@@ -216,7 +220,10 @@ class PositionView(generics.RetrieveAPIView):
 
 
 class TransactionsViewSet(
-    mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    viewsets.GenericViewSet,
 ):
     model = Transaction
     serializer_class = TransactionSerializer
@@ -236,12 +243,11 @@ class TransactionsViewSet(
 
     def get_serializer_class(
         self,
-    ) -> Type[
-        Union[TransactionSerializer, AddTransactionKnownAssetSerializer]
-    ]:
+    ) -> Type[Union[TransactionSerializer, AddTransactionKnownAssetSerializer]]:
         if self.action in ("create", "update"):
             return AddTransactionKnownAssetSerializer
-
+        elif self.action == "add_with_custom_asset":
+            return AddTransactionNewAssetSerializer
         return TransactionSerializer
 
     def get_serializer_context(self) -> Dict[str, Any]:
@@ -257,16 +263,33 @@ class TransactionsViewSet(
         assert isinstance(self.request.user, User)
         account_repository = accounts.AccountRepository()
         account = account_repository.get(
-            user=self.request.user,
-            id=serializer.validated_data["account"])
+            user=self.request.user, id=serializer.validated_data["account"]
+        )
 
         arguments = serializer.validated_data.copy()
         arguments.pop("account")
         asset_id = arguments.pop("asset")
         arguments["asset_id"] = asset_id
-        accounts.AccountRepository().add_transaction_known_asset(
-            account, **arguments
+        account_repository.add_transaction_known_asset(account, **arguments)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )
+
+    @action(detail=False, methods=["post"])
+    def add_with_custom_asset(self, request):
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        assert isinstance(self.request.user, User)
+        account_repository = accounts.AccountRepository()
+        account = account_repository.get(
+            user=self.request.user, id=serializer.validated_data["account"]
+        )
+        arguments = serializer.validated_data.copy()
+        arguments.pop("account")
+        account_repository.add_transaction_custom_asset(account, **arguments)
         headers = self.get_success_headers(serializer.data)
         return Response(
             serializer.data, status=status.HTTP_201_CREATED, headers=headers

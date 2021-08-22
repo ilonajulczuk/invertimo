@@ -4,6 +4,7 @@ from finance import models
 from typing import Any, Dict
 from django.conf import settings
 
+
 _REFERENCE_TO_OPERATING_MIC_SIMPLIFIED_MAPPING : Dict[str, str] = {
     "NSY": "XNYS",
     "NDQ": "XNAS",
@@ -30,6 +31,13 @@ class ExchangeRepository:
                 identifiers__value=simplified_mic,
                 identifiers__id_type=models.ExchangeIDType.MIC,
             )
+
+    def get_by_name(self, exchange_name):
+        if exchange_name == "other/NA":
+            return None
+        return models.Exchange.objects.get(
+            name=exchange_name,
+        )
 
     def add(self, exchange_record) -> None:
         mics = exchange_record["OperatingMIC"]
@@ -68,7 +76,7 @@ def query_exchanges() -> Any:
     return response.json()
 
 
-class SecurityRepository:
+class AssetRepository:
     def __init__(self, exchange: models.Exchange):
         self.exchange = exchange
 
@@ -93,7 +101,7 @@ class SecurityRepository:
 
 
 def get_or_create_asset(isin: str, exchange: models.Exchange):
-    repository = SecurityRepository(exchange)
+    repository = AssetRepository(exchange)
     asset = repository.get(isin)
     if asset:
         return asset
@@ -110,6 +118,7 @@ def get_or_create_asset(isin: str, exchange: models.Exchange):
                 currency=currency,
                 country=record["Country"],
                 name=record["Name"],
+                tracked=True,
             )
             print("created asset")
             return asset
