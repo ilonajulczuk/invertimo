@@ -143,6 +143,9 @@ export class APIClient {
         // Date from the datepicker will not have time and the time is actually required.
         if (typeof executedAt === "string") {
             executedAt = new Date(executedAt);
+        } else {
+            // Align to 00 UTC.
+            executedAt = new Date(executedAt.toISOString.slice(0, 10));
         }
         data["executed_at"] = executedAt;
 
