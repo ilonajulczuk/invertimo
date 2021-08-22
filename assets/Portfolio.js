@@ -157,14 +157,25 @@ export default class Portfolio extends React.Component {
     }
 
     async handleAddTransaction(data) {
+        let result;
         if (data.symbol.id) {
-            let result = await this.apiClient.addTransaction(data);
-            // Reload all the data, e.g. accounts, positions, etc.
-            this.refreshFromServer();
-            return result;
+
+            // Check if fields were not changed...
+            if (data.symbol.currency === data.currency && data.symbol.exchange.name === data.exchange) {
+                result = await this.apiClient.addTransaction(data);
+            } else {
+                data.symbol = data.symbol.symbol;
+                // If that's the case then just use the symbol of the asset and treat it as
+                // custom asset.
+                result = await this.apiClient.addTransactionWithCustomAsset(data);
+            }
         } else {
-            return { ok: false, message: "Only supporting known assets for now..." };
+            result = await this.apiClient.addTransactionWithCustomAsset(data);
         }
+        // Reload all the data, e.g. accounts, positions, etc.
+        this.refreshFromServer();
+        return result;
+
     }
 
     async getPositionDetail(positionId) {
@@ -279,7 +290,7 @@ export default class Portfolio extends React.Component {
                                 handleAddAccount={this.handleAddAccount}
                                 handleAddTransaction={this.handleAddTransaction}
                                 hasTransactions={this.state.transactions.length > 0}
-                                />
+                            />
                         </Route>
                         <Route path="/">
 

@@ -189,7 +189,6 @@ class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction])
     )
     account = serializers.IntegerField()
 
-
     symbol = serializers.CharField()
     currency = CurrencyField()
     # TODO: add validation to exchange!

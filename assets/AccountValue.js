@@ -121,8 +121,13 @@ export function AccountValue(props) {
 
     let positionsMap = new Map(props.positions.map(position => [position.id, position]));
     let sortedValues = sortByFirstValue(props.values.slice());
+
     sortedValues = sortedValues.map(positionIdAndValues => ([positionIdAndValues[0],
     trimDataUntilDate(positionIdAndValues[1], startDay)]));
+
+    // Filter positions that don't have any price data.
+    sortedValues = sortedValues.filter(positionIdAndValues => positionIdAndValues[1].length > 0);
+
 
     let valuesOfBiggestPositions = sortedValues.slice(0, 9);
 

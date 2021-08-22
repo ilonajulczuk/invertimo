@@ -125,11 +125,18 @@ export class APIClient {
         let data = {...transactionData};
         data["account"] = data["account"].id;
         data["asset"] = data["symbol"].id;
-        data["transaction_costs"] = data["fees"];
-        data["local_value"] = data["price"] * data["quantity"];
+
+        let multiplier = 1;
+        if (data["tradeType"] === "sold") {
+            data["quantity"] = - data["quantity"];
+            multiplier = -1;
+        }
+
+        data["transaction_costs"] = -data["fees"];
+        data["local_value"] = -data["price"] * data["quantity"];
         let value = data["totalValueAccountCurrency"];
-        data["value_in_account_currency"] = value === "" ? data["local_value"] : value;
-        data["total_in_account_currency"] = data["totalCostAccountCurrency"];
+        data["value_in_account_currency"] = value === "" ? -data["local_value"] * multiplier : value;
+        data["total_in_account_currency"] = -data["totalCostAccountCurrency"] * multiplier;
         data["order_id"] = "";
         let executedAt = data["executedAt"];
 
@@ -149,9 +156,39 @@ export class APIClient {
         return response;
     }
 
-    async addTransactionWithNewAsset(transactionData) {
-        // account: id
+    async addTransactionWithCustomAsset(transactionData) {
 
-        return await postData(this.baseUrl + '/transactions/create_with_new_asset', transactionData);
+        let data = {...transactionData};
+        data["account"] = data["account"].id;
+        data["asset_type"] = data["assetType"];
+
+        let multiplier = 1;
+        if (data["tradeType"] === "sold") {
+            data["quantity"] = - data["quantity"];
+            multiplier = -1;
+        }
+
+        data["transaction_costs"] = -data["fees"];
+        data["local_value"] = -data["price"] * data["quantity"];
+        let value = data["totalValueAccountCurrency"];
+        data["value_in_account_currency"] = value === "" ? -data["local_value"] * multiplier : value;
+        data["total_in_account_currency"] = -data["totalCostAccountCurrency"] * multiplier;
+        data["order_id"] = "";
+        let executedAt = data["executedAt"];
+
+        // Date from the datepicker will not have time and the time is actually required.
+        if (typeof executedAt === "string") {
+            executedAt = new Date(executedAt);
+        }
+        data["executed_at"] = executedAt;
+        const response =  await postData(this.baseUrl + '/transactions/add_with_custom_asset/', data);
+        if (response.errors) {
+            response.errors["totalCostAccountCurrency"] =  response.errors["total_in_account_currency"];
+            response.errors["assetType"] = response.errors["asset_type"];
+            response.errors["fees"] = response.errors["transaction_costs"];
+            response.errors["totalValueAccountCurrency"] = response.errors["value_in_account_currency"];
+            response.errors["executedAt"] = response.errors["executed_at"];
+        }
+        return response;
     }
 }

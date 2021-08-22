@@ -129,6 +129,14 @@ class AccountRepository:
             total_in_account_currency=total_in_account_currency,
             order_id=order_id,
         )
+
+        # We know the price at the tme the asset transacted, let's add it.
+        models.PriceHistory.objects.create(
+            asset=asset,
+            value=price,
+            date=executed_at.date()
+        )
+
         if created:
             position.quantity += quantity
             position.save()
