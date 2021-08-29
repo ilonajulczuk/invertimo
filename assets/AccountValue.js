@@ -128,7 +128,6 @@ export function AccountValue(props) {
     // Filter positions that don't have any price data.
     sortedValues = sortedValues.filter(positionIdAndValues => positionIdAndValues[1].length > 0);
 
-
     let valuesOfBiggestPositions = sortedValues.slice(0, 9);
 
     let valuesOfRemainingPositions = sortedValues.slice(9, sortedValues.length);

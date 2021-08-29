@@ -114,7 +114,11 @@ describe('form for recording transactions', () => {
             userEvent.type(document.getElementById("exchange"), 'my exchange');
             userEvent.type(document.getElementById("quantity"), '13');
             userEvent.type(screen.getByLabelText(/price/i), '1300');
-            userEvent.type(screen.getByLabelText(/total cost/i), '1300');
+
+            fireEvent.change(document.getElementById("total-cost-account-currency"),
+             {target: {value: "162000"}});
+
+            // userEvent.type(totalCost, '160000');
             userEvent.type(screen.getByLabelText(/fees/i), '0');
 
             // Complicated part of the asset selection, can override other fields
@@ -152,7 +156,7 @@ describe('form for recording transactions', () => {
             currency: "USD",
             exchange: "USA Stocks",
             executedAt: new Date("2021-08-10"),
-            "totalCostAccountCurrency": 1300,
+            "totalCostAccountCurrency": 162000,
             "totalValueAccountCurrency": "",
             "tradeType": "buy",
             "symbol": {
@@ -177,4 +181,5 @@ describe('form for recording transactions', () => {
 
 
     });
+
 });

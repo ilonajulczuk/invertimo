@@ -107,7 +107,7 @@ class AccountRepository:
     ):
 
         exchange = exchanges.ExchangeRepository().get_by_name(exchange)
-        asset = models.Asset.objects.create(
+        asset, _ = models.Asset.objects.get_or_create(
             symbol=symbol,
             exchange=exchange,
             currency=currency,

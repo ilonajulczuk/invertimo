@@ -82,7 +82,7 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-const matchNumberUpToTwoDecimalPlaces = (value) => (value + "").match(/^\d*(\.{1}\d{0,2})?$/);
+const matchNumberUpToTwoDecimalPlaces = (value) => value === undefined || (value + "").match(/^\d*(\.\d{0,2})?$/);
 
 const validationSchema = yup.object({
     symbol: yup
@@ -100,9 +100,9 @@ const validationSchema = yup.object({
         .required('Trade type is required'),
     price: yup
         .number('Price needs to be a number')
+        .required('Price is required')
         .test('has-2-or-less-places', "Only up to two decimal places are allowed",
-            matchNumberUpToTwoDecimalPlaces)
-        .required('Price is required'),
+            matchNumberUpToTwoDecimalPlaces),
     quantity: yup
         .number()
         .required('Quantity is required'),
@@ -111,24 +111,25 @@ const validationSchema = yup.object({
         .required('Account needs to be selected'),
     totalCostAccountCurrency: yup
         .number()
+        // .required('Total is required')
         .test('has-2-or-less-places', "Only up to two decimal places are allowed",
-            matchNumberUpToTwoDecimalPlaces)
-        .required('Total is required'),
+            matchNumberUpToTwoDecimalPlaces),
     // This value is only required if currency of the asset and account don't match.
     totalValueAccountCurrency: yup
         .number().when(['currency', 'account'], {
             is: (currency, account) => currency !== account.currency,
             then: yup.number().test('has-2-or-less-places', "Only up to two decimal places are allowed",
-            matchNumberUpToTwoDecimalPlaces).required(
-                'Total value in account currency has to be provided if the' +
-                ' asset currency is different than the account currency.'),
+                matchNumberUpToTwoDecimalPlaces).required(
+                    'Total value in account currency has to be provided if the' +
+                    ' asset currency is different than the account currency.'),
             otherwise: yup.number(),
         }),
     fees: yup
         .number()
+        .required('Fees are required')
         .test('has-2-or-less-places', "Only up to two decimal places are allowed",
             matchNumberUpToTwoDecimalPlaces)
-        .required('Fees are required'),
+    ,
     executedAt: yup
         .date()
         .typeError("Provide a date in YYYY/MM/DD format")
@@ -224,28 +225,13 @@ export function RecordTransactionForm(props) {
                         shrink: true,
                     }}
                 />
-                <Button variant="outlined"
-                >Use default exchange rate for that day</Button>
             </div>
         </>;
 
         totalCostBlock = (<><h4>Total cost</h4>
             <p>Total cost will be deducted from selected account balance and fees will be associated with assets.</p>
             <div className={classes.inputs}>
-                <TextField
-                    id="total-cost-account-currency"
-                    label={`Total cost in ${accountCurrency}`}
-                    name="totalCostAccountCurrency"
-                    value={formik.values.totalCostAccountCurrency}
-                    type="number"
-                    onChange={formik.handleChange}
-                    error={formik.touched.totalCostAccountCurrency && Boolean(formik.errors.totalCostAccountCurrency)}
-                    helperText={(formik.touched.totalCostAccountCurrency && formik.errors.totalCostAccountCurrency)}
-                    className={classes.formControl}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
+
 
                 <TextField
                     id="fees"
@@ -261,18 +247,11 @@ export function RecordTransactionForm(props) {
                         shrink: true,
                     }}
                 />
-
-            </div>
-        </>);
-    } else {
-        totalCostBlock = (<><h4>Total cost</h4>
-            <p>Total cost will be deducted from selected account balance and fees will be associated with assets.</p>
-            <div className={classes.inputs}>
-                <TextField
+           <TextField
                     id="total-cost-account-currency"
-                    label="Total cost"
+                    label={`Total cost in ${accountCurrency}`}
                     name="totalCostAccountCurrency"
-                    value={formik.values.totalCostAccountCurrency}
+                    value={formik.values.totalCostAccountCurrency || formik.values.totalValueAccountCurrency + formik.values.fees}
                     type="number"
                     onChange={formik.handleChange}
                     error={formik.touched.totalCostAccountCurrency && Boolean(formik.errors.totalCostAccountCurrency)}
@@ -282,8 +261,14 @@ export function RecordTransactionForm(props) {
                         shrink: true,
                     }}
                 />
+            </div>
+        </>);
+    } else {
+        totalCostBlock = (<><h4>Total cost</h4>
+            <p>Total cost will be deducted from selected account balance and fees will be associated with assets.</p>
+            <div className={classes.inputs}>
 
-                <TextField
+            <TextField
                     id="fees"
                     label="Fees"
                     name="fees"
@@ -297,6 +282,23 @@ export function RecordTransactionForm(props) {
                         shrink: true,
                     }}
                 />
+
+                <TextField
+                    id="total-cost-account-currency"
+                    label="Total cost"
+                    name="totalCostAccountCurrency"
+                    value={formik.values.totalCostAccountCurrency || Math.round(100 * formik.values.price * formik.values.quantity) / 100 + formik.values.fees}
+                    type="number"
+                    onChange={formik.handleChange}
+                    error={formik.touched.totalCostAccountCurrency && Boolean(formik.errors.totalCostAccountCurrency)}
+                    helperText={(formik.touched.totalCostAccountCurrency && formik.errors.totalCostAccountCurrency)}
+                    className={classes.formControl}
+                    InputLabelProps={{
+                        shrink: true,
+                    }}
+                />
+
+
             </div></>);
 
     }

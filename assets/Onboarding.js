@@ -70,7 +70,9 @@ export function Onboarding(props) {
     );
 
     const hasAccounts = props.accounts.length > 0;
-    const hasTransactions = props.hasTransactions;
+    const numTransactions = props.transactions.length;
+    const hasTransactions = numTransactions > 0;
+
     const steps = [
         {
             label: 'Investment accounts',
@@ -136,6 +138,7 @@ export function Onboarding(props) {
             content: (
                 <div>
                     <h3>Record transaction</h3>
+                    <p>You currently have {numTransactions} transactions recorded.</p>
                     <p>You will be able to later edit or delete this transaction.</p>
                     <RecordTransactionForm accounts={props.accounts} hasTransactions={hasTransactions} handleSubmit={props.handleAddTransaction} />
                 </div>
@@ -162,7 +165,7 @@ export function Onboarding(props) {
 
 Onboarding.propTypes = {
     accounts: PropTypes.array.isRequired,
-    hasTransactions: PropTypes.bool.isRequired,
+    transactions: PropTypes.array.isRequired,
     handleAddAccount: PropTypes.func.isRequired,
     handleAddTransaction: PropTypes.func.isRequired,
 };

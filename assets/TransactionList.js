@@ -63,6 +63,9 @@ export class TransactionList extends React.Component {
 
         let accountsById = new Map(this.props.accounts.map(account => [account.id, account]));
 
+        if (this.props.transactions == null) {
+            return <div>Loading...</div>;
+        }
         const transactions = this.props.transactions.map(transaction => {
             let transactionCopy = { ...transaction };
             let date = new Date(transactionCopy.executed_at);

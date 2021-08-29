@@ -135,7 +135,7 @@ export default class Portfolio extends React.Component {
             "positions": [],
             "positionDetails": new Map(),
             "accounts": null,
-            "transactions": [],
+            "transactions": null,
             "accountValues": new Map(),
         };
         this.apiClient = new APIClient('./api');
@@ -230,7 +230,7 @@ export default class Portfolio extends React.Component {
         const userEmail = JSON.parse(document.getElementById('userEmail').textContent);
 
         // If there are no accounts loaded yet, there isn't much to show.
-        if (this.state.accounts == null) {
+        if (this.state.accounts === null || this.state.transactions === null) {
             return (<div className="main-grid">
                 <Header email={userEmail} />
             </div>);
@@ -238,6 +238,8 @@ export default class Portfolio extends React.Component {
 
         // If the accounts are loaded, but there is nothing there, start an onboarding wizard.
         const newUser = this.state.accounts.length == 0;
+
+        const noTransactions = this.state.transactions.length == 0;
 
         let accountValues = this.state.accounts.filter(account =>
             this.state.accountValues.get(account.id)).map((account) => {
@@ -253,6 +255,21 @@ export default class Portfolio extends React.Component {
                 );
             });
 
+        let redirectOrDisplay;
+        if (newUser) {
+            redirectOrDisplay = <Redirect to="/start/investment_accounts" />;
+        } else if (noTransactions) {
+            redirectOrDisplay = <Redirect to="/start/transactions_intro" />;
+        } else {
+            redirectOrDisplay = (<div>
+                                <h1>Portfolio</h1>
+
+                                <ErrorBoundary>
+                                    <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
+                                    {accountValues}
+                                </ErrorBoundary>
+                            </div>);
+        }
         return (
             <div className="main-grid">
                 <Header email={userEmail} />
@@ -289,21 +306,12 @@ export default class Portfolio extends React.Component {
                             <Onboarding accounts={this.state.accounts}
                                 handleAddAccount={this.handleAddAccount}
                                 handleAddTransaction={this.handleAddTransaction}
-                                hasTransactions={this.state.transactions.length > 0}
+                                transactions={this.state.transactions}
                             />
                         </Route>
                         <Route path="/">
 
-                            {newUser ? <Redirect to="/start/investment_accounts" /> : <div>
-                                <h1>Portfolio</h1>
-
-                                <ErrorBoundary>
-                                    <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
-                                    {accountValues}
-                                </ErrorBoundary>
-                            </div>
-
-                            }
+                            {redirectOrDisplay}
                         </Route>
 
                     </Switch>

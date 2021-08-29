@@ -121,8 +121,8 @@ export class APIClient {
     }
 
     async addTransaction(transactionData) {
-
-        let data = {...transactionData};
+        // TODO: extract an adapter with tests.
+        let data = { ...transactionData };
         data["account"] = data["account"].id;
         data["asset"] = data["symbol"].id;
 
@@ -135,8 +135,20 @@ export class APIClient {
         data["transaction_costs"] = -data["fees"];
         data["local_value"] = -data["price"] * data["quantity"];
         let value = data["totalValueAccountCurrency"];
-        data["value_in_account_currency"] = value === "" ? -data["local_value"] * multiplier : value;
-        data["total_in_account_currency"] = -data["totalCostAccountCurrency"] * multiplier;
+        const emptyAccountCurrencyValue = value === "";
+        data["value_in_account_currency"] = (
+            value === "" ? -data["local_value"] * multiplier : -value * multiplier);
+
+        let totalInAccountCurrency = data["totalCostAccountCurrency"];
+        // User can go with the default value.
+        if (totalInAccountCurrency === "") {
+            if (emptyAccountCurrencyValue) {
+                totalInAccountCurrency = data["local_value"] + data["fees"];
+            } else {
+                totalInAccountCurrency = value + data["fees"];
+            }
+        }
+        data["total_in_account_currency"] = -totalInAccountCurrency * multiplier;
         data["order_id"] = "";
         let executedAt = data["executedAt"];
 
@@ -145,13 +157,13 @@ export class APIClient {
             executedAt = new Date(executedAt);
         } else {
             // Align to 00 UTC.
-            executedAt = new Date(executedAt.toISOString.slice(0, 10));
+            executedAt = new Date(executedAt.toISOString().slice(0, 10));
         }
         data["executed_at"] = executedAt;
 
         const response = await postData(this.baseUrl + '/transactions/', data);
         if (response.errors) {
-            response.errors["totalCostAccountCurrency"] =  response.errors["total_in_account_currency"];
+            response.errors["totalCostAccountCurrency"] = response.errors["total_in_account_currency"];
             response.errors["fees"] = response.errors["transaction_costs"];
             response.errors["totalValueAccountCurrency"] = response.errors["value_in_account_currency"];
             response.errors["executedAt"] = response.errors["executed_at"];
@@ -161,7 +173,7 @@ export class APIClient {
 
     async addTransactionWithCustomAsset(transactionData) {
 
-        let data = {...transactionData};
+        let data = { ...transactionData };
         data["account"] = data["account"].id;
         data["asset_type"] = data["assetType"];
 
@@ -174,8 +186,20 @@ export class APIClient {
         data["transaction_costs"] = -data["fees"];
         data["local_value"] = -data["price"] * data["quantity"];
         let value = data["totalValueAccountCurrency"];
-        data["value_in_account_currency"] = value === "" ? -data["local_value"] * multiplier : value;
-        data["total_in_account_currency"] = -data["totalCostAccountCurrency"] * multiplier;
+        const emptyAccountCurrencyValue = value === "";
+        data["value_in_account_currency"] = (
+            value === "" ? -data["local_value"] * multiplier : -value * multiplier);
+
+        let totalInAccountCurrency = data["totalCostAccountCurrency"];
+        // User can go with the default value.
+        if (totalInAccountCurrency === "") {
+            if (emptyAccountCurrencyValue) {
+                totalInAccountCurrency = data["local_value"] + data["fees"];
+            } else {
+                totalInAccountCurrency = value + data["fees"];
+            }
+        }
+        data["total_in_account_currency"] = -totalInAccountCurrency * multiplier;
         data["order_id"] = "";
         let executedAt = data["executedAt"];
 
@@ -184,9 +208,9 @@ export class APIClient {
             executedAt = new Date(executedAt);
         }
         data["executed_at"] = executedAt;
-        const response =  await postData(this.baseUrl + '/transactions/add_with_custom_asset/', data);
+        const response = await postData(this.baseUrl + '/transactions/add_with_custom_asset/', data);
         if (response.errors) {
-            response.errors["totalCostAccountCurrency"] =  response.errors["total_in_account_currency"];
+            response.errors["totalCostAccountCurrency"] = response.errors["total_in_account_currency"];
             response.errors["assetType"] = response.errors["asset_type"];
             response.errors["fees"] = response.errors["transaction_costs"];
             response.errors["totalValueAccountCurrency"] = response.errors["value_in_account_currency"];
