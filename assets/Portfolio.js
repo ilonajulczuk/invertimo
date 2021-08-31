@@ -158,17 +158,8 @@ export default class Portfolio extends React.Component {
 
     async handleAddTransaction(data) {
         let result;
-        if (data.symbol.id) {
-
-            // Check if fields were not changed...
-            if (data.symbol.currency === data.currency && data.symbol.exchange.name === data.exchange) {
-                result = await this.apiClient.addTransaction(data);
-            } else {
-                data.symbol = data.symbol.symbol;
-                // If that's the case then just use the symbol of the asset and treat it as
-                // custom asset.
-                result = await this.apiClient.addTransactionWithCustomAsset(data);
-            }
+        if (data.asset) {
+            result = await this.apiClient.addTransaction(data);
         } else {
             result = await this.apiClient.addTransactionWithCustomAsset(data);
         }

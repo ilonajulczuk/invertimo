@@ -116,10 +116,10 @@ describe('form for recording transactions', () => {
             userEvent.type(screen.getByLabelText(/price/i), '1300');
 
             fireEvent.change(document.getElementById("total-cost-account-currency"),
-             {target: {value: "162000"}});
+             {target: {value: "16901"}});
 
             // userEvent.type(totalCost, '160000');
-            userEvent.type(screen.getByLabelText(/fees/i), '0');
+            userEvent.type(screen.getByLabelText(/fees/i), '0.5');
 
             // Complicated part of the asset selection, can override other fields
             // if confirmed in the dialog.
@@ -151,30 +151,20 @@ describe('form for recording transactions', () => {
         }
 
         const expectedValue = {
-            account: accounts[0],
+            account: accounts[0].id,
             assetType: "stock",
             currency: "USD",
             exchange: "USA Stocks",
-            executedAt: new Date("2021-08-10"),
-            "totalCostAccountCurrency": 162000,
-            "totalValueAccountCurrency": "",
+            "executed_at": new Date("2021-08-10"),
             "tradeType": "buy",
-            "symbol": {
-                "id": 30,
-                "isin": "US0846707026",
-                "symbol": "BRK-B",
-                "name": "Berkshire Hathaway Inc",
-                "exchange": {
-                    "id": 132,
-                    "name": "USA Stocks"
-                },
-                "currency": "USD",
-                "country": "USA"
-            },
-            "fees": 0,
+            "asset": 30,
+            "transaction_costs": -0.5,
             "price": 1300,
             "quantity": 13,
-
+            "local_value": -16900,
+            "value_in_account_currency": -16900,
+            "total_in_account_currency": -16901,
+            "order_id": "",
         };
         expect(document.querySelectorAll('[aria-invalid="true"]').length).toEqual(0);
         expect(handleSubmit).toHaveBeenCalledWith(expectedValue);

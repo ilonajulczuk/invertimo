@@ -30,6 +30,85 @@ import {
 } from '@material-ui/pickers';
 
 
+function formTransactionToAPITransaction(formData) {
+    let data = { ...formData };
+    data["account"] = data["account"].id;
+    // Asset could be auto filled and unchanged -> asset set to id.
+    // Auto filled and changed -> treated as custom asset.
+    // Totally custom -> treated as custom asset.
+    const assetId = data["symbol"].id;
+    if (assetId) {
+        if (data.symbol.currency === data.currency && data.symbol.exchange.name === data.exchange) {
+            data["asset"] = assetId;
+            delete data["symbol"];
+        } else {
+            data["symbol"] = formData.symbol.symbol;
+            data["asset_type"] = formData["assetType"];
+        }
+    } else {
+        data["asset_type"] = formData["assetType"];
+    }
+
+    // When the asset is bought all the values are supposed to be negative.
+    // Multiplier is applied to flip the sign if the transaction is a sell.
+    let multiplier = 1;
+    if (data["tradeType"] === "sold") {
+        data["quantity"] = -data["quantity"];
+        multiplier = -1;
+    }
+
+    data["transaction_costs"] = -data["fees"];
+    delete data.fees;
+    data["local_value"] = -data["price"] * data["quantity"] * multiplier;
+
+    // This value is empty if the currencies match.
+    let value = data["totalValueAccountCurrency"];
+    const emptyAccountCurrencyValue = value === "";
+    data["value_in_account_currency"] = (
+        emptyAccountCurrencyValue ? data["local_value"]: -value * multiplier);
+
+    delete data["totalValueAccountCurrency"];
+
+
+    // User can go with the default value that is precomputed, in that case fill it in.
+    let totalInAccountCurrency = data["totalCostAccountCurrency"];
+    if (totalInAccountCurrency === "") {
+        data["total_in_account_currency"] = data["value_in_account_currency"] + data["transaction_costs"];
+    } else {
+        data["total_in_account_currency"] = -totalInAccountCurrency * multiplier;
+    }
+
+
+    delete data["totalCostAccountCurrency"];
+    data["order_id"] = "";
+
+    // Date from the datepicker will not have time and the time is actually required.
+    let executedAt = data["executedAt"];
+    if (typeof executedAt === "string") {
+        executedAt = new Date(executedAt);
+    }
+    data["executed_at"] = executedAt;
+    delete data["executedAt"];
+
+    return data;
+}
+
+
+function apiTransactionResponseToErrors(apiResponse) {
+
+    let response = {ok: apiResponse.ok};
+
+    if (response.errors) {
+        response.errors["totalCostAccountCurrency"] = apiResponse.errors["total_in_account_currency"];
+        response.errors["assetType"] = apiResponse.errors["asset_type"];
+        response.errors["fees"] = apiResponse.errors["transaction_costs"];
+        response.errors["totalValueAccountCurrency"] = apiResponse.errors["value_in_account_currency"];
+        response.errors["executedAt"] = apiResponse.errors["executed_at"];
+    }
+    return response;
+
+}
+
 function Alert(props) {
     return <MuiAlert elevation={6} variant="filled" {...props} />;
 }
@@ -168,7 +247,10 @@ export function RecordTransactionForm(props) {
 
     const onSubmit = async (values, { setErrors, resetForm }) => {
         try {
-            const result = await props.handleSubmit(values);
+
+            const cleanValues = formTransactionToAPITransaction(values);
+            let result = await props.handleSubmit(cleanValues);
+            result = apiTransactionResponseToErrors(result);
             if (result.ok) {
                 resetForm();
                 snackbarSetOpen(true);
@@ -247,7 +329,7 @@ export function RecordTransactionForm(props) {
                         shrink: true,
                     }}
                 />
-           <TextField
+                <TextField
                     id="total-cost-account-currency"
                     label={`Total cost in ${accountCurrency}`}
                     name="totalCostAccountCurrency"
@@ -268,7 +350,7 @@ export function RecordTransactionForm(props) {
             <p>Total cost will be deducted from selected account balance and fees will be associated with assets.</p>
             <div className={classes.inputs}>
 
-            <TextField
+                <TextField
                     id="fees"
                     label="Fees"
                     name="fees"
