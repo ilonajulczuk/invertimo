@@ -185,20 +185,27 @@ export function SelectAssetFormFragment(props) {
       </div>
 
       <div className={classes.inputs}>
-        <TextField
-          id="exchange"
-          label="Exchange"
-          name="exchange"
-          value={formik.values.exchange}
-          onChange={formik.handleChange}
-          error={formik.touched.exchange && Boolean(formik.errors.exchange)}
-          helperText={(formik.touched.exchange && formik.errors.exchange) || "Exchange name like 'XETRA'"}
-          className={classes.formControl}
-          disabled={otherFieldsDisabled}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
+        <FormControl className={classes.formControl}>
+          <InputLabel id="exchange-label"
+           error={(formik.touched.exchange && formik.errors.exchange)}>Exchange</InputLabel>
+          <Select
+            id="exchange"
+            name="exchange"
+            labelId="exchange-label"
+            value={formik.values.exchange}
+            onChange={formik.handleChange}
+            error={formik.touched.exchange && Boolean(formik.errors.exchange)}
+            className={classes.formControl}
+            disabled={otherFieldsDisabled}
+          >
+            <MenuItem value={"USA Stocks"}>USA Stocks</MenuItem>
+            <MenuItem value={"XETRA Exchange"}>XETRA Exchange</MenuItem>
+            <MenuItem value={"London Exchange"}>London Exchange</MenuItem>
+            <MenuItem value={"Borsa Italiana"}>Borsa Italiana</MenuItem>
+          </Select>
+          <FormHelperText error={(formik.touched.exchange && formik.errors.exchange)}>{(formik.touched.exchange && formik.errors.exchange) ||
+            `Only selected exchanges are supported for now`}</FormHelperText>
+        </FormControl>
 
         <FormControl className={classes.narrowInput}>
           <InputLabel id="currency-select-label">Currency</InputLabel>

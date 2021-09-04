@@ -212,8 +212,8 @@ export default class Portfolio extends React.Component {
                 this.setState({ "transactions": transactions });
             });
     }
-    render() {
 
+    render() {
         const userEmail = JSON.parse(document.getElementById('userEmail').textContent);
 
         // If there are no accounts loaded yet, there isn't much to show.

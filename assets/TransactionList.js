@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { ErrorBoundary } from './error_utils.js';
 import { TableWithSort } from './components/TableWithSort.js';
 import { toSymbol } from './currencies.js';
+import Icon from '@material-ui/core/Icon';
 
 import './transaction_list.css';
 import Button from '@material-ui/core/Button';
@@ -130,6 +131,7 @@ export function TransactionList(props) {
                     variant="contained"
                     color="secondary"
                 >
+                    <Icon>create</Icon>
                     Record transaction
                 </Button>
             </div>
