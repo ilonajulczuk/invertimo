@@ -4,6 +4,9 @@ import PropTypes from 'prop-types';
 import { TableWithSort } from './components/TableWithSort.js';
 import { toSymbol } from './currencies.js';
 import { PositionDetail } from './PositionDetail.js';
+
+import { ErrorBoundary } from './error_utils.js';
+
 import {
     Switch,
     Route,
@@ -87,15 +90,17 @@ export function PositionList(props) {
             <Switch>
                 <Route exact path={path}>
                     <h2>Positions</h2>
-                    <TableWithSort
-                        rows={positions}
-                        headCells={positionHeadCells}
-                        defaultOrder="asc"
-                        defaultOrderBy="product" />
+                    <ErrorBoundary>
+                        <TableWithSort
+                            rows={positions}
+                            headCells={positionHeadCells}
+                            defaultOrder="asc"
+                            defaultOrderBy="product" />
+                    </ErrorBoundary>
                 </Route>
 
                 <Route path={`${path}/:positionId`}>
-                    <PositionDetail positions={props.positions} accounts={props.accounts} getPositionDetail={props.getPositionDetail}/>
+                    <PositionDetail positions={props.positions} accounts={props.accounts} getPositionDetail={props.getPositionDetail} />
 
                 </Route>
             </Switch>

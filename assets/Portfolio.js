@@ -1,7 +1,6 @@
 import React from 'react';
 import './portfolio.css';
 import { PositionList } from './PositionList.js';
-import { TransactionList } from './TransactionList.js';
 import { AccountValue } from './AccountValue.js';
 import { Header } from './Header.js';
 import { APIClient } from './api_utils.js';
@@ -17,6 +16,7 @@ import { toSymbol } from './currencies.js';
 
 import { ErrorBoundary } from './error_utils.js';
 import { Onboarding } from './Onboarding.js';
+import { Transactions } from './Transactions';
 
 
 class AccountStats extends React.Component {
@@ -77,7 +77,6 @@ export function PortfolioOverview(props) {
 
     let positionsCount = 0;
     let transactionsCount = 0;
-    let accountEventCount = "?";
 
     let accounts = props.accounts;
 
@@ -104,18 +103,15 @@ export function PortfolioOverview(props) {
             </div>
             <div className="card">
                 <span className="card-label">Assets</span>
-                <p>
-                    {positionsCount} <a href="#/positions">Positions</a> in {accounts.length}  <a href=""> {accounts.length > 1 ? "Accounts" : "Account"}</a>
-                </p>
+                <div>
+                    {positionsCount} <a href="#/positions">Positions</a> in {accounts.length}  {accounts.length > 1 ? "Accounts" : "Account"}
+                </div>
                 <a className="button" href="/#positions">See all Positions</a>
-                <a className="button">Manage accounts</a>
             </div>
             <div className="card">
                 <span className="card-label">Events</span>
-                <div>{transactionsCount} <a href="">Transactions</a></div>
-                <div>{accountEventCount} <a href="">Account Events</a></div>
-                <a className="button">Manage transactions</a>
-                <a className="button">Manage events</a>
+                <div>{transactionsCount} <a href="#/transactions">Transactions</a></div>
+                <a className="button" href="#/transactions">Manage transactions</a>
             </div>
         </div>
     );
@@ -252,14 +248,15 @@ export default class Portfolio extends React.Component {
         } else if (noTransactions) {
             redirectOrDisplay = <Redirect to="/start/transactions_intro" />;
         } else {
-            redirectOrDisplay = (<div>
-                                <h1>Portfolio</h1>
+            redirectOrDisplay = (
+                <div>
+                    <h2>Portfolio</h2>
 
-                                <ErrorBoundary>
-                                    <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
-                                    {accountValues}
-                                </ErrorBoundary>
-                            </div>);
+                    <ErrorBoundary>
+                        <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
+                        {accountValues}
+                    </ErrorBoundary>
+                </div>);
         }
         return (
             <div className="main-grid">
@@ -281,9 +278,9 @@ export default class Portfolio extends React.Component {
                 <div className="main-content">
                     <Switch>
                         <Route path="/transactions">
-                            <h2>Transactions</h2>
                             <ErrorBoundary>
-                                <TransactionList transactions={this.state.transactions}
+                                <Transactions transactions={this.state.transactions}
+                                    handleAddTransaction={this.handleAddTransaction}
                                     accounts={this.state.accounts} />
                             </ErrorBoundary>
                         </Route>
