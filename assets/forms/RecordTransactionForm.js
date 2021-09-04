@@ -69,7 +69,6 @@ function formTransactionToAPITransaction(formData) {
 
     delete data["totalValueAccountCurrency"];
 
-
     // User can go with the default value that is precomputed, in that case fill it in.
     let totalInAccountCurrency = data["totalCostAccountCurrency"];
     if (totalInAccountCurrency === "") {
@@ -77,7 +76,6 @@ function formTransactionToAPITransaction(formData) {
     } else {
         data["total_in_account_currency"] = -totalInAccountCurrency * multiplier;
     }
-
 
     delete data["totalCostAccountCurrency"];
     data["order_id"] = "";
@@ -95,15 +93,17 @@ function formTransactionToAPITransaction(formData) {
 
 
 function apiTransactionResponseToErrors(apiResponse) {
-
     let response = {ok: apiResponse.ok};
 
-    if (response.errors) {
+    if (apiResponse.errors) {
         response.errors["totalCostAccountCurrency"] = apiResponse.errors["total_in_account_currency"];
         response.errors["assetType"] = apiResponse.errors["asset_type"];
         response.errors["fees"] = apiResponse.errors["transaction_costs"];
         response.errors["totalValueAccountCurrency"] = apiResponse.errors["value_in_account_currency"];
         response.errors["executedAt"] = apiResponse.errors["executed_at"];
+    }
+    if (apiResponse.message) {
+        response.message = apiResponse.message;
     }
     return response;
 
@@ -167,7 +167,7 @@ const validationSchema = yup.object({
     symbol: yup
         .lazy(value => typeof value === 'string' ? yup.string().required() : yup.object().required()),
     exchange: yup
-        .string('Enter the exchange name like \'XET\'')
+        .string()
         .required('Exchange is required'),
     currency: yup
         .string('Enter the currency')
@@ -196,7 +196,7 @@ const validationSchema = yup.object({
     // This value is only required if currency of the asset and account don't match.
     totalValueAccountCurrency: yup
         .number().when(['currency', 'account'], {
-            is: (currency, account) => currency !== account.currency,
+            is: (currency, account) => account ? currency !== account.currency : false,
             then: yup.number().test('has-2-or-less-places', "Only up to two decimal places are allowed",
                 matchNumberUpToTwoDecimalPlaces).required(
                     'Total value in account currency has to be provided if the' +
@@ -229,13 +229,12 @@ export function RecordTransactionForm(props) {
         snackbarSetOpen(false);
     };
 
-
     const initialValues = {
         currency: "EUR",
         symbol: "",
         tradeType: "buy",
         executedAt: props.executedAtDate || new Date(),
-        account: props.accounts[0],
+        account: "",
         exchange: "",
         assetType: "stock",
         price: "",
@@ -280,13 +279,15 @@ export function RecordTransactionForm(props) {
 
     const submitButtonText = props.hasTransactions ? "Record another transaction" : "Record transaction";
 
-
     let valueBlock = null;
     let totalCostBlock = null;
 
-    let accountCurrency = toSymbol(formik.values.account.currency);
+    let formattedAccountCurrency = "";
+    if (formik.values.account) {
+        formattedAccountCurrency = toSymbol(formik.values.account.currency);
+    }
 
-    const sameCurrency = formik.values.account.currency == formik.values.currency;
+    const sameCurrency =  formik.values.account ? formik.values.account.currency == formik.values.currency : false;
     if (!sameCurrency) {
 
         valueBlock = <>
@@ -295,7 +296,7 @@ export function RecordTransactionForm(props) {
 
                 <TextField
                     id="value-account-currency"
-                    label={`Total value in ${accountCurrency}`}
+                    label={`Total value in ${formattedAccountCurrency}`}
                     name="totalValueAccountCurrency"
                     type="number"
                     value={formik.values.totalValueAccountCurrency}
@@ -317,7 +318,7 @@ export function RecordTransactionForm(props) {
 
                 <TextField
                     id="fees"
-                    label={`Fees in ${accountCurrency}`}
+                    label={`Fees in ${formattedAccountCurrency}`}
                     name="fees"
                     type="number"
                     value={formik.values.fees}
@@ -331,7 +332,7 @@ export function RecordTransactionForm(props) {
                 />
                 <TextField
                     id="total-cost-account-currency"
-                    label={`Total cost in ${accountCurrency}`}
+                    label={`Total cost in ${formattedAccountCurrency}`}
                     name="totalCostAccountCurrency"
                     value={formik.values.totalCostAccountCurrency || formik.values.totalValueAccountCurrency + formik.values.fees}
                     type="number"
@@ -379,14 +380,10 @@ export function RecordTransactionForm(props) {
                         shrink: true,
                     }}
                 />
-
-
             </div></>);
-
     }
 
     const selectAssetBlock = <SelectAssetFormFragment formik={formik} />;
-
 
     return (
         <form className={classes.form} onSubmit={formik.handleSubmit}>
@@ -429,7 +426,7 @@ export function RecordTransactionForm(props) {
                 </MuiPickersUtilsProvider>
 
                 <FormControl className={classes.formControl}>
-                    <InputLabel id="account-label">In account</InputLabel>
+                    <InputLabel id="account-label" error={formik.touched.account && Boolean(formik.errors.account)}>In account</InputLabel>
                     <Select
                         name="account"
                         labelId="account-label"
@@ -441,7 +438,7 @@ export function RecordTransactionForm(props) {
                     >
                         {accountOptions}
                     </Select>
-                    <FormHelperText>{(formik.touched.account && formik.errors.account) ||
+                    <FormHelperText error={formik.touched.account && Boolean(formik.errors.account)}>{(formik.touched.account && formik.errors.account) ||
                         `Trade needs to be associated with one of your accounts`}</FormHelperText>
                 </FormControl>
             </div>
@@ -476,7 +473,6 @@ export function RecordTransactionForm(props) {
                         shrink: true,
                     }}
                 />
-
             </div>
 
             {valueBlock}

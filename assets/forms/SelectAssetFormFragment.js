@@ -15,9 +15,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogActions from '@material-ui/core/DialogActions';
 import Button from '@material-ui/core/Button';
 
-
 import { makeStyles } from '@material-ui/core/styles';
-
 
 import PropTypes from 'prop-types';
 
@@ -59,6 +57,8 @@ export function SelectAssetFormFragment(props) {
   const formik = props.formik;
   const classes = useStyles();
 
+  // TODO: move up, so that resetting the form (e.g. after submission)
+  // also resets the disabled state.
   const [openFill, toggleOpenFill] = React.useState(false);
   const [otherFieldsDisabled, toggleDisable] = React.useState(false);
 
@@ -187,7 +187,7 @@ export function SelectAssetFormFragment(props) {
       <div className={classes.inputs}>
         <FormControl className={classes.formControl}>
           <InputLabel id="exchange-label"
-           error={(formik.touched.exchange && formik.errors.exchange)}>Exchange</InputLabel>
+           error={formik.touched.exchange && Boolean(formik.errors.exchange)}>Exchange</InputLabel>
           <Select
             id="exchange"
             name="exchange"
@@ -202,8 +202,9 @@ export function SelectAssetFormFragment(props) {
             <MenuItem value={"XETRA Exchange"}>XETRA Exchange</MenuItem>
             <MenuItem value={"London Exchange"}>London Exchange</MenuItem>
             <MenuItem value={"Borsa Italiana"}>Borsa Italiana</MenuItem>
+            <MenuItem value={"Other / NA"}>Other / NA</MenuItem>
           </Select>
-          <FormHelperText error={(formik.touched.exchange && formik.errors.exchange)}>{(formik.touched.exchange && formik.errors.exchange) ||
+          <FormHelperText error={(formik.touched.exchange && Boolean(formik.errors.exchange))}>{(formik.touched.exchange && formik.errors.exchange) ||
             `Only selected exchanges are supported for now`}</FormHelperText>
         </FormControl>
 

@@ -13,6 +13,8 @@ _REFERENCE_TO_OPERATING_MIC_SIMPLIFIED_MAPPING : Dict[str, str] = {
     "MIL": "XMIL",  # Milan.
 }
 
+OTHER_OR_NA_EXCHANGE_NAME = "Other / NA"
+
 
 class ExchangeRepository:
     def get(self, exchange_mic, exchange_reference):
@@ -33,8 +35,10 @@ class ExchangeRepository:
             )
 
     def get_by_name(self, exchange_name):
-        if exchange_name == "other/NA":
-            return None
+        if exchange_name == OTHER_OR_NA_EXCHANGE_NAME:
+            # If it doesn't exist, create it and later reuse it.
+            exchange, _ = models.Exchange.objects.get_or_create(name=OTHER_OR_NA_EXCHANGE_NAME)
+            return exchange
         return models.Exchange.objects.get(
             name=exchange_name,
         )

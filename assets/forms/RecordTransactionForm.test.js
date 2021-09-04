@@ -106,12 +106,16 @@ describe('form for recording transactions', () => {
 
         await act(async () => {
 
-            const currencySelector = document.getElementById("currency");
-            fireEvent.mouseDown(currencySelector);
-            const listbox = await screen.findByRole('listbox');
+            let selector = document.getElementById("currency");
+            fireEvent.mouseDown(selector);
+            let listbox = await screen.findByRole('listbox');
             fireEvent.click(within(listbox).getByText(/USD/i));
 
-            userEvent.type(document.getElementById("exchange"), 'my exchange');
+            selector = document.getElementById("account");
+            fireEvent.mouseDown(selector);
+            listbox = await screen.findByRole('listbox');
+            fireEvent.click(within(listbox).getByText(/First account/i));
+
             userEvent.type(document.getElementById("quantity"), '13');
             userEvent.type(screen.getByLabelText(/price/i), '1300');
 
