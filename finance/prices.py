@@ -8,10 +8,10 @@ logger = logging.getLogger(__name__)
 symbol_to_currency_pair = {
     "USDEUR": {
         "from_currency": models.Currency.USD,
-        "to_currency": models.Currency.EURO,
+        "to_currency": models.Currency.EUR,
     },
     "EURUSD": {
-        "from_currency": models.Currency.EURO,
+        "from_currency": models.Currency.EUR,
         "to_currency": models.Currency.USD,
     },
     "GBPUSD": {
@@ -23,16 +23,16 @@ symbol_to_currency_pair = {
         "to_currency": models.Currency.GBP,
     },
     "EURGBP": {
-        "from_currency": models.Currency.EURO,
+        "from_currency": models.Currency.EUR,
         "to_currency": models.Currency.GBP,
     },
     "GBPEUR": {
         "from_currency": models.Currency.GBP,
-        "to_currency": models.Currency.EURO,
+        "to_currency": models.Currency.EUR,
     },
     "GBXEUR": {
         "from_currency": models.Currency.GBX,
-        "to_currency": models.Currency.EURO,
+        "to_currency": models.Currency.EUR,
     },
     "GBXUSD": {
         "from_currency": models.Currency.GBX,
