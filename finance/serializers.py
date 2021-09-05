@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from finance import models
+from finance import exchanges
 from finance.models import (
     Account,
     CurrencyExchangeRate,
@@ -191,8 +192,8 @@ class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction])
 
     symbol = serializers.CharField()
     currency = CurrencyField()
-    # TODO: add validation to exchange!
-    # For now only a small list of values should be supported.
+
+    # Name of existing exchange or a special name for NA.
     exchange = serializers.CharField()
     asset_type = AssetTypeField()
 
@@ -201,9 +202,11 @@ class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction])
             raise serializers.ValidationError(f"User doesn't have account with id: '{value}'")
         return value
 
-    def validate_asset(self, value):
-        if not models.Asset.objects.filter(pk=value).exists():
-            raise serializers.ValidationError(f"There is no asset with id: '{value}'")
+    def validate_exchange(self, value):
+        if value == exchanges.OTHER_OR_NA_EXCHANGE_NAME:
+            return value
+        if not models.Exchange.objects.filter(name=value).exists():
+            raise serializers.ValidationError(f"There is no exchange with name: '{value}'")
         return value
 
     class Meta:

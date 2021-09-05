@@ -122,7 +122,6 @@ describe('form for recording transactions', () => {
             fireEvent.change(document.getElementById("total-cost-account-currency"),
              {target: {value: "16901"}});
 
-            // userEvent.type(totalCost, '160000');
             userEvent.type(screen.getByLabelText(/fees/i), '0.5');
 
             // Complicated part of the asset selection, can override other fields

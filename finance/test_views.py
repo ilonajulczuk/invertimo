@@ -403,7 +403,6 @@ class TestTransactionsView(ViewTestBase, TestCase):
                 "exchange": "USA stocks",
                 "asset_type": "stock",
                 "symbol": "DIS",
-
                 "quantity": 10,
                 "price": 3.15,
                 "transaction_costs": 0,
@@ -414,6 +413,49 @@ class TestTransactionsView(ViewTestBase, TestCase):
             },
         )
         self.assertEqual(response.status_code, 201)
+
+    def test_add_transaction_for_new_asset_na_exchange(self):
+        response = self.client.post(
+            reverse("transaction-add-with-custom-asset"),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "currency": "USD",
+                "exchange": "Other / NA",
+                "asset_type": "stock",
+                "symbol": "DIS",
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+                "currency": "EUR",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+
+
+    def test_add_transaction_for_new_asset_bad_exchange(self):
+        response = self.client.post(
+            reverse("transaction-add-with-custom-asset"),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "currency": "USD",
+                "exchange": "Fake exchange that doesn't exist",
+                "asset_type": "stock",
+                "symbol": "DIS",
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+                "currency": "EUR",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
 
 
 class TestTransactionsDetailView(ViewTestBase, TestCase):
