@@ -248,6 +248,11 @@ class Position(models.Model):
         )
         price_tuples = [(price.date, price.value) for price in prices]
 
+        # Transactions also record price history, so add their data points.
+        transactions = self.transactions.filter(executed_at__gte=from_date, executed_at__lte=to_date)
+        price_tuples_from_transactions =[(transaction.executed_at.date(), transaction.price) for transaction in transactions]
+        price_tuples.extend(price_tuples_from_transactions)
+
         first_price = prices.last()
         if isinstance(first_price, PriceHistory):
             if first_price.date > from_date:
@@ -258,6 +263,7 @@ class Position(models.Model):
                 price_tuples.extend(
                     [(date, decimal.Decimal("0")) for date in additional_dates]
                 )
+        price_tuples.sort(key=lambda x: x[0], reverse=True)
         return multiply_at_matching_dates(price_tuples, quantity_history)
 
     def value_history_in_account_currency(

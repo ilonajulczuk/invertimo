@@ -84,6 +84,8 @@ function formTransactionToAPITransaction(formData) {
     let executedAt = data["executedAt"];
     if (typeof executedAt === "string") {
         executedAt = new Date(executedAt);
+    } else if (executedAt instanceof Date) {
+        executedAt = new Date(executedAt.toISOString().slice(0, 10));
     }
     data["executed_at"] = executedAt;
     delete data["executedAt"];

@@ -46,7 +46,7 @@ export function PositionList(props) {
             displayValue: (
                 <div className="position-name">
                     <span className="card-label">{data.asset.isin}</span>
-                    <span className="position-symbol">{data.asset.symbol}</span>
+                    <a href={`#positions/${position.id}`}><span className="position-symbol">{data.asset.symbol}</span></a>
                     <span>{data.asset.name}</span>
                 </div>
             ),

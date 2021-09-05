@@ -9,7 +9,7 @@ import './account_value.css';
 
 import { toSymbol } from './currencies.js';
 import { generateColors } from './colors.js';
-
+import { addAcrossDatesWithFill } from './timeseries_utils.js';
 
 // TODO: add test for this.
 function sortByFirstValue(positions) {
@@ -45,65 +45,6 @@ function trimDataUntilDate(timeSeries, date) {
     return trimmedTimeSeries;
 }
 
-
-export function addAcrossDates(rowsOfValues, compareFunc) {
-    const NumRows = rowsOfValues.length;
-    let indices = new Array(NumRows);
-    indices.fill(0);
-
-    if (rowsOfValues.length == 0) {
-        return [];
-    }
-    let combinedValues = [];
-    const firstRowOfValues = rowsOfValues[0];
-    let currentDate = firstRowOfValues[0][0];
-    let currentVal = 0;
-
-    let finishedSomeRow = false;
-    while (!finishedSomeRow) {
-
-        currentVal = 0;
-        for (let i = 0; i < NumRows; i++) {
-            let currentIndexForCurrentRow = indices[i];
-            if (currentIndexForCurrentRow >= rowsOfValues[i].length) {
-
-                finishedSomeRow = true;
-                if (i != NumRows - 1) {
-                    currentVal = null;
-                }
-                break;
-            }
-
-            while (compareFunc(rowsOfValues[i][currentIndexForCurrentRow][0], currentDate) < 0) {
-                indices[i] += 1;
-                currentIndexForCurrentRow = indices[i];
-                if (currentIndexForCurrentRow >= rowsOfValues[i].length) {
-                    finishedSomeRow = true;
-                    break;
-                }
-            }
-            if (currentIndexForCurrentRow >= rowsOfValues[i].length) {
-                finishedSomeRow = true;
-                break;
-            }
-
-            if (compareFunc(rowsOfValues[i][currentIndexForCurrentRow][0], currentDate) == 0) {
-                currentVal += rowsOfValues[i][currentIndexForCurrentRow][1];
-                indices[i] += 1;
-                currentIndexForCurrentRow = indices[i];
-            } else {
-                currentDate = rowsOfValues[i][currentIndexForCurrentRow][0];
-                currentVal = null;
-                break;
-            }
-
-        }
-        if (currentVal != null) {
-            combinedValues.push([currentDate, currentVal]);
-        }
-    }
-    return combinedValues;
-}
 
 export function AccountValue(props) {
 
@@ -153,7 +94,7 @@ export function AccountValue(props) {
         return row;
     });
 
-    let remainingValuesCombined = addAcrossDates(valuesOfRemainingPositions, (a, b) => new Date(b) - new Date(a));
+    let remainingValuesCombined = addAcrossDatesWithFill(valuesOfRemainingPositions, (a, b) => new Date(b) - new Date(a));
     remainingValuesCombined = remainingValuesCombined.map(elem => {
         let exactDate = new Date(elem[0]);
         return {
@@ -172,7 +113,9 @@ export function AccountValue(props) {
         );
     }
 
-    let allValuesCombined = addAcrossDates(sortedValues.map(positionIdAndValues => positionIdAndValues[1]), (a, b) => new Date(b) - new Date(a));
+    // It backfills the values from the last one for a given row.
+    // It flips the order of dates from oldest to youngest.
+    let allValuesCombined = addAcrossDatesWithFill(sortedValues.map(positionIdAndValues => positionIdAndValues[1]));
     allValuesCombined = allValuesCombined.map(elem => {
         let exactDate = new Date(elem[0]);
         return {
@@ -189,14 +132,18 @@ export function AccountValue(props) {
             }
         );
     }
+
     if (values.length > 0) {
         let selectedPositions = valuesOfBiggestPositions.map(
             positionIdAndValues => positionsMap.get(positionIdAndValues[0]));
 
         let positionPercentages = valuesOfBiggestPositions.map(values => {
-
-            return Math.round(
-                values[1][0][1] * 100 * 100 / allValuesCombined[0].y) / 100;
+            if (allValuesCombined.length > 0) {
+                return Math.round(
+                    values[1][0][1] * 100 * 100 / allValuesCombined[allValuesCombined.length -1].y) / 100;
+            } else {
+                return "NaN";
+            }
         });
         let accountCurrency = toSymbol(props.account.currency);
         return (<div className="account-value-charts">

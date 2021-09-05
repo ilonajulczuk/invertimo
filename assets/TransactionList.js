@@ -85,7 +85,7 @@ export function TransactionList(props) {
         let positionField = (
             <div className="position-name">
                 <span className="card-label">{position.asset.isin}</span>
-                <span className="position-symbol">{position.asset.symbol}</span>
+                <a href={`#positions/${position.id}`}><span className="position-symbol">{position.asset.symbol}</span></a>
                 <span>{position.asset.name}</span>
             </div>
         );

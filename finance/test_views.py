@@ -223,7 +223,7 @@ class TestAccountsView(ViewTestBase, HypothesisTestCase):
         )
         .map(lambda s: s.strip())
         .filter(lambda s: len(s) > 0),
-        currency=st.sampled_from(["GBP", "EUR", "USD"])
+        currency=st.sampled_from(["GBP", "EUR", "USD"]),
     )
     def test_adding_account(self, nickname, currency):
         self.client.force_login(self.user)
@@ -253,7 +253,6 @@ class TestAccountsView(ViewTestBase, HypothesisTestCase):
             },
         )
         self.assertEqual(response.status_code, 400)
-
 
     def test_empty_currency_fails(self):
         response = self.client.post(
@@ -372,7 +371,9 @@ class TestTransactionsView(ViewTestBase, TestCase):
 
     def test_add_transaction_for_known_asset_for_not_owned_account_fails(self):
 
-        self.other_user = User.objects.create(username="billy", email="billy@example.com")
+        self.other_user = User.objects.create(
+            username="billy", email="billy@example.com"
+        )
         self.other_account, _, self.other_asset = _add_dummy_account_and_asset(
             self.other_user, isin="something"
         )
@@ -434,7 +435,6 @@ class TestTransactionsView(ViewTestBase, TestCase):
             },
         )
         self.assertEqual(response.status_code, 201)
-
 
     def test_add_transaction_for_new_asset_bad_exchange(self):
         response = self.client.post(
