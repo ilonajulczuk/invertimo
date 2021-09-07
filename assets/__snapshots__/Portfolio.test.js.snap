@@ -11,10 +11,10 @@ exports[`portfolio tests shows portfolio overview with one account 1`] = `
     </ul>
   </div>
   <div class=\\"card\\"><span class=\\"card-label\\">Assets</span>
-    <div>3 <a href=\\"#/positions\\">Positions</a> in 1 Account</div><a class=\\"button\\" href=\\"/#positions\\">See all Positions</a>
-  </div>
-  <div class=\\"card\\"><span class=\\"card-label\\">Events</span>
-    <div>15 <a href=\\"#/transactions\\">Transactions</a></div><a class=\\"button\\" href=\\"#/transactions\\">Manage transactions</a>
+    <div class=\\"assets-overview-content\\">
+      <div>3 <a href=\\"#/positions\\">Positions</a> in 1 Account</div>
+      <div>15 <a href=\\"#/transactions\\">Transactions</a></div>
+    </div><a class=\\"MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedSecondary\\" tabindex=\\"0\\" aria-disabled=\\"false\\" href=\\"#/transactions/record\\"><span class=\\"MuiButton-label\\"><span class=\\"material-icons MuiIcon-root\\" aria-hidden=\\"true\\">create</span>Record transaction</span><span class=\\"MuiTouchRipple-root\\"></span></a>
   </div>
 </div>"
 `;
@@ -36,10 +36,10 @@ exports[`portfolio tests shows portfolio overview with two accounts 1`] = `
     </ul>
   </div>
   <div class=\\"card\\"><span class=\\"card-label\\">Assets</span>
-    <div>5 <a href=\\"#/positions\\">Positions</a> in 2 Accounts</div><a class=\\"button\\" href=\\"/#positions\\">See all Positions</a>
-  </div>
-  <div class=\\"card\\"><span class=\\"card-label\\">Events</span>
-    <div>20 <a href=\\"#/transactions\\">Transactions</a></div><a class=\\"button\\" href=\\"#/transactions\\">Manage transactions</a>
+    <div class=\\"assets-overview-content\\">
+      <div>5 <a href=\\"#/positions\\">Positions</a> in 2 Accounts</div>
+      <div>20 <a href=\\"#/transactions\\">Transactions</a></div>
+    </div><a class=\\"MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedSecondary\\" tabindex=\\"0\\" aria-disabled=\\"false\\" href=\\"#/transactions/record\\"><span class=\\"MuiButton-label\\"><span class=\\"material-icons MuiIcon-root\\" aria-hidden=\\"true\\">create</span>Record transaction</span><span class=\\"MuiTouchRipple-root\\"></span></a>
   </div>
 </div>"
 `;
@@ -48,10 +48,10 @@ exports[`portfolio tests shows portfolio overview without any accounts 1`] = `
 "<div class=\\"portfolio-overview\\">
   <div class=\\"portfolio-overview-card card\\"><span class=\\"card-label\\">At a glance</span></div>
   <div class=\\"card\\"><span class=\\"card-label\\">Assets</span>
-    <div>0 <a href=\\"#/positions\\">Positions</a> in 0 Account</div><a class=\\"button\\" href=\\"/#positions\\">See all Positions</a>
-  </div>
-  <div class=\\"card\\"><span class=\\"card-label\\">Events</span>
-    <div>0 <a href=\\"#/transactions\\">Transactions</a></div><a class=\\"button\\" href=\\"#/transactions\\">Manage transactions</a>
+    <div class=\\"assets-overview-content\\">
+      <div>0 <a href=\\"#/positions\\">Positions</a> in 0 Account</div>
+      <div>0 <a href=\\"#/transactions\\">Transactions</a></div>
+    </div><a class=\\"MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedSecondary\\" tabindex=\\"0\\" aria-disabled=\\"false\\" href=\\"#/transactions/record\\"><span class=\\"MuiButton-label\\"><span class=\\"material-icons MuiIcon-root\\" aria-hidden=\\"true\\">create</span>Record transaction</span><span class=\\"MuiTouchRipple-root\\"></span></a>
   </div>
 </div>"
 `;

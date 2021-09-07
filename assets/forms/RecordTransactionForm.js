@@ -48,18 +48,20 @@ function formTransactionToAPITransaction(formData) {
     } else {
         data["asset_type"] = formData["assetType"];
     }
+    delete data["assetType"];
 
     // When the asset is bought all the values are supposed to be negative.
     // Multiplier is applied to flip the sign if the transaction is a sell.
     let multiplier = 1;
-    if (data["tradeType"] === "sold") {
+    if (data["tradeType"] === "sell") {
         data["quantity"] = -data["quantity"];
         multiplier = -1;
     }
+    delete data["tradeType"];
 
     data["transaction_costs"] = -data["fees"];
     delete data.fees;
-    data["local_value"] = -data["price"] * data["quantity"] * multiplier;
+    data["local_value"] = -data["price"] * data["quantity"];
 
     // This value is empty if the currencies match.
     let value = data["totalValueAccountCurrency"];

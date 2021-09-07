@@ -13,6 +13,8 @@ import {
 } from "react-router-dom";
 import { toSymbol } from './currencies.js';
 
+import Icon from '@material-ui/core/Icon';
+import Button from '@material-ui/core/Button';
 
 import { ErrorBoundary } from './error_utils.js';
 import { Onboarding } from './Onboarding.js';
@@ -103,15 +105,24 @@ export function PortfolioOverview(props) {
             </div>
             <div className="card">
                 <span className="card-label">Assets</span>
-                <div>
-                    {positionsCount} <a href="#/positions">Positions</a> in {accounts.length}  {accounts.length > 1 ? "Accounts" : "Account"}
+                <div className="assets-overview-content">
+                    <div>
+
+                        {positionsCount} <a href="#/positions">Positions</a> in {accounts.length}  {accounts.length > 1 ? "Accounts" : "Account"}
+
+                    </div>
+                    <div>
+                        {transactionsCount} <a href="#/transactions">Transactions</a>
+                    </div>
                 </div>
-                <a className="button" href="/#positions">See all Positions</a>
-            </div>
-            <div className="card">
-                <span className="card-label">Events</span>
-                <div>{transactionsCount} <a href="#/transactions">Transactions</a></div>
-                <a className="button" href="#/transactions">Manage transactions</a>
+                <Button
+                    href="#/transactions/record"
+                    variant="contained"
+                    color="secondary"
+                >
+                    <Icon>create</Icon>
+                    Record transaction
+                </Button>
             </div>
         </div>
     );

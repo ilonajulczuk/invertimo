@@ -79,6 +79,12 @@ header {
     margin-top: 0.5em;
 }
 
+.assets-overview-content {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1em;
+}
+
 .main-grid a {
     color: #09666d;
     font-weight: bold;

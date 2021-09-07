@@ -116,7 +116,7 @@ export function generateDatesAsStrings(startDate, endDate) {
     return dates;
 }
 
-
+// TODO: add tests for those two pretty complex functions.
 
 export function addAcrossDates(rowsOfValues, compareFunc) {
     const NumRows = rowsOfValues.length;
@@ -202,8 +202,6 @@ export function addAcrossDatesWithFill(rowsOfValues) {
             earliestDate = possibleEarliestDate;
         }
     }
-
-    console.log(earliestDate, latestDate);
     // Generate dates.
     const dates = generateDatesAsStrings(earliestDate, latestDate);
     let datesAndValues = dates.map(date => [date, 0]);
