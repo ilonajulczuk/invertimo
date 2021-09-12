@@ -9,6 +9,9 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from typing import Any, Dict, Union, Type
+from rest_framework.decorators import action
+
+
 from finance import accounts, models
 from finance.models import CurrencyExchangeRate, Position, PriceHistory, Transaction
 from finance.serializers import (
@@ -23,6 +26,7 @@ from finance.serializers import (
     AssetPriceHistorySerializer,
     TransactionSerializer,
     AddTransactionKnownAssetSerializer,
+    AddTransactionNewAssetSerializer,
 )
 
 
@@ -53,7 +57,9 @@ class AccountsViewSet(viewsets.ModelViewSet):
                 "from_date",
                 datetime.date.today() - datetime.timedelta(days=30),
             )
-            context["to_date"] = self.query_data.get("to_date", datetime.date.today())
+            context["to_date"] = self.query_data.get(
+                "to_date", datetime.date.today() + datetime.timedelta(days=1)
+            )
         return context
 
     def get_serializer_class(
@@ -122,7 +128,11 @@ class PositionsView(generics.ListAPIView):
                     CurrencyExchangeRate.objects.filter(
                         from_currency=OuterRef("asset__currency"),
                         to_currency=OuterRef("account__currency"),
-                        date=OuterRef("latest_price_date"),
+                        # Will get the latest rate even if it's not the same as
+                        # date at which last price was recorded.
+                        # This shouldn't make a big difference if both prices and exchange rates
+                        # are frequently recorded, but is helpful if some is missing.
+                        # date=OuterRef("latest_price_date"),
                     )
                     .order_by("-date")
                     .values("value")[:1]
@@ -211,12 +221,18 @@ class PositionView(generics.RetrieveAPIView):
                 "from_date",
                 datetime.date.today() - datetime.timedelta(days=365),
             )
-            context["to_date"] = self.query_data.get("to_date", datetime.date.today())
+            context["to_date"] = self.query_data.get(
+                "to_date", datetime.date.today() + datetime.timedelta(days=1)
+            )
         return context
 
 
 class TransactionsViewSet(
-    mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
 ):
     model = Transaction
     serializer_class = TransactionSerializer
@@ -237,11 +253,16 @@ class TransactionsViewSet(
     def get_serializer_class(
         self,
     ) -> Type[
-        Union[TransactionSerializer, AddTransactionKnownAssetSerializer]
+        Union[
+            TransactionSerializer,
+            AddTransactionKnownAssetSerializer,
+            AddTransactionNewAssetSerializer,
+        ]
     ]:
         if self.action in ("create", "update"):
             return AddTransactionKnownAssetSerializer
-
+        elif self.action == "add_with_custom_asset":
+            return AddTransactionNewAssetSerializer
         return TransactionSerializer
 
     def get_serializer_context(self) -> Dict[str, Any]:
@@ -257,16 +278,33 @@ class TransactionsViewSet(
         assert isinstance(self.request.user, User)
         account_repository = accounts.AccountRepository()
         account = account_repository.get(
-            user=self.request.user,
-            id=serializer.validated_data["account"])
+            user=self.request.user, id=serializer.validated_data["account"]
+        )
 
         arguments = serializer.validated_data.copy()
         arguments.pop("account")
         asset_id = arguments.pop("asset")
         arguments["asset_id"] = asset_id
-        accounts.AccountRepository().add_transaction_known_asset(
-            account, **arguments
+        account_repository.add_transaction_known_asset(account, **arguments)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )
+
+    @action(detail=False, methods=["post"])
+    def add_with_custom_asset(self, request):
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        assert isinstance(self.request.user, User)
+        account_repository = accounts.AccountRepository()
+        account = account_repository.get(
+            user=self.request.user, id=serializer.validated_data["account"]
+        )
+        arguments = serializer.validated_data.copy()
+        arguments.pop("account")
+        account_repository.add_transaction_custom_asset(account, **arguments)
         headers = self.get_success_headers(serializer.data)
         return Response(
             serializer.data, status=status.HTTP_201_CREATED, headers=headers

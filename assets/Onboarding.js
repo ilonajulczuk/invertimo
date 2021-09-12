@@ -61,8 +61,43 @@ AccountCard.propTypes = {
 };
 
 
-export function Onboarding(props) {
+function AddAccountStep({ hasAccounts, handleAddAccount, existingAccounts }) {
+
     const classes = useStyles();
+
+    let intro = null;
+    if (hasAccounts) {
+        intro = (
+            <><h3>Your accounts</h3>
+                <div className={classes.accountCards}>
+                    {existingAccounts}
+                </div>
+            </>);
+    } else {
+        intro = (
+            <>
+                <h3>You don&apos;t have any account yet...</h3>
+                <p>Let&apos;s add one now.</p>
+            </>
+        );
+    }
+    return <>
+        {intro}
+        <CreateAccountForm
+            handleSubmit={handleAddAccount}
+            hasAccounts={hasAccounts} />
+    </>;
+
+}
+
+AddAccountStep.propTypes = {
+    hasAccounts: PropTypes.bool.isRequired,
+    existingAccounts: PropTypes.array.isRequired,
+    handleAddAccount: PropTypes.func.isRequired,
+};
+
+
+export function Onboarding(props) {
     let { stepName } = useParams();
 
     let existingAccounts = props.accounts.map(account => (
@@ -70,7 +105,9 @@ export function Onboarding(props) {
     );
 
     const hasAccounts = props.accounts.length > 0;
-    const hasTransactions = props.hasTransactions;
+    const numTransactions = props.transactions.length;
+    const hasTransactions = numTransactions > 0;
+
     const steps = [
         {
             label: 'Investment accounts',
@@ -93,18 +130,9 @@ export function Onboarding(props) {
             path: 'create_account',
             previous: 'investment_accounts',
             next: 'transactions_intro',
-            content: (
-                <>
-                    <h3>{hasAccounts ? "Your accounts" : "You don't have any accounts"}
-                    </h3>
-                    <div className={classes.accountCards}>
-                        {existingAccounts}
-                    </div>
-                    <CreateAccountForm
-                        handleSubmit={props.handleAddAccount}
-                        hasAccounts={hasAccounts} />
-                </>
-            ),
+            content: <AddAccountStep
+                existingAccounts={existingAccounts} hasAccounts={hasAccounts}
+                handleAddAccount={props.handleAddAccount} />,
             nextDisabled: !hasAccounts,
         },
         {
@@ -136,6 +164,7 @@ export function Onboarding(props) {
             content: (
                 <div>
                     <h3>Record transaction</h3>
+                    <p>You currently have {numTransactions} transactions recorded.</p>
                     <p>You will be able to later edit or delete this transaction.</p>
                     <RecordTransactionForm accounts={props.accounts} hasTransactions={hasTransactions} handleSubmit={props.handleAddTransaction} />
                 </div>
@@ -162,7 +191,7 @@ export function Onboarding(props) {
 
 Onboarding.propTypes = {
     accounts: PropTypes.array.isRequired,
-    hasTransactions: PropTypes.bool.isRequired,
+    transactions: PropTypes.array.isRequired,
     handleAddAccount: PropTypes.func.isRequired,
     handleAddTransaction: PropTypes.func.isRequired,
 };

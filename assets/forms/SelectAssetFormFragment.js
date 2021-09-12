@@ -15,9 +15,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogActions from '@material-ui/core/DialogActions';
 import Button from '@material-ui/core/Button';
 
-
 import { makeStyles } from '@material-ui/core/styles';
-
 
 import PropTypes from 'prop-types';
 
@@ -59,6 +57,8 @@ export function SelectAssetFormFragment(props) {
   const formik = props.formik;
   const classes = useStyles();
 
+  // TODO: move up, so that resetting the form (e.g. after submission)
+  // also resets the disabled state.
   const [openFill, toggleOpenFill] = React.useState(false);
   const [otherFieldsDisabled, toggleDisable] = React.useState(false);
 
@@ -156,6 +156,7 @@ export function SelectAssetFormFragment(props) {
           freeSolo
           renderInput={(params) => (
             <TextField {...params}
+              id="symbol"
               label="Symbol or Name"
               error={formik.touched.symbol && Boolean(formik.errors.symbol)}
               helperText={(formik.touched.symbol && formik.errors.symbol) || "Stock symbol like 'DIS' or ISIN"} />
@@ -184,20 +185,28 @@ export function SelectAssetFormFragment(props) {
       </div>
 
       <div className={classes.inputs}>
-        <TextField
-          id="exchange"
-          label="Exchange"
-          name="exchange"
-          value={formik.values.exchange}
-          onChange={formik.handleChange}
-          error={formik.touched.exchange && Boolean(formik.errors.exchange)}
-          helperText={(formik.touched.exchange && formik.errors.exchange) || "Exchange name like 'XETRA'"}
-          className={classes.formControl}
-          disabled={otherFieldsDisabled}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
+        <FormControl className={classes.formControl}>
+          <InputLabel id="exchange-label"
+           error={formik.touched.exchange && Boolean(formik.errors.exchange)}>Exchange</InputLabel>
+          <Select
+            id="exchange"
+            name="exchange"
+            labelId="exchange-label"
+            value={formik.values.exchange}
+            onChange={formik.handleChange}
+            error={formik.touched.exchange && Boolean(formik.errors.exchange)}
+            className={classes.formControl}
+            disabled={otherFieldsDisabled}
+          >
+            <MenuItem value={"USA Stocks"}>USA Stocks</MenuItem>
+            <MenuItem value={"XETRA Exchange"}>XETRA Exchange</MenuItem>
+            <MenuItem value={"London Exchange"}>London Exchange</MenuItem>
+            <MenuItem value={"Borsa Italiana"}>Borsa Italiana</MenuItem>
+            <MenuItem value={"Other / NA"}>Other / NA</MenuItem>
+          </Select>
+          <FormHelperText error={(formik.touched.exchange && Boolean(formik.errors.exchange))}>{(formik.touched.exchange && formik.errors.exchange) ||
+            `Only selected exchanges are supported for now`}</FormHelperText>
+        </FormControl>
 
         <FormControl className={classes.narrowInput}>
           <InputLabel id="currency-select-label">Currency</InputLabel>
@@ -205,6 +214,7 @@ export function SelectAssetFormFragment(props) {
             name="currency"
             labelId="currency-select-label"
             id="currency"
+            data-testid="currency"
             value={formik.values.currency}
             onChange={formik.handleChange}
             error={formik.touched.currency && Boolean(formik.errors.currency)}
@@ -214,6 +224,7 @@ export function SelectAssetFormFragment(props) {
             <MenuItem value={"USD"}>$ USD</MenuItem>
             <MenuItem value={"EUR"}>€ EUR</MenuItem>
             <MenuItem value={"GBP"}>£ GBP</MenuItem>
+            <MenuItem value={"GBX"}>GBX</MenuItem>
           </Select>
           <FormHelperText>{(formik.touched.currency && formik.errors.currency)}</FormHelperText>
         </FormControl>

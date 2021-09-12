@@ -1,7 +1,6 @@
 import React from 'react';
 import './portfolio.css';
 import { PositionList } from './PositionList.js';
-import { TransactionList } from './TransactionList.js';
 import { AccountValue } from './AccountValue.js';
 import { Header } from './Header.js';
 import { APIClient } from './api_utils.js';
@@ -14,9 +13,12 @@ import {
 } from "react-router-dom";
 import { toSymbol } from './currencies.js';
 
+import Icon from '@material-ui/core/Icon';
+import Button from '@material-ui/core/Button';
 
 import { ErrorBoundary } from './error_utils.js';
 import { Onboarding } from './Onboarding.js';
+import { Transactions } from './Transactions';
 
 
 class AccountStats extends React.Component {
@@ -77,7 +79,6 @@ export function PortfolioOverview(props) {
 
     let positionsCount = 0;
     let transactionsCount = 0;
-    let accountEventCount = "?";
 
     let accounts = props.accounts;
 
@@ -104,18 +105,24 @@ export function PortfolioOverview(props) {
             </div>
             <div className="card">
                 <span className="card-label">Assets</span>
-                <p>
-                    {positionsCount} <a href="#/positions">Positions</a> in {accounts.length}  <a href=""> {accounts.length > 1 ? "Accounts" : "Account"}</a>
-                </p>
-                <a className="button" href="/#positions">See all Positions</a>
-                <a className="button">Manage accounts</a>
-            </div>
-            <div className="card">
-                <span className="card-label">Events</span>
-                <div>{transactionsCount} <a href="">Transactions</a></div>
-                <div>{accountEventCount} <a href="">Account Events</a></div>
-                <a className="button">Manage transactions</a>
-                <a className="button">Manage events</a>
+                <div className="assets-overview-content">
+                    <div>
+
+                        {positionsCount} <a href="#/positions">Positions</a> in {accounts.length}  {accounts.length > 1 ? "Accounts" : "Account"}
+
+                    </div>
+                    <div>
+                        {transactionsCount} <a href="#/transactions">Transactions</a>
+                    </div>
+                </div>
+                <Button
+                    href="#/transactions/record"
+                    variant="contained"
+                    color="secondary"
+                >
+                    <Icon>create</Icon>
+                    Record transaction
+                </Button>
             </div>
         </div>
     );
@@ -135,7 +142,7 @@ export default class Portfolio extends React.Component {
             "positions": [],
             "positionDetails": new Map(),
             "accounts": null,
-            "transactions": [],
+            "transactions": null,
             "accountValues": new Map(),
         };
         this.apiClient = new APIClient('./api');
@@ -157,14 +164,16 @@ export default class Portfolio extends React.Component {
     }
 
     async handleAddTransaction(data) {
-        if (data.symbol.id) {
-            let result = await this.apiClient.addTransaction(data);
-            // Reload all the data, e.g. accounts, positions, etc.
-            this.refreshFromServer();
-            return result;
+        let result;
+        if (data.asset) {
+            result = await this.apiClient.addTransaction(data);
         } else {
-            return { ok: false, message: "Only supporting known assets for now..." };
+            result = await this.apiClient.addTransactionWithCustomAsset(data);
         }
+        // Reload all the data, e.g. accounts, positions, etc.
+        this.refreshFromServer();
+        return result;
+
     }
 
     async getPositionDetail(positionId) {
@@ -214,12 +223,12 @@ export default class Portfolio extends React.Component {
                 this.setState({ "transactions": transactions });
             });
     }
-    render() {
 
+    render() {
         const userEmail = JSON.parse(document.getElementById('userEmail').textContent);
 
         // If there are no accounts loaded yet, there isn't much to show.
-        if (this.state.accounts == null) {
+        if (this.state.accounts === null || this.state.transactions === null) {
             return (<div className="main-grid">
                 <Header email={userEmail} />
             </div>);
@@ -227,6 +236,8 @@ export default class Portfolio extends React.Component {
 
         // If the accounts are loaded, but there is nothing there, start an onboarding wizard.
         const newUser = this.state.accounts.length == 0;
+
+        const noTransactions = this.state.transactions.length == 0;
 
         let accountValues = this.state.accounts.filter(account =>
             this.state.accountValues.get(account.id)).map((account) => {
@@ -242,6 +253,22 @@ export default class Portfolio extends React.Component {
                 );
             });
 
+        let redirectOrDisplay;
+        if (newUser) {
+            redirectOrDisplay = <Redirect to="/start/investment_accounts" />;
+        } else if (noTransactions) {
+            redirectOrDisplay = <Redirect to="/start/transactions_intro" />;
+        } else {
+            redirectOrDisplay = (
+                <div>
+                    <h2>Portfolio</h2>
+
+                    <ErrorBoundary>
+                        <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
+                        {accountValues}
+                    </ErrorBoundary>
+                </div>);
+        }
         return (
             <div className="main-grid">
                 <Header email={userEmail} />
@@ -262,9 +289,9 @@ export default class Portfolio extends React.Component {
                 <div className="main-content">
                     <Switch>
                         <Route path="/transactions">
-                            <h2>Transactions</h2>
                             <ErrorBoundary>
-                                <TransactionList transactions={this.state.transactions}
+                                <Transactions transactions={this.state.transactions}
+                                    handleAddTransaction={this.handleAddTransaction}
                                     accounts={this.state.accounts} />
                             </ErrorBoundary>
                         </Route>
@@ -278,21 +305,12 @@ export default class Portfolio extends React.Component {
                             <Onboarding accounts={this.state.accounts}
                                 handleAddAccount={this.handleAddAccount}
                                 handleAddTransaction={this.handleAddTransaction}
-                                hasTransactions={this.state.transactions.length > 0}
-                                />
+                                transactions={this.state.transactions}
+                            />
                         </Route>
                         <Route path="/">
 
-                            {newUser ? <Redirect to="/start/investment_accounts" /> : <div>
-                                <h1>Portfolio</h1>
-
-                                <ErrorBoundary>
-                                    <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
-                                    {accountValues}
-                                </ErrorBoundary>
-                            </div>
-
-                            }
+                            {redirectOrDisplay}
                         </Route>
 
                     </Switch>

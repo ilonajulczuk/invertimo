@@ -91,3 +91,169 @@ export function combineValues(firstSequence, secondSequence, combineFn) {
     }
     return values;
 }
+
+export function generateDates(startDate, endDate) {
+    let dates = [];
+    let date = new Date(startDate);
+    // Use just dates for comparison as adding a date for long periods of time
+    // might result with some "additional hours" due to timezones.
+    // If data has the same data, but e.g. is one our later then the last date would
+    // be absent.
+    const endDateStr = endDate.toISOString().slice(0, 10);
+    while (date.toISOString().slice(0, 10) <= endDateStr) {
+        // Since the date will be changed in place, we need to make a copy.
+        dates.push(new Date(date));
+        // Add one more day.
+        date.setDate(date.getDate() + 1);
+    }
+    return dates;
+}
+
+export function generateDatesAsStrings(startDate, endDate) {
+    let dates = [];
+    let date = new Date(startDate.toISOString().slice(0, 10));
+
+    // Use just dates for comparison as adding a date for long periods of time
+    // might result with some "additional hours" due to timezones.
+    // If data has the same data, but e.g. is one our later then the last date would
+    // be absent.
+    const endDateStr = endDate.toISOString().slice(0, 10);
+    while (date.toISOString().slice(0, 10) <= endDateStr) {
+        // Since the date will be changed in place, we need to make a copy.
+        dates.push(date.toISOString().slice(0, 10));
+        // Add one more day.
+        date.setDate(date.getDate() + 1);
+    }
+    return dates;
+}
+
+// TODO: add tests for those two pretty complex functions.
+
+export function addAcrossDates(rowsOfValues, compareFunc) {
+    const NumRows = rowsOfValues.length;
+    let indices = new Array(NumRows);
+    indices.fill(0);
+
+    if (rowsOfValues.length == 0) {
+        return [];
+    }
+    let combinedValues = [];
+    const firstRowOfValues = rowsOfValues[0];
+    let currentDate = firstRowOfValues[0][0];
+    let currentVal = 0;
+
+    let finishedSomeRow = false;
+    while (!finishedSomeRow) {
+
+        currentVal = 0;
+        for (let i = 0; i < NumRows; i++) {
+            let currentIndexForCurrentRow = indices[i];
+            if (currentIndexForCurrentRow >= rowsOfValues[i].length) {
+
+                finishedSomeRow = true;
+                if (i != NumRows - 1) {
+                    currentVal = null;
+                }
+                break;
+            }
+
+            while (compareFunc(rowsOfValues[i][currentIndexForCurrentRow][0], currentDate) < 0) {
+                indices[i] += 1;
+                currentIndexForCurrentRow = indices[i];
+                if (currentIndexForCurrentRow >= rowsOfValues[i].length) {
+                    finishedSomeRow = true;
+                    break;
+                }
+            }
+            if (currentIndexForCurrentRow >= rowsOfValues[i].length) {
+                finishedSomeRow = true;
+                break;
+            }
+
+            if (compareFunc(rowsOfValues[i][currentIndexForCurrentRow][0], currentDate) == 0) {
+                currentVal += rowsOfValues[i][currentIndexForCurrentRow][1];
+                indices[i] += 1;
+                currentIndexForCurrentRow = indices[i];
+            } else {
+                currentDate = rowsOfValues[i][currentIndexForCurrentRow][0];
+                currentVal = null;
+                break;
+            }
+
+        }
+        if (currentVal != null) {
+            combinedValues.push([currentDate, currentVal]);
+        }
+    }
+    return combinedValues;
+}
+
+// Each row should have at least one point in it.
+export function addAcrossDatesWithFill(rowsOfValues) {
+    if (rowsOfValues.length < 1) {
+        return [];
+    }
+    for (let row of rowsOfValues) {
+        if (row.length < 1) {
+            return [];
+        }
+    }
+
+    const firstRow = rowsOfValues[0];
+
+    // Latest date is in the beginning.
+    let latestDate = new Date(firstRow[0][0]);
+    let earliestDate =  new Date(firstRow[firstRow.length -1][0]);
+    for (let row of rowsOfValues) {
+        const possibleLatestDate = new Date(row[0][0]);
+        if (possibleLatestDate > latestDate) {
+            latestDate = possibleLatestDate;
+        }
+        const possibleEarliestDate = new Date(row[row.length - 1][0]);
+        if (possibleEarliestDate < earliestDate) {
+            earliestDate = possibleEarliestDate;
+        }
+    }
+    // Generate dates.
+    const dates = generateDatesAsStrings(earliestDate, latestDate);
+
+    let datesAndValues = dates.map(date => [date, 0]);
+
+    for (let row of rowsOfValues) {
+        let lastValue = row[row.length -1][1];
+        let rowIndex = row.length - 1;
+        for (let i = 0; i < datesAndValues.length; i++) {
+            if (rowIndex < 0) {
+                datesAndValues[i][1] += lastValue;
+                continue;
+            }
+            if (row[rowIndex][0] == datesAndValues[i][0]) {
+                datesAndValues[i][1] += row[rowIndex][1];
+                lastValue = row[rowIndex][1];
+                rowIndex -= 1;
+            } else if (row[rowIndex][0] >  datesAndValues[i][0]){
+                datesAndValues[i][1] += lastValue;
+            } else {
+                // Date is smaller can happen if there are duplicates.
+                while(rowIndex > 0 && row[rowIndex][0] < datesAndValues[i][0]) {
+                    lastValue = row[rowIndex][1];
+                    rowIndex -= 1;
+                }
+                // Duplicates should be skipped now, let's see if the next value is good.
+                if (rowIndex >= 0) {
+                    if (row[rowIndex][0] == datesAndValues[i][0]) {
+                        datesAndValues[i][1] += row[rowIndex][1];
+                        lastValue = row[rowIndex][1];
+                        rowIndex -= 1;
+                    } else if (row[rowIndex][0] >  datesAndValues[i][0]){
+                        datesAndValues[i][1] += lastValue;
+                    }
+                } else {
+                    datesAndValues[i][1] += lastValue;
+                }
+            }
+        }
+    }
+
+    return datesAndValues;
+}

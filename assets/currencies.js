@@ -1,7 +1,7 @@
 
 
 export const currencyValues = [
-    "EUR", "USD", "GBP"
+    "EUR", "USD", "GBP", "GBX",
 ];
 
 
@@ -10,6 +10,7 @@ export const CURRENCY_TO_SYMBOL = new Map(
         ["USD", "$"],
         ["EUR", "€"],
         ["GBP", "£"],
+        ["GBX", "GBX"],
     ]
 );
 

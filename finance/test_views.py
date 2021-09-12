@@ -28,13 +28,14 @@ def _add_dummy_account_and_asset(user, isin):
     account = models.Account.objects.create(
         user=user, currency=models.Currency.EUR, nickname="test account"
     )
-    exchange = models.Exchange.objects.create(name="my US stocks", country="USA")
+    exchange = models.Exchange.objects.create(name="USA stocks", country="USA")
     asset = models.Asset.objects.create(
         isin=isin,
         symbol="MOONIES",
         name="a stock",
         currency=models.Currency.USD,
         exchange=exchange,
+        tracked=True,
     )
     return account, exchange, asset
 
@@ -222,7 +223,7 @@ class TestAccountsView(ViewTestBase, HypothesisTestCase):
         )
         .map(lambda s: s.strip())
         .filter(lambda s: len(s) > 0),
-        currency=st.sampled_from(["GBP", "EUR", "USD"])
+        currency=st.sampled_from(["GBP", "EUR", "USD"]),
     )
     def test_adding_account(self, nickname, currency):
         self.client.force_login(self.user)
@@ -252,7 +253,6 @@ class TestAccountsView(ViewTestBase, HypothesisTestCase):
             },
         )
         self.assertEqual(response.status_code, 400)
-
 
     def test_empty_currency_fails(self):
         response = self.client.post(
@@ -371,7 +371,9 @@ class TestTransactionsView(ViewTestBase, TestCase):
 
     def test_add_transaction_for_known_asset_for_not_owned_account_fails(self):
 
-        self.other_user = User.objects.create(username="billy", email="billy@example.com")
+        self.other_user = User.objects.create(
+            username="billy", email="billy@example.com"
+        )
         self.other_account, _, self.other_asset = _add_dummy_account_and_asset(
             self.other_user, isin="something"
         )
@@ -382,6 +384,68 @@ class TestTransactionsView(ViewTestBase, TestCase):
                 "executed_at": "2021-03-04T00:00:00Z",
                 "account": self.other_account.pk,
                 "asset": self.other_asset.pk,
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_add_transaction_for_new_asset(self):
+        response = self.client.post(
+            reverse("transaction-add-with-custom-asset"),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "currency": "USD",
+                "exchange": "USA stocks",
+                "asset_type": "stock",
+                "symbol": "DIS",
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+                "currency": "EUR",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+
+    def test_add_transaction_for_new_asset_na_exchange(self):
+        response = self.client.post(
+            reverse("transaction-add-with-custom-asset"),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "currency": "USD",
+                "exchange": "Other / NA",
+                "asset_type": "stock",
+                "symbol": "DIS",
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+                "currency": "EUR",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+
+    def test_add_transaction_for_new_asset_bad_exchange(self):
+        response = self.client.post(
+            reverse("transaction-add-with-custom-asset"),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "currency": "USD",
+                "exchange": "Fake exchange that doesn't exist",
+                "asset_type": "stock",
+                "symbol": "DIS",
                 "quantity": 10,
                 "price": 3.15,
                 "transaction_costs": 0,

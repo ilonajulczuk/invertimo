@@ -1,7 +1,10 @@
-from finance import models
-from finance import exchanges
-from django.contrib.auth.models import User
+import datetime
 import decimal
+from typing import Optional
+
+from django.contrib.auth.models import User
+
+from finance import exchanges, models
 
 
 class AccountRepository:
@@ -54,14 +57,19 @@ class AccountRepository:
 
         return transaction
 
-    def add_transaction_known_asset(self, account, asset_id, executed_at,
+    def add_transaction_known_asset(
+        self,
+        account,
+        asset_id,
+        executed_at,
         quantity,
         price,
         transaction_costs,
         local_value,
         value_in_account_currency,
         total_in_account_currency,
-        order_id=None) -> models.Transaction:
+        order_id=None,
+    ) -> models.Transaction:
 
         position = self._get_or_create_position_for_asset(account, asset_id)
 
@@ -84,15 +92,58 @@ class AccountRepository:
 
         return transaction
 
-    def add_tranaction_custom_asset(self, account, asset_details, executed_at,
-        quantity,
-        price,
-        transaction_costs,
-        local_value,
-        value_in_account_currency,
-        total_in_account_currency,
-        order_id):
-        pass
+    def add_transaction_custom_asset(
+        self,
+        account: models.Account,
+        symbol: str,
+        currency: models.Currency,
+        exchange: str,
+        asset_type: models.AssetType,
+        executed_at: datetime.datetime,
+        quantity: decimal.Decimal,
+        price: decimal.Decimal,
+        transaction_costs: decimal.Decimal,
+        local_value: decimal.Decimal,
+        value_in_account_currency: decimal.Decimal,
+        total_in_account_currency: decimal.Decimal,
+        order_id: Optional[str] = None,
+    ) -> models.Transaction:
+
+        exchange_entity = exchanges.ExchangeRepository().get_by_name(exchange)
+        asset, _ = models.Asset.objects.get_or_create(
+            symbol=symbol,
+            exchange=exchange_entity,
+            currency=currency,
+            asset_type=asset_type,
+            tracked=False,
+            added_by=account.user,
+        )
+        position = self._get_or_create_position_for_asset(account, asset.pk)
+
+        transaction, created = models.Transaction.objects.get_or_create(
+            executed_at=executed_at,
+            position=position,
+            quantity=quantity,
+            price=price,
+            transaction_costs=transaction_costs,
+            local_value=local_value,
+            value_in_account_currency=value_in_account_currency,
+            total_in_account_currency=total_in_account_currency,
+            order_id=order_id,
+        )
+
+        # We know the price at the tme the asset transacted, let's add it.
+        models.PriceHistory.objects.create(
+            asset=asset, value=price, date=executed_at.date()
+        )
+
+        if created:
+            position.quantity += quantity
+            position.save()
+            account.balance += total_in_account_currency
+            account.save()
+
+        return transaction
 
     def add_event(self, account):
         pass
@@ -111,12 +162,8 @@ class AccountRepository:
         else:
             return None
 
-    def _get_or_create_position_for_asset(
-        self, account: models.Account, asset_id: int
-    ):
-        positions = models.Position.objects.filter(
-            account=account, asset__pk=asset_id
-        )
+    def _get_or_create_position_for_asset(self, account: models.Account, asset_id: int):
+        positions = models.Position.objects.filter(account=account, asset__pk=asset_id)
         if positions:
             return positions[0]
         asset = models.Asset.objects.get(pk=asset_id)

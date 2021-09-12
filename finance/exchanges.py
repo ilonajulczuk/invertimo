@@ -4,6 +4,7 @@ from finance import models
 from typing import Any, Dict
 from django.conf import settings
 
+
 _REFERENCE_TO_OPERATING_MIC_SIMPLIFIED_MAPPING : Dict[str, str] = {
     "NSY": "XNYS",
     "NDQ": "XNAS",
@@ -11,6 +12,8 @@ _REFERENCE_TO_OPERATING_MIC_SIMPLIFIED_MAPPING : Dict[str, str] = {
     "LSE": "XLON",
     "MIL": "XMIL",  # Milan.
 }
+
+OTHER_OR_NA_EXCHANGE_NAME = "Other / NA"
 
 
 class ExchangeRepository:
@@ -30,6 +33,15 @@ class ExchangeRepository:
                 identifiers__value=simplified_mic,
                 identifiers__id_type=models.ExchangeIDType.MIC,
             )
+
+    def get_by_name(self, exchange_name: str) -> models.Exchange:
+        if exchange_name == OTHER_OR_NA_EXCHANGE_NAME:
+            # If it doesn't exist, create it and later reuse it.
+            exchange, _ = models.Exchange.objects.get_or_create(name=OTHER_OR_NA_EXCHANGE_NAME)
+            return exchange
+        return models.Exchange.objects.get(
+            name=exchange_name,
+        )
 
     def add(self, exchange_record) -> None:
         mics = exchange_record["OperatingMIC"]
@@ -68,7 +80,7 @@ def query_exchanges() -> Any:
     return response.json()
 
 
-class SecurityRepository:
+class AssetRepository:
     def __init__(self, exchange: models.Exchange):
         self.exchange = exchange
 
@@ -78,7 +90,7 @@ class SecurityRepository:
             return assets[0]
 
     def add(
-        self, isin: str, symbol: str, currency: models.Currency, country: str, name: str
+        self, isin: str, symbol: str, currency: models.Currency, country: str, name: str, tracked: bool
     ):
         asset = models.Asset(
             exchange=self.exchange,
@@ -87,13 +99,14 @@ class SecurityRepository:
             currency=currency,
             country=country,
             name=name,
+            tracked=tracked,
         )
         asset.save()
         return asset
 
 
 def get_or_create_asset(isin: str, exchange: models.Exchange):
-    repository = SecurityRepository(exchange)
+    repository = AssetRepository(exchange)
     asset = repository.get(isin)
     if asset:
         return asset
@@ -110,6 +123,7 @@ def get_or_create_asset(isin: str, exchange: models.Exchange):
                 currency=currency,
                 country=record["Country"],
                 name=record["Name"],
+                tracked=True,
             )
             print("created asset")
             return asset

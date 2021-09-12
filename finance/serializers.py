@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from finance import models
+from finance import exchanges
 from finance.models import (
     Account,
     CurrencyExchangeRate,
@@ -29,6 +30,18 @@ class CurrencyField(serializers.IntegerField):
             return models.currency_enum_from_string(value)
         except ValueError:
             raise serializers.ValidationError(f"Invalid value to resprent currency")
+
+
+class AssetTypeField(serializers.IntegerField):
+    def to_representation(self, value):
+        return models.asset_type_string_from_enum(value)
+
+    def to_internal_value(self, value):
+        try:
+            return models.asset_type_enum_from_string(value)
+        except ValueError:
+            raise serializers.ValidationError(f"Invalid value to resprent asset type")
+
 
 
 class AssetSerializer(serializers.ModelSerializer[Asset]):
@@ -153,6 +166,59 @@ class AddTransactionKnownAssetSerializer(serializers.ModelSerializer[Transaction
             "executed_at",
             "account",
             "asset",
+            "quantity",
+            "price",
+            "transaction_costs",
+            "local_value",
+            "value_in_account_currency",
+            "total_in_account_currency",
+            "order_id",
+        ]
+
+
+class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction]):
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
+    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+
+    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
+    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    value_in_account_currency = serializers.DecimalField(
+        max_digits=20, decimal_places=2
+    )
+    total_in_account_currency = serializers.DecimalField(
+        max_digits=20, decimal_places=2
+    )
+    account = serializers.IntegerField()
+
+    symbol = serializers.CharField()
+    currency = CurrencyField()
+
+    # Name of existing exchange or a special name for NA.
+    exchange = serializers.CharField()
+    asset_type = AssetTypeField()
+
+    def validate_account(self, value):
+        if not models.Account.objects.filter(user=self.context["request"].user, pk=value).exists():
+            raise serializers.ValidationError(f"User doesn't have account with id: '{value}'")
+        return value
+
+    def validate_exchange(self, value):
+        if value == exchanges.OTHER_OR_NA_EXCHANGE_NAME:
+            return value
+        if not models.Exchange.objects.filter(name=value).exists():
+            raise serializers.ValidationError(f"There is no exchange with name: '{value}'")
+        return value
+
+    class Meta:
+        model = Transaction
+        fields = [
+            "id",
+            "executed_at",
+            "account",
+            "symbol",
+            "currency",
+            "exchange",
+            "asset_type",
             "quantity",
             "price",
             "transaction_costs",
