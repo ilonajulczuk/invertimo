@@ -1,5 +1,5 @@
 import React from 'react';
-import { VictoryStack, VictoryLine, VictoryChart, VictoryArea, VictoryCursorContainer, VictoryAxis } from 'victory';
+import { VictoryStack, VictoryLine, VictoryGroup, VictoryScatter, VictoryChart, VictoryArea, VictoryCursorContainer, VictoryAxis } from 'victory';
 import { findClosestValue } from '../timeseries_utils.js';
 import PropTypes from 'prop-types';
 import { generateColors } from '../colors.js';
@@ -8,6 +8,9 @@ import { generateColors } from '../colors.js';
 export class AreaChartWithCursor extends React.Component {
 
     render() {
+        let endDate = new Date();
+        endDate.setDate(endDate.getDate() + 1);
+
         return (
             <VictoryChart
                 height={300}
@@ -24,7 +27,7 @@ export class AreaChartWithCursor extends React.Component {
                 />}
                 scale={{ x: "time" }}
                 domain={{
-                    x: [this.props.startDay, new Date()],
+                    x: [this.props.startDay, endDate],
                 }}
                 minDomain={{ y: 0 }}
             >
@@ -130,6 +133,8 @@ AreChartWithMultipleDatasetsAndCursor.propTypes = {
 export class LineChartWithCursor extends React.Component {
 
     render() {
+        let endDate = new Date();
+        endDate.setDate(endDate.getDate() + 1);
         return (
             <VictoryChart
                 height={300}
@@ -146,7 +151,7 @@ export class LineChartWithCursor extends React.Component {
                 />}
                 scale={{ x: "time" }}
                 domain={{
-                    x: [this.props.startDay, new Date()],
+                    x: [this.props.startDay, endDate],
                 }}
                 minDomain={{ y: 0 }}
             >
@@ -154,13 +159,24 @@ export class LineChartWithCursor extends React.Component {
                 <VictoryAxis style={{
                     tickLabels: { angle: -45, padding: 20 },
                 }} />
-                <VictoryLine
-                    style={{ data: { stroke: "#e96158" } }}
-                    data={this.props.dataset}
-                    x="date"
-                    y="value"
+                <VictoryGroup>
 
-                />
+                    <VictoryLine
+                        style={{ data: { stroke: "#e96158" } }}
+                        data={this.props.dataset}
+                        x="date"
+                        y="value"
+
+                    />
+                    <VictoryScatter
+                        style={{ data: { stroke: "#e96158" } }}
+                        data={this.props.dataset}
+                        x="date"
+                        y="value"
+
+                    />
+                </VictoryGroup>
+
             </VictoryChart>
         );
     }

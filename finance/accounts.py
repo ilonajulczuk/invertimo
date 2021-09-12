@@ -1,7 +1,10 @@
-from finance import models
-from finance import exchanges
-from django.contrib.auth.models import User
+import datetime
 import decimal
+from typing import Optional
+
+from django.contrib.auth.models import User
+
+from finance import exchanges, models
 
 
 class AccountRepository:
@@ -91,30 +94,29 @@ class AccountRepository:
 
     def add_transaction_custom_asset(
         self,
-        account,
-        symbol,
-        currency,
-        exchange,
-        asset_type,
-        executed_at,
-        quantity,
-        price,
-        transaction_costs,
-        local_value,
-        value_in_account_currency,
-        total_in_account_currency,
-        order_id=None,
-    ):
+        account: models.Account,
+        symbol: str,
+        currency: models.Currency,
+        exchange: str,
+        asset_type: models.AssetType,
+        executed_at: datetime.datetime,
+        quantity: decimal.Decimal,
+        price: decimal.Decimal,
+        transaction_costs: decimal.Decimal,
+        local_value: decimal.Decimal,
+        value_in_account_currency: decimal.Decimal,
+        total_in_account_currency: decimal.Decimal,
+        order_id: Optional[str] = None,
+    ) -> models.Transaction:
 
-        exchange = exchanges.ExchangeRepository().get_by_name(exchange)
+        exchange_entity = exchanges.ExchangeRepository().get_by_name(exchange)
         asset, _ = models.Asset.objects.get_or_create(
             symbol=symbol,
-            exchange=exchange,
+            exchange=exchange_entity,
             currency=currency,
             asset_type=asset_type,
             tracked=False,
             added_by=account.user,
-
         )
         position = self._get_or_create_position_for_asset(account, asset.pk)
 
@@ -132,9 +134,7 @@ class AccountRepository:
 
         # We know the price at the tme the asset transacted, let's add it.
         models.PriceHistory.objects.create(
-            asset=asset,
-            value=price,
-            date=executed_at.date()
+            asset=asset, value=price, date=executed_at.date()
         )
 
         if created:

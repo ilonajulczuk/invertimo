@@ -34,7 +34,7 @@ class ExchangeRepository:
                 identifiers__id_type=models.ExchangeIDType.MIC,
             )
 
-    def get_by_name(self, exchange_name):
+    def get_by_name(self, exchange_name: str) -> models.Exchange:
         if exchange_name == OTHER_OR_NA_EXCHANGE_NAME:
             # If it doesn't exist, create it and later reuse it.
             exchange, _ = models.Exchange.objects.get_or_create(name=OTHER_OR_NA_EXCHANGE_NAME)
@@ -90,7 +90,7 @@ class AssetRepository:
             return assets[0]
 
     def add(
-        self, isin: str, symbol: str, currency: models.Currency, country: str, name: str
+        self, isin: str, symbol: str, currency: models.Currency, country: str, name: str, tracked: bool
     ):
         asset = models.Asset(
             exchange=self.exchange,
@@ -99,6 +99,7 @@ class AssetRepository:
             currency=currency,
             country=country,
             name=name,
+            tracked=tracked,
         )
         asset.save()
         return asset

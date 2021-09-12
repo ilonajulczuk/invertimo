@@ -122,7 +122,11 @@ class Asset(models.Model):
     name = models.CharField(max_length=200)
     exchange = models.ForeignKey(
         # Null is for not exchange traded assets or if the exchange is NA/Other.
-        Exchange, on_delete=models.CASCADE, related_name="assets", null=True, blank=True,
+        Exchange,
+        on_delete=models.CASCADE,
+        related_name="assets",
+        null=True,
+        blank=True,
     )
     currency = models.IntegerField(choices=Currency.choices, default=Currency.USD)
     country = models.CharField(max_length=200, null=True)
@@ -132,7 +136,13 @@ class Asset(models.Model):
     tracked = models.BooleanField(default=True)
 
     # Only relevant if not tracked and added by a specific user.
-    added_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name="custom_assets")
+    added_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="custom_assets",
+    )
 
     # TODO:
     # Add constraint that ISIN / NAME and exchange are unique for given added_by.
@@ -143,8 +153,9 @@ class Asset(models.Model):
     #     unique_together = [["isin", "exchange"]]
 
     def __str__(self):
+        exchange_name = self.exchange.name if self.exchange else "Other / NA"
         return (
-            f"<Asset exchange: {self.exchange.name}, isin: "
+            f"<Asset exchange: {exchange_name}, isin: "
             f"{self.isin}, symbol: {self.symbol}, name: {self.name}, "
             f"currency: {self.get_currency_display()}, country: {self.country}>"
         )
@@ -179,9 +190,7 @@ class Position(models.Model):
     account = models.ForeignKey(
         Account, on_delete=models.CASCADE, related_name="positions"
     )
-    asset = models.ForeignKey(
-        Asset, on_delete=models.CASCADE, related_name="positions"
-    )
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="positions")
 
     quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     last_modified = models.DateTimeField(auto_now=True)
@@ -249,10 +258,19 @@ class Position(models.Model):
         price_tuples = [(price.date, price.value) for price in prices]
 
         # Transactions also record price history, so add their data points.
-        transactions = self.transactions.filter(executed_at__gte=from_date, executed_at__lte=to_date)
-        price_tuples_from_transactions =[(transaction.executed_at.date(), transaction.price) for transaction in transactions]
+        transactions = self.transactions.filter(
+            executed_at__gte=from_date, executed_at__lte=to_date
+        )
+        price_tuples_from_transactions = [
+            (
+                # The date is rounded up to the next day.
+                # Alternative solution: use the last price and extend it further
+                # to the future.
+                transaction.executed_at.date() + datetime.timedelta(days=1),
+                transaction.price)
+            for transaction in transactions
+        ]
         price_tuples.extend(price_tuples_from_transactions)
-
         first_price = prices.last()
         if isinstance(first_price, PriceHistory):
             if first_price.date > from_date:
@@ -263,6 +281,7 @@ class Position(models.Model):
                 price_tuples.extend(
                     [(date, decimal.Decimal("0")) for date in additional_dates]
                 )
+
         price_tuples.sort(key=lambda x: x[0], reverse=True)
         return multiply_at_matching_dates(price_tuples, quantity_history)
 
@@ -284,6 +303,18 @@ class Position(models.Model):
         exchange_rate_tuples = get_exchange_rates(
             from_date, to_date, from_currency, to_currency
         )
+
+        # If no latest exchange rate, reuse the last one.
+        if len(exchange_rate_tuples) > 0 and exchange_rate_tuples[0][0] < to_date:
+            last_day = exchange_rate_tuples[0][0] + datetime.timedelta(days=1)
+
+            additional_dates = utils.generate_date_intervals(
+                last_day, to_date, output_period=output_period
+            )
+            exchange_rate_tuples.extend(
+                [(date, exchange_rate_tuples[0][1]) for date in additional_dates]
+            )
+        exchange_rate_tuples.sort(key=lambda x: x[0], reverse=True)
         return multiply_at_matching_dates(value_history, exchange_rate_tuples)
 
 

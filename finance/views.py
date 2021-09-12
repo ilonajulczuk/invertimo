@@ -57,7 +57,9 @@ class AccountsViewSet(viewsets.ModelViewSet):
                 "from_date",
                 datetime.date.today() - datetime.timedelta(days=30),
             )
-            context["to_date"] = self.query_data.get("to_date", datetime.date.today())
+            context["to_date"] = self.query_data.get(
+                "to_date", datetime.date.today() + datetime.timedelta(days=1)
+            )
         return context
 
     def get_serializer_class(
@@ -126,7 +128,11 @@ class PositionsView(generics.ListAPIView):
                     CurrencyExchangeRate.objects.filter(
                         from_currency=OuterRef("asset__currency"),
                         to_currency=OuterRef("account__currency"),
-                        date=OuterRef("latest_price_date"),
+                        # Will get the latest rate even if it's not the same as
+                        # date at which last price was recorded.
+                        # This shouldn't make a big difference if both prices and exchange rates
+                        # are frequently recorded, but is helpful if some is missing.
+                        # date=OuterRef("latest_price_date"),
                     )
                     .order_by("-date")
                     .values("value")[:1]
@@ -215,7 +221,9 @@ class PositionView(generics.RetrieveAPIView):
                 "from_date",
                 datetime.date.today() - datetime.timedelta(days=365),
             )
-            context["to_date"] = self.query_data.get("to_date", datetime.date.today())
+            context["to_date"] = self.query_data.get(
+                "to_date", datetime.date.today() + datetime.timedelta(days=1)
+            )
         return context
 
 
@@ -244,7 +252,13 @@ class TransactionsViewSet(
 
     def get_serializer_class(
         self,
-    ) -> Type[Union[TransactionSerializer, AddTransactionKnownAssetSerializer]]:
+    ) -> Type[
+        Union[
+            TransactionSerializer,
+            AddTransactionKnownAssetSerializer,
+            AddTransactionNewAssetSerializer,
+        ]
+    ]:
         if self.action in ("create", "update"):
             return AddTransactionKnownAssetSerializer
         elif self.action == "add_with_custom_asset":

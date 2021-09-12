@@ -11,7 +11,7 @@ DATE_FORMAT = "%Y-%m-%d %H:%M%z"
 
 
 _FAKE_TRANSACTIONS = [
-    ("2021-04-27 10:00Z", 3, 12.11),  # Price after the transaction: 3
+    ("2021-04-27 10:00Z", 3, 12.11),  # Count after the transaction: 3
     ("2021-04-29 12:00Z", 4, 12.44),  # 7
     ("2021-04-30 17:00Z", 3, 14.3),  # 10
     ("2021-05-01 11:00Z", -2, 15.3),  # 8
@@ -264,7 +264,7 @@ class TestPosition(TestCase):
         value_history = position.value_history(from_date, to_date)
 
         expected_value_history = [
-            # ("2021-05-04", 17.00 * 100), -- price missing
+            ("2021-05-04", 17.00 * 14.5), # -- price missing, but last transaction price available.
             ("2021-05-03", 11.00 * 110),
             ("2021-05-02", 8.00 * 120),
             ("2021-05-01", 10.00 * 100),
@@ -312,7 +312,7 @@ class TestPosition(TestCase):
         value_history = position.value_history(from_date, to_date)
 
         expected_value_history = [
-            # ("2021-05-04", 17.00 * 100), -- price missing
+            ("2021-05-04", 17.00 * 14.5), # -- price missing, but last transaction price available.
             ("2021-05-03", 11.00 * 110),
             ("2021-05-02", 8.00 * 120),
             ("2021-05-01", 10.00 * 100),

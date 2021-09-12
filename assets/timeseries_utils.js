@@ -95,7 +95,12 @@ export function combineValues(firstSequence, secondSequence, combineFn) {
 export function generateDates(startDate, endDate) {
     let dates = [];
     let date = new Date(startDate);
-    while (date <= endDate) {
+    // Use just dates for comparison as adding a date for long periods of time
+    // might result with some "additional hours" due to timezones.
+    // If data has the same data, but e.g. is one our later then the last date would
+    // be absent.
+    const endDateStr = endDate.toISOString().slice(0, 10);
+    while (date.toISOString().slice(0, 10) <= endDateStr) {
         // Since the date will be changed in place, we need to make a copy.
         dates.push(new Date(date));
         // Add one more day.
@@ -106,8 +111,14 @@ export function generateDates(startDate, endDate) {
 
 export function generateDatesAsStrings(startDate, endDate) {
     let dates = [];
-    let date = new Date(startDate);
-    while (date <= endDate) {
+    let date = new Date(startDate.toISOString().slice(0, 10));
+
+    // Use just dates for comparison as adding a date for long periods of time
+    // might result with some "additional hours" due to timezones.
+    // If data has the same data, but e.g. is one our later then the last date would
+    // be absent.
+    const endDateStr = endDate.toISOString().slice(0, 10);
+    while (date.toISOString().slice(0, 10) <= endDateStr) {
         // Since the date will be changed in place, we need to make a copy.
         dates.push(date.toISOString().slice(0, 10));
         // Add one more day.
@@ -187,6 +198,7 @@ export function addAcrossDatesWithFill(rowsOfValues) {
             return [];
         }
     }
+
     const firstRow = rowsOfValues[0];
 
     // Latest date is in the beginning.
@@ -204,6 +216,7 @@ export function addAcrossDatesWithFill(rowsOfValues) {
     }
     // Generate dates.
     const dates = generateDatesAsStrings(earliestDate, latestDate);
+
     let datesAndValues = dates.map(date => [date, 0]);
 
     for (let row of rowsOfValues) {
