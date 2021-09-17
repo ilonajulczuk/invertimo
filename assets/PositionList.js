@@ -7,10 +7,11 @@ import { PositionDetail } from './PositionDetail.js';
 
 import { ErrorBoundary } from './error_utils.js';
 
+
+import Button from '@material-ui/core/Button';
 import {
     Switch,
     Route,
-    NavLink,
     useRouteMatch
 } from "react-router-dom";
 
@@ -79,7 +80,9 @@ export function PositionList(props) {
         };
         positionRow.interaction = {
             displayValue: <div className="column-stack">
-                <NavLink to={"/positions/" + position.id}>Details</NavLink>
+                <Button
+                    href={"#/positions/" + position.id}
+                >Details</Button>
             </div>
         };
         return positionRow;

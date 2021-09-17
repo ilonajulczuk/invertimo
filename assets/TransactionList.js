@@ -65,7 +65,7 @@ export function TransactionList(props) {
         { id: 'value', label: 'Value' },
         { id: 'transaction_costs', label: 'Fees' },
         { id: 'executed_at', label: 'Executed At' },
-        { id: 'order_id', label: 'Order Details' },
+        { id: 'interaction', label: '' },
     ];
 
     let accountsById = new Map(props.accounts.map(account => [account.id, account]));
@@ -114,7 +114,14 @@ export function TransactionList(props) {
             comparisonKey: Number(transactionCopy.transaction_costs)
         };
 
+        transactionCopy.interaction = {
+            displayValue: <div className="column-stack">
+                <Button
+                    href={"#/transactions/" + transaction.id}
+                >Details</Button>
 
+            </div>
+        };
         let lastModifiedDate = new Date(transactionCopy.last_modified);
         transactionCopy.last_modified = lastModifiedDate.toLocaleDateString();
         return transactionCopy;
