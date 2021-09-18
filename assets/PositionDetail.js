@@ -11,7 +11,6 @@ import { EmbeddedTransactionList } from './TransactionList.js';
 import { AreaChartWithCursor, LineChartWithCursor } from './components/charts.js';
 import { toSymbol } from './currencies';
 
-
 import './position_list.css';
 
 
@@ -70,7 +69,7 @@ export function PositionDetail(props) {
                 {basicData.asset.exchange.name}
             </div>
             <div>
-                Quantity: {basicData.quantity}
+                <span className="card-label"> Quantity</span>{basicData.quantity}
             </div>
             <div>
                 <span className="card-label">Price as of {basicData.latest_price_date}</span>

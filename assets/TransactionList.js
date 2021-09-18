@@ -12,6 +12,7 @@ import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 
 const embeddedTransactionHeadCells = [
+    { id: 'type', label: 'Type' },
     { id: 'quantity', label: 'Quantity' },
     { id: 'price', label: 'Price' },
     { id: 'local_value', label: 'Total value' },
@@ -24,9 +25,24 @@ export class EmbeddedTransactionList extends React.Component {
 
     render() {
         const transactions = this.props.transactions.map(transaction => {
+
             let transactionCopy = { ...transaction };
             let date = new Date(transactionCopy.executed_at);
             transactionCopy.executed_at = date.toLocaleString();
+            let transactionTypeDisplay = null;
+            if (transaction.value_in_account_currency < 0) {
+                transactionTypeDisplay = (
+                    <div className="trade-type trade-type-buy">Buy</div>
+                );
+            } else {
+                transactionTypeDisplay = (
+                    <div className="trade-type trade-type-sell">Sell</div>
+                );
+            }
+            transactionCopy.type = {
+                displayValue: transactionTypeDisplay,
+                comparisonKey: transaction.value_in_account_currency,
+            };
             return transactionCopy;
         });
         return (
@@ -58,7 +74,9 @@ const useStyles = makeStyles({
 
 export function TransactionList(props) {
 
+    const classes = useStyles();
     const transactionHeadCells = [
+        { id: 'type', label: 'Type' },
         { id: 'position', label: 'Position' },
         { id: 'quantity', label: 'Quantity' },
         { id: 'price', label: 'Price' },
@@ -94,6 +112,20 @@ export function TransactionList(props) {
             comparisonKey: position.asset.symbol,
         };
 
+        let transactionTypeDisplay = null;
+        if (transaction.value_in_account_currency < 0) {
+            transactionTypeDisplay = (
+                <div className="trade-type trade-type-buy">BUY</div>
+            );
+        } else {
+            transactionTypeDisplay = (
+                <div className="trade-type trade-type-sell">SELL</div>
+            );
+        }
+        transactionCopy.type = {
+            displayValue: transactionTypeDisplay,
+            comparisonKey: transaction.value_in_account_currency,
+        };
         let account = accountsById.get(transaction.position.account);
         const accountCurrencySymbol = toSymbol(account.currency);
         const positionCurrencySymbol = toSymbol(transaction.position.asset.currency);
@@ -127,7 +159,6 @@ export function TransactionList(props) {
         return transactionCopy;
     });
 
-    const classes = useStyles();
 
     return (
         <ErrorBoundary>

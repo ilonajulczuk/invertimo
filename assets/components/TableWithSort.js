@@ -128,7 +128,6 @@ const useStyles = makeStyles((theme) => ({
     },
     table: {
         minWidth: 750,
-
     },
     additionalCellPadding: {
         paddingTop: "1em",
@@ -136,7 +135,6 @@ const useStyles = makeStyles((theme) => ({
         paddingLeft: "2em",
         paddingRight: "2em",
     },
-
     visuallyHidden: {
         border: 0,
         clip: 'rect(0 0 0 0)',

@@ -101,6 +101,7 @@ class EmbeddedTransactionSerializer(serializers.ModelSerializer[Transaction]):
             "transaction_costs",
             "order_id",
             "local_value",
+            "value_in_account_currency",
         ]
 
 
