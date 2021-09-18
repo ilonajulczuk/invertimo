@@ -13,8 +13,6 @@ import { toSymbol } from './currencies';
 
 import './position_list.css';
 
-
-
 export function PositionDetail(props) {
 
     const [chartTimeSelectorOptionId, setChartTimeSelectorOptionId] = useState(3);

@@ -51,7 +51,7 @@ export function Transactions(props) {
 
             </Route>
             <Route path={`${path}/:transactionId`}>
-                <TransactionDetail transactions={props.transactions} />
+                <TransactionDetail transactions={props.transactions} accounts={props.accounts}/>
             </Route>
         </Switch>
     );

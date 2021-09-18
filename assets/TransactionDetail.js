@@ -18,7 +18,17 @@ const useStyles = makeStyles({
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-    }
+    },
+    transactionDetails: {
+        padding: "10px",
+        background: "#8282820d",
+        border: "1px solid #384a5052",
+        borderLeft: "5px solid #1b98a1",
+        borderBottom: "5px solid #384a5052",
+        marginBottom: "2em",
+        display: "flex",
+        flexDirection: "column",
+    },
 });
 
 export function TransactionDetail(props) {
@@ -34,6 +44,9 @@ export function TransactionDetail(props) {
         }
     }
 
+    let accountsById = new Map(props.accounts.map(account => [account.id, account]));
+    let account = accountsById.get(transaction.position.account);
+
     let transactionTypeDisplay = null;
     if (transaction.value_in_account_currency < 0) {
         transactionTypeDisplay = (
@@ -45,10 +58,10 @@ export function TransactionDetail(props) {
         );
     }
 
-    const accountCurrencySymbol = toSymbol("EUR"); //(account.currency);
+    const accountCurrencySymbol = toSymbol(account.currency);
     const positionCurrencySymbol = toSymbol(transaction.position.asset.currency);
 
-    let basicHeader = (
+    let topInfo = (
         <div className="position-card">
             {transactionTypeDisplay}
             <div className="asset-name">
@@ -91,7 +104,6 @@ export function TransactionDetail(props) {
         <div>
             <div className={classes.header}>
                 <h2><a href="../#transactions/">Transactions</a> / {transactionId}</h2>
-
                 <div>
                     <Button
                         href={"#/transactions/" + transaction.id + "/edit/"}
@@ -105,13 +117,19 @@ export function TransactionDetail(props) {
                 </div>
             </div>
 
-            {basicHeader}
+            {topInfo}
+            <div className={classes.transactionDetails}>
+
+                <p>Executed in account <a href={`#accounts/${account.id}`}>{account.nickname}</a> {transaction.order_id ? `with order id: #${transaction.order_id}` : ""}</p> {transaction.order_id}
+
+            </div>
         </div>
 
     );
 }
 
 TransactionDetail.propTypes = {
+    accounts: PropTypes.array.isRequired,
     transactions: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.number.isRequired,
         quantity: PropTypes.string.isRequired,

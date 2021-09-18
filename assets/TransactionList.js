@@ -18,6 +18,7 @@ const embeddedTransactionHeadCells = [
     { id: 'local_value', label: 'Total value' },
     { id: 'executed_at', label: 'Executed At' },
     { id: 'transaction_costs', label: 'Fees' },
+    { id: 'interaction', label: '' },
 ];
 
 
@@ -43,6 +44,15 @@ export class EmbeddedTransactionList extends React.Component {
                 displayValue: transactionTypeDisplay,
                 comparisonKey: transaction.value_in_account_currency,
             };
+            transactionCopy.interaction = {
+                displayValue: <div className="column-stack">
+                    <Button
+                        href={"#/transactions/" + transaction.id}
+                    >Details</Button>
+
+                </div>
+            };
+
             return transactionCopy;
         });
         return (
