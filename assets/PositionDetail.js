@@ -12,12 +12,14 @@ import { AreaChartWithCursor, LineChartWithCursor } from './components/charts.js
 import { toSymbol } from './currencies';
 
 import './position_list.css';
+import {APIClientError} from './api_utils.js';
 
 export function PositionDetail(props) {
 
     const [chartTimeSelectorOptionId, setChartTimeSelectorOptionId] = useState(3);
     const [chartTimePeriod, setChartTimePeriod] = useState({ months: 3 });
     const [data, setData] = useState(0);
+    const [failedLoading, setFailedLoading] = useState(false);
 
     let handleChartTimeSelectorChange = (selectorOptionId, selectorData) => {
         setChartTimeSelectorOptionId(selectorOptionId);
@@ -26,13 +28,6 @@ export function PositionDetail(props) {
 
     let { positionId } = useParams();
 
-    useEffect(() => {
-        props.getPositionDetail(positionId).then(
-            positionDetail => {
-                setData(positionDetail);
-            }
-        );
-    });
 
     let basicData = null;
     for (let position of props.positions) {
@@ -40,10 +35,38 @@ export function PositionDetail(props) {
             basicData = position;
         }
     }
-    if (basicData == null) {
-        return <div>...</div>;
-    }
 
+
+    useEffect(() => {
+        // This looks like 404 case, no need to fetch additional data.
+        if (basicData === null) {
+            return;
+        }
+        try {
+            props.getPositionDetail(positionId).then(
+                positionDetail => {
+                    setData(positionDetail);
+                }
+            );
+        } catch (err) {
+            if (err instanceof APIClientError) {
+                setFailedLoading(true);
+                console.log(err);
+            } else {
+                throw err;
+            }
+        }
+
+    });
+
+    if (basicData == null) {
+        return (
+            <div>
+                <h2><a href="../#positions/">Positions</a> / ID: {positionId}</h2>
+                <div>Not found :(</div>
+            </div>
+        );
+    }
     let account = props.accounts[0];
     for (let acc of props.accounts) {
         if (acc.id == basicData.account) {
@@ -93,8 +116,8 @@ export function PositionDetail(props) {
         return <div> <h2><a href="../#positions/">Positions</a> / {basicData.asset.symbol}</h2>
             {basicHeader}
             <div>Loading...</div></div>;
-    } else if (data == null) {
-        return <div>Failed...</div>;
+    } else if (failedLoading) {
+        return <div>Failed at loading the data...</div>;
     }
     let skipFactor = 1;
     const dataDays = daysFromDurationObject(chartTimePeriod) || 4 * 365;

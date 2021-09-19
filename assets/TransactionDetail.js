@@ -8,8 +8,19 @@ import Button from '@material-ui/core/Button';
 import { toSymbol } from './currencies.js';
 
 import {
+    Switch,
+    Route,
     useParams,
+    useRouteMatch,
+    useHistory,
 } from "react-router-dom";
+
+
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogActions from '@material-ui/core/DialogActions';
 
 import { makeStyles } from '@material-ui/core/styles';
 
@@ -44,6 +55,15 @@ export function TransactionDetail(props) {
         }
     }
 
+    if (transaction === null) {
+        return (
+            <div>
+                <div className={classes.header}>
+                    <h2><a href="../#transactions/">Transactions</a> / {transactionId}</h2>
+                </div>
+                <div>404 Not found :(</div>
+            </div>);
+    }
     let accountsById = new Map(props.accounts.map(account => [account.id, account]));
     let account = accountsById.get(transaction.position.account);
 
@@ -100,13 +120,25 @@ export function TransactionDetail(props) {
         </div>
     );
 
+    let history = useHistory();
+
+    const handleDelete = () => {
+        props.handleDeleteTransaction(transaction.id);
+        history.push("/transactions");
+    };
+
+    const handleCancel = () => {
+        history.push("/transactions/" + transaction.id);
+    };
+
+    let { path } = useRouteMatch();
     return (
         <div>
             <div className={classes.header}>
                 <h2><a href="../#transactions/">Transactions</a> / {transactionId}</h2>
                 <div>
                     <Button
-                        href={"#/transactions/" + transaction.id + "/edit/"}
+                        href={"#/transactions/" + transaction.id + "/correct/"}
                         color="primary"
                         size="small"
                     ><Icon>create</Icon> Correct</Button>
@@ -123,6 +155,35 @@ export function TransactionDetail(props) {
                 <p>Executed in account <a href={`#accounts/${account.id}`}>{account.nickname}</a> {transaction.order_id ? `with order id: #${transaction.order_id}` : ""}</p> {transaction.order_id}
 
             </div>
+            <Switch>
+                <Route path={`${path}/correct`}>
+                    <h1>Correct not implemented yet!</h1>
+                </Route>
+                <Route path={`${path}/delete`}>
+                    <Dialog
+                        open={true}
+                        onClose={handleCancel}
+                        aria-labelledby="delete-transaction-dialog-title"
+                        aria-describedby="delete-transaction-dialog-description"
+                    >
+                        <DialogTitle id="delete-transaction-dialog-title">{"Are you sure you want to delete this transaction?"}</DialogTitle>
+                        <DialogContent>
+                            <DialogContentText id="delete-transaction-dialog-description">
+                                It will be as if this transaction has never happened. This might cause you to miss historical data.
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={handleCancel} variant="outlined" autoFocus>
+                                Cancel
+                            </Button>
+                            <Button onClick={handleDelete} color="secondary" variant="contained">
+                                Delete
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+
+                </Route>
+            </Switch>
         </div>
 
     );
@@ -138,4 +199,5 @@ TransactionDetail.propTypes = {
         transaction_costs: PropTypes.string,
         executed_at: PropTypes.string.isRequired,
     })).isRequired,
+    handleDeleteTransaction: PropTypes.func.isRequired,
 };

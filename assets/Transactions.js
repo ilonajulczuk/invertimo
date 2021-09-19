@@ -34,7 +34,6 @@ RecordTransaction.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
 };
 
-
 export function Transactions(props) {
 
     let { path } = useRouteMatch();
@@ -51,7 +50,7 @@ export function Transactions(props) {
 
             </Route>
             <Route path={`${path}/:transactionId`}>
-                <TransactionDetail transactions={props.transactions} accounts={props.accounts}/>
+                <TransactionDetail transactions={props.transactions} accounts={props.accounts} handleDeleteTransaction={props.handleDeleteTransaction}/>
             </Route>
         </Switch>
     );
@@ -69,4 +68,5 @@ Transactions.propTypes = {
         executed_at: PropTypes.string.isRequired,
     })).isRequired,
     handleAddTransaction: PropTypes.func.isRequired,
+    handleDeleteTransaction: PropTypes.func.isRequired,
 };
