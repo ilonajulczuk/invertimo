@@ -489,3 +489,44 @@ class TestTransactionsDetailView(ViewTestBase, TestCase):
 
     def get_reversed_url(self):
         return reverse(self.VIEW_NAME, args=[self.transaction.pk])
+
+    def test_delete_transaction(self):
+
+        self.assertEqual(models.Position.objects.count(), 1)
+        position = models.Position.objects.first()
+
+        old_quantity = position.quantity
+        old_account_balance = position.account.balance
+        first_transaction = models.Transaction.objects.first()
+        middle_transaction = models.Transaction.objects.all()[3]
+
+        self.assertEqual(models.Transaction.objects.count(), 8)
+        self.client.delete(reverse(self.VIEW_NAME, args=[first_transaction.pk]))
+
+        self.assertEqual(models.Transaction.objects.count(), 7)
+        position.refresh_from_db()
+        self.assertEqual(position.quantity, old_quantity - first_transaction.quantity)
+        self.assertEqual(
+            position.account.balance,
+            old_account_balance - first_transaction.total_in_account_currency,
+        )
+        # Delete another transaction from the middle.
+        self.client.delete(reverse(self.VIEW_NAME, args=[middle_transaction.pk]))
+
+        # Test if quantity of position has changed.
+        # Test that value history has changed for the position.
+        self.assertEqual(models.Transaction.objects.count(), 6)
+        position.refresh_from_db()
+        self.assertEqual(
+            position.quantity,
+            old_quantity - first_transaction.quantity - middle_transaction.quantity,
+        )
+        self.assertEqual(
+            position.account.balance,
+            old_account_balance
+            - first_transaction.total_in_account_currency
+            - middle_transaction.total_in_account_currency,
+        )
+
+    def test_delete_transaction_deletes_position_if_its_the_only_one(self):
+        pass

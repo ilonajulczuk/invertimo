@@ -309,3 +309,7 @@ class TransactionsViewSet(
         return Response(
             serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )
+
+    def perform_destroy(self, instance):
+        account_repository = accounts.AccountRepository()
+        account_repository.delete_transaction(instance)

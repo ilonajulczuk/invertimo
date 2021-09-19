@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 
 from finance import exchanges, models
 
+from django.db import transaction
+
 
 class AccountRepository:
     def get(self, user: User, id: int) -> models.Account:
@@ -18,6 +20,7 @@ class AccountRepository:
             user=user, nickname=nickname, description=description, currency=currency
         )
 
+    @transaction.atomic
     def add_transaction(
         self,
         account,
@@ -57,6 +60,7 @@ class AccountRepository:
 
         return transaction
 
+    @transaction.atomic
     def add_transaction_known_asset(
         self,
         account,
@@ -92,6 +96,7 @@ class AccountRepository:
 
         return transaction
 
+    @transaction.atomic
     def add_transaction_custom_asset(
         self,
         account: models.Account,
@@ -168,3 +173,16 @@ class AccountRepository:
             return positions[0]
         asset = models.Asset.objects.get(pk=asset_id)
         return models.Position.objects.create(account=account, asset=asset)
+
+    @transaction.atomic
+    def delete_transaction(self, transaction : models.Transaction) -> None:
+
+        position = transaction.position
+        account = position.account
+
+        # This assume no splits and merges support.
+        position.quantity -= transaction.quantity
+        position.save()
+        account.balance -= transaction.total_in_account_currency
+        account.save()
+        transaction.delete()
