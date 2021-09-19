@@ -28,14 +28,12 @@ export function PositionDetail(props) {
 
     let { positionId } = useParams();
 
-
     let basicData = null;
     for (let position of props.positions) {
         if (position.id == positionId) {
             basicData = position;
         }
     }
-
 
     useEffect(() => {
         // This looks like 404 case, no need to fetch additional data.

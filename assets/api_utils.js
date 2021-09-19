@@ -9,7 +9,7 @@ export class APIClientError extends Error { }
 
 // TODO: add cache control to get requests.
 export async function fetchDetailResult(url) {
-    let response = await fetch(url);
+    let response = await fetch(url, { cache: 'no-cache', });
     if (!response.ok) {
         if (!response.ok) {
             throw new APIClientError(
@@ -24,7 +24,7 @@ export async function fetchAllResults(url) {
 
     while (url) {
         let response;
-        response = await fetch(url);
+        response = await fetch(url, { cache: 'no-cache', });
 
         if (!response.ok) {
             throw new APIClientError(

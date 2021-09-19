@@ -137,7 +137,7 @@ class PositionsView(generics.ListAPIView):
                     .order_by("-date")
                     .values("value")[:1]
                 )
-            )
+            ).order_by('id')
         )
 
 
