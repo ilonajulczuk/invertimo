@@ -1,21 +1,19 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import Icon from '@material-ui/core/Icon';
-
 import './transaction_list.css';
-import Button from '@material-ui/core/Button';
 import { toSymbol } from './currencies.js';
+import { CorrectTransactionForm } from './forms/CorrectTransactionForm.js';
 
 import {
     Switch,
     Route,
-    useParams,
     useRouteMatch,
     useHistory,
 } from "react-router-dom";
 
-
+import Icon from '@material-ui/core/Icon';
+import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -44,9 +42,13 @@ const useStyles = makeStyles({
 
 export function TransactionDetail(props) {
 
+
     const classes = useStyles();
 
-    let { transactionId } = useParams();
+    let match  = useRouteMatch("/transactions/:transactionId");
+    let path = match.path;
+    let transactionId = match.params.transactionId;
+    let history = useHistory();
 
     let transaction = null;
     for (let t of props.transactions) {
@@ -119,9 +121,6 @@ export function TransactionDetail(props) {
 
         </div>
     );
-
-    let history = useHistory();
-
     const handleDelete = () => {
         props.handleDeleteTransaction(transaction.id);
         history.push("/transactions");
@@ -131,7 +130,12 @@ export function TransactionDetail(props) {
         history.push("/transactions/" + transaction.id);
     };
 
-    let { path } = useRouteMatch();
+    const handleCorrectDetails = (values) => {
+        console.log(values);
+        history.push("/transactions/" + transaction.id);
+    };
+
+
     return (
         <div>
             <div className={classes.header}>
@@ -157,7 +161,27 @@ export function TransactionDetail(props) {
             </div>
             <Switch>
                 <Route path={`${path}/correct`}>
-                    <h1>Correct not implemented yet!</h1>
+                    <Dialog
+                        open={true}
+                        onClose={handleCancel}
+                        aria-labelledby="correct-transaction-dialog-title"
+                        aria-describedby="correct-transaction-dialog-description"
+                    >
+                        <DialogTitle id="correct-transaction-dialog-title">{"Correct details of the transaction"}</DialogTitle>
+                        <DialogContent>
+                            <DialogContentText id="correct-transaction-dialog-description">
+                                    If you want to change the details not available here, consider deleting this transaction and recording a new one.
+                            </DialogContentText>
+                            <CorrectTransactionForm
+                                account={account}
+                                transaction={transaction}
+                                handleSubmit={handleCorrectDetails}
+                                handleCancel={handleCancel} />
+
+                        </DialogContent>
+
+                    </Dialog>
+
                 </Route>
                 <Route path={`${path}/delete`}>
                     <Dialog
@@ -185,7 +209,6 @@ export function TransactionDetail(props) {
                 </Route>
             </Switch>
         </div>
-
     );
 }
 
@@ -198,6 +221,7 @@ TransactionDetail.propTypes = {
         local_value: PropTypes.string.isRequired,
         transaction_costs: PropTypes.string,
         executed_at: PropTypes.string.isRequired,
+        position: PropTypes.object.isRequired,
     })).isRequired,
     handleDeleteTransaction: PropTypes.func.isRequired,
 };

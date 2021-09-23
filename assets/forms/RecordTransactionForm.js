@@ -29,6 +29,7 @@ import {
     KeyboardDatePicker,
 } from '@material-ui/pickers';
 
+import { matchNumberUpToTwoDecimalPlaces } from './utils.js';
 
 function formTransactionToAPITransaction(formData) {
     let data = { ...formData };
@@ -164,8 +165,6 @@ const useStyles = makeStyles((theme) => ({
         marginBottom: "2em",
     },
 }));
-
-const matchNumberUpToTwoDecimalPlaces = (value) => value === undefined || (value + "").match(/^\d*(\.\d{0,2})?$/);
 
 const validationSchema = yup.object({
     symbol: yup
