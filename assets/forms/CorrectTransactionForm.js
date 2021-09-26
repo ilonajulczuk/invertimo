@@ -26,6 +26,37 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
+const mapping = new Map(Object.entries({
+    'executed_at': 'executedAt',
+    'quantity': 'quantity',
+    'transaction_costs': 'fees',
+    'price': 'price',
+    'total_in_account_currency': 'totalCostAccountCurrency',
+    'value_in_account_currency': 'totalValueAccountCurrency',
+    'local_value': 'totalValue',
+}));
+
+function formUpdateToAPIUpdate(formData) {
+    let data = {};
+
+    for (let entry of mapping) {
+        data[entry[0]] = formData[entry[1]];
+    }
+    return data;
+}
+
+function apiToErrors(apiResponse) {
+    let data = { ...apiResponse };
+    data.errors = {};
+    if (apiResponse.errors) {
+        for (let error of apiResponse.errors) {
+            data.errors[mapping[error]] = apiResponse.errors[error];
+        }
+    }
+
+    return data;
+
+}
 
 export function CorrectTransactionForm(props) {
 
@@ -52,13 +83,17 @@ export function CorrectTransactionForm(props) {
             .test('has-2-or-less-places', "Only up to two decimal places are allowed",
                 matchNumberUpToTwoDecimalPlaces)
             .required('Total is required'),
-        // This value is only required if currency of the asset and account don't match.
+        totalValue: yup
+            .number().test('has-2-or-less-places', "Only up to two decimal places are allowed",
+                matchNumberUpToTwoDecimalPlaces)
+            .required(
+                'Total value in position currency has to be provided.'),
+
         totalValueAccountCurrency: yup
             .number().test('has-2-or-less-places', "Only up to two decimal places are allowed",
                 matchNumberUpToTwoDecimalPlaces)
             .required(
-                'Total value in account currency has to be provided if the' +
-                ' asset currency is different than the account currency.'),
+                'Total value in account currency has to be provided.'),
         fees: yup
             .number()
             .required('Fees are required')
@@ -75,6 +110,7 @@ export function CorrectTransactionForm(props) {
         fees: props.transaction.transaction_costs,
         price: props.transaction.price,
         executedAt: new Date(props.transaction.executed_at),
+        totalValue: props.transaction.local_value,
         totalCostAccountCurrency: props.transaction.total_in_account_currency,
         totalValueAccountCurrency: props.transaction.value_in_account_currency,
     };
@@ -88,11 +124,25 @@ export function CorrectTransactionForm(props) {
             initialValues={initialValues}
             validationSchema={validationSchema}
 
-            onSubmit={(values, actions) => {
-                alert(JSON.stringify(values, null, 2));
-                props.handleSubmit(values);
-                actions.setSubmitting(false);
-
+            onSubmit={async (values, actions) => {
+                try {
+                    const update = formUpdateToAPIUpdate(values);
+                    alert(JSON.stringify(update, null, 2));
+                    let result = await props.handleSubmit(props.transaction.id, update);
+                    result = apiToErrors(result);
+                    actions.setSubmitting(false);
+                    if (result.ok) {
+                        actions.resetForm();
+                    } else {
+                        if (result.errors) {
+                            actions.setErrors(result.errors);
+                        } else if (result.message) {
+                            alert(result.message);
+                        }
+                    }
+                } catch (e) {
+                    alert(e);
+                }
             }}
         >
             {({ isSubmitting }) => (
@@ -112,6 +162,12 @@ export function CorrectTransactionForm(props) {
                         />
                     </div>
                     <div className={classes.inputs}>
+                    <FormikTextField
+                            id="totalValue"
+                            label={`Total Value ${positionCurrency}`}
+                            name="totalValue"
+                            type="number"
+                        />
                         <FormikTextField
                             id="totalValueAccountCurrency"
                             label={`Total Value ${accountCurrency}`}

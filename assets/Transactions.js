@@ -50,7 +50,12 @@ export function Transactions(props) {
 
             </Route>
             <Route path={`${path}/:transactionId`}>
-                <TransactionDetail transactions={props.transactions} accounts={props.accounts} handleDeleteTransaction={props.handleDeleteTransaction}/>
+                <TransactionDetail
+                    transactions={props.transactions}
+                    accounts={props.accounts}
+                    handleDeleteTransaction={props.handleDeleteTransaction}
+                    handleCorrectTransaction={props.handleCorrectTransaction}
+                />
             </Route>
         </Switch>
     );
@@ -69,4 +74,5 @@ Transactions.propTypes = {
     })).isRequired,
     handleAddTransaction: PropTypes.func.isRequired,
     handleDeleteTransaction: PropTypes.func.isRequired,
+    handleCorrectTransaction: PropTypes.func.isRequired,
 };

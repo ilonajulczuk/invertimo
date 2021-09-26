@@ -64,6 +64,7 @@ describe('transaction detail tests', () => {
     ];
 
     const handleDeleteTransaction = jest.fn();
+    const handleCorrectTransaction = jest.fn();
     it("renders transaction with correct actions", async () => {
         expect.hasAssertions();
         await act(async () => {
@@ -71,7 +72,9 @@ describe('transaction detail tests', () => {
                 <TransactionDetail
                     accounts={accounts}
                     transactions={transactions}
-                    handleDeleteTransaction={handleDeleteTransaction} />
+                    handleDeleteTransaction={handleDeleteTransaction}
+                    handleCorrectTransaction={handleCorrectTransaction}
+                />
             </MemoryRouter>, container);
         });
         expect(pretty(container.innerHTML)).toContain('The Walt Disney Company');

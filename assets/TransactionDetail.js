@@ -40,9 +40,8 @@ const useStyles = makeStyles({
     },
 });
 
+
 export function TransactionDetail(props) {
-
-
     const classes = useStyles();
 
     let match  = useRouteMatch("/transactions/:transactionId");
@@ -130,11 +129,15 @@ export function TransactionDetail(props) {
         history.push("/transactions/" + transaction.id);
     };
 
-    const handleCorrectDetails = (values) => {
-        console.log(values);
+    const handleCorrectDetails = async (transactionId, update) => {
+        let result = await props.handleCorrectTransaction(transactionId, update);
+        if (!result.ok) {
+            return result;
+        }
+        // Will redirect to the detail page and hide the correct detail page.
         history.push("/transactions/" + transaction.id);
+        return result;
     };
-
 
     return (
         <div>
@@ -224,4 +227,5 @@ TransactionDetail.propTypes = {
         position: PropTypes.object.isRequired,
     })).isRequired,
     handleDeleteTransaction: PropTypes.func.isRequired,
+    handleCorrectTransaction: PropTypes.func.isRequired,
 };

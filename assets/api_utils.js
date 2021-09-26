@@ -43,11 +43,11 @@ export async function fetchAllResults(url) {
 }
 
 
-async function postData(url = '', data = {}) {
+async function submitData(url = '', data = {}, method = 'POST') {
 
     const csrftoken = Cookies.get('csrftoken');
     const response = await fetch(url, {
-        method: 'POST',
+        method: method,
         mode: 'cors',
         cache: 'no-cache',
         credentials: 'same-origin',
@@ -79,6 +79,13 @@ async function postData(url = '', data = {}) {
 
 }
 
+async function postData(url = '', data = {}) {
+    return submitData(url, data, 'POST');
+}
+
+async function putData(url = '', data = {}) {
+    return submitData(url, data, 'PUT');
+}
 
 async function deleteData(url = '', data = {}) {
 
@@ -164,5 +171,9 @@ export class APIClient {
 
     async deleteTransaction(transactionId) {
         return await deleteData(this.baseUrl + '/transactions/' + transactionId + "/");
+    }
+
+    async correctTransaction(transactionId, update) {
+        return await putData(this.baseUrl + '/transactions/' + transactionId + "/", update);
     }
 }

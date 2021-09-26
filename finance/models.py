@@ -355,7 +355,7 @@ class Transaction(models.Model):
 
     def __str__(self):
         return (
-            f"<Transaction executed_at: {self.executed_at}, position: {self.position}>"
+            f"<Transaction id: {self.pk} executed_at: {self.executed_at}, position: {self.position}>"
         )
 
     class Meta:

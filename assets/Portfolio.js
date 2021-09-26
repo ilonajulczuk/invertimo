@@ -150,6 +150,7 @@ export default class Portfolio extends React.Component {
         this.handleAddAccount = this.handleAddAccount.bind(this);
         this.handleAddTransaction = this.handleAddTransaction.bind(this);
         this.handleDeleteTransaction = this.handleDeleteTransaction.bind(this);
+        this.handleCorrectTransaction = this.handleCorrectTransaction.bind(this);
     }
 
     async handleAddAccount(accountData) {
@@ -179,6 +180,12 @@ export default class Portfolio extends React.Component {
     async handleDeleteTransaction(transactionId) {
         let result = await this.apiClient.deleteTransaction(transactionId);
         // Reload all the data, e.g. accounts, positions, etc.
+        this.refreshFromServer();
+        return result;
+    }
+
+    async handleCorrectTransaction(transactionId, update) {
+        let result = await this.apiClient.correctTransaction(transactionId, update);
         this.refreshFromServer();
         return result;
     }
@@ -301,6 +308,7 @@ export default class Portfolio extends React.Component {
                                 <Transactions transactions={this.state.transactions}
                                     handleAddTransaction={this.handleAddTransaction}
                                     handleDeleteTransaction={this.handleDeleteTransaction}
+                                    handleCorrectTransaction={this.handleCorrectTransaction}
                                     accounts={this.state.accounts} />
                             </ErrorBoundary>
                         </Route>
