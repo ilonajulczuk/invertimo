@@ -20,6 +20,9 @@ const useStyles = makeStyles((theme) => ({
         gap: "10px",
         alignItems: "baseline",
     },
+    wideInput: {
+        minWidth: "300px",
+    },
     bottomButtons: {
         marginTop: theme.spacing(4),
         justifyContent: "right",
@@ -127,7 +130,6 @@ export function CorrectTransactionForm(props) {
             onSubmit={async (values, actions) => {
                 try {
                     const update = formUpdateToAPIUpdate(values);
-                    alert(JSON.stringify(update, null, 2));
                     let result = await props.handleSubmit(props.transaction.id, update);
                     result = apiToErrors(result);
                     actions.setSubmitting(false);
@@ -161,16 +163,20 @@ export function CorrectTransactionForm(props) {
                             type="number"
                         />
                     </div>
-                    <div className={classes.inputs}>
-                    <FormikTextField
+                    <div>
+                        <FormikTextField
+                            className={classes.wideInput}
                             id="totalValue"
-                            label={`Total Value ${positionCurrency}`}
+                            label={`Total Value ${positionCurrency} (position currency)`}
                             name="totalValue"
                             type="number"
                         />
+                    </div>
+                    <div className={classes.inputs}>
                         <FormikTextField
+                            className={classes.wideInput}
                             id="totalValueAccountCurrency"
-                            label={`Total Value ${accountCurrency}`}
+                            label={`Total Value ${accountCurrency} (account currency)`}
                             name="totalValueAccountCurrency"
                             type="number"
                         />
