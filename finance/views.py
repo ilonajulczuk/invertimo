@@ -321,3 +321,11 @@ class TransactionsViewSet(
     def perform_update(self, serializer):
         account_repository = accounts.AccountRepository()
         account_repository.correct_transaction(serializer.instance, serializer.validated_data)
+
+
+class AccountEventViewSet(viewsets.ModelViewSet):
+    model = Transaction
+    serializer_class = TransactionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = LimitOffsetPagination
+    basename = "transaction"

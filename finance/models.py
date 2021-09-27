@@ -59,6 +59,7 @@ class Account(models.Model):
 
     class Meta:
         unique_together = [["user", "nickname"]]
+        ordering = ["-id"]
 
 
 class Exchange(models.Model):
@@ -402,6 +403,9 @@ class AccountEvent(models.Model):
         else:
             if self.position:
                 raise ValidationError(f"Position can't be set for: {self.event_type}")
+
+    class Meta:
+        ordering = ["-executed_at"]
 
 
 class CurrencyExchangeRate(models.Model):

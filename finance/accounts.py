@@ -40,6 +40,8 @@ class AccountRepository:
             raise ValueError(
                 f"Failed to create a position from a transaction record, isin: {isin}, exchange ref: {exchange}"
             )
+        position.quantity_history.cache_clear()
+        position.value_history.cache_clear()
 
         transaction, created = models.Transaction.objects.get_or_create(
             executed_at=executed_at,
@@ -76,6 +78,8 @@ class AccountRepository:
     ) -> models.Transaction:
 
         position = self._get_or_create_position_for_asset(account, asset_id)
+        position.quantity_history.cache_clear()
+        position.value_history.cache_clear()
 
         transaction, created = models.Transaction.objects.get_or_create(
             executed_at=executed_at,
@@ -124,6 +128,8 @@ class AccountRepository:
             added_by=account.user,
         )
         position = self._get_or_create_position_for_asset(account, asset.pk)
+        position.quantity_history.cache_clear()
+        position.value_history.cache_clear()
 
         transaction, created = models.Transaction.objects.get_or_create(
             executed_at=executed_at,
@@ -174,6 +180,8 @@ class AccountRepository:
     def delete_transaction(self, transaction: models.Transaction) -> None:
 
         position = transaction.position
+        position.quantity_history.cache_clear()
+        position.value_history.cache_clear()
         account = position.account
 
         # This assume no splits and merges support.
@@ -203,6 +211,8 @@ class AccountRepository:
                     f"field: '{field}' not allowed "
                 )
         position = transaction.position
+        position.quantity_history.cache_clear()
+        position.value_history.cache_clear()
         account = position.account
 
         position.quantity -= transaction.quantity

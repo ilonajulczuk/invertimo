@@ -491,7 +491,6 @@ class TestTransactionDetailView(ViewTestBase, TestCase):
         return reverse(self.VIEW_NAME, args=[self.transaction.pk])
 
     def test_delete_transaction(self):
-
         self.assertEqual(models.Position.objects.count(), 1)
         position = models.Position.objects.first()
 
@@ -528,6 +527,38 @@ class TestTransactionDetailView(ViewTestBase, TestCase):
             - middle_transaction.total_in_account_currency,
         )
 
+    def test_delete_transaction_quantity_history_changes(self):
+        self.assertEqual(models.Position.objects.count(), 1)
+        position = models.Position.objects.first()
+
+        old_quantity = position.quantity
+        old_account_balance = position.account.balance
+        first_transaction = models.Transaction.objects.first()
+
+        old_position_response = self.client.get(
+            reverse("api-position", args=[position.pk])
+        )
+        self.assertEqual(old_position_response.status_code, 200)
+        self.assertEqual(models.Transaction.objects.count(), 8)
+        self.client.delete(reverse(self.VIEW_NAME, args=[first_transaction.pk]))
+
+        self.assertEqual(models.Transaction.objects.count(), 7)
+        position.refresh_from_db()
+        self.assertEqual(position.quantity, old_quantity - first_transaction.quantity)
+        self.assertEqual(
+            position.account.balance,
+            old_account_balance - first_transaction.total_in_account_currency,
+        )
+
+        new_position_response = self.client.get(
+            reverse("api-position", args=[position.pk])
+        )
+        self.assertEqual(new_position_response.status_code, 200)
+        self.assertNotEqual(
+            old_position_response.json()["quantities"],
+            new_position_response.json()["quantities"],
+        )
+
     def test_correct_transaction(self):
         # Start with a bunch of transactions.
         # Correcting transaction doesn't change number of transactions.
@@ -561,8 +592,13 @@ class TestTransactionDetailView(ViewTestBase, TestCase):
         position.refresh_from_db()
         corrected_transaction = models.Transaction.objects.get(pk=transaction.pk)
 
-        self.assertEqual(position.quantity, old_quantity - transaction.quantity + corrected_transaction.quantity)
+        self.assertEqual(
+            position.quantity,
+            old_quantity - transaction.quantity + corrected_transaction.quantity,
+        )
         self.assertEqual(
             position.account.balance,
-            old_account_balance - transaction.total_in_account_currency + corrected_transaction.total_in_account_currency,
+            old_account_balance
+            - transaction.total_in_account_currency
+            + corrected_transaction.total_in_account_currency,
         )
