@@ -128,9 +128,6 @@ class AccountRepository:
             added_by=account.user,
         )
         position = self._get_or_create_position_for_asset(account, asset.pk)
-        position.quantity_history.cache_clear()
-        position.value_history.cache_clear()
-
         transaction, created = models.Transaction.objects.get_or_create(
             executed_at=executed_at,
             position=position,
@@ -148,6 +145,9 @@ class AccountRepository:
             position.save()
             account.balance += total_in_account_currency
             account.save()
+
+        position.quantity_history.cache_clear()
+        position.value_history.cache_clear()
 
         return transaction
 
@@ -180,8 +180,7 @@ class AccountRepository:
     def delete_transaction(self, transaction: models.Transaction) -> None:
 
         position = transaction.position
-        position.quantity_history.cache_clear()
-        position.value_history.cache_clear()
+
         account = position.account
 
         # This assume no splits and merges support.
@@ -190,6 +189,8 @@ class AccountRepository:
         account.balance -= transaction.total_in_account_currency
         account.save()
         transaction.delete()
+        position.quantity_history.cache_clear()
+        position.value_history.cache_clear()
 
     @transaction.atomic
     def correct_transaction(self, transaction, update) -> None:
@@ -211,8 +212,6 @@ class AccountRepository:
                     f"field: '{field}' not allowed "
                 )
         position = transaction.position
-        position.quantity_history.cache_clear()
-        position.value_history.cache_clear()
         account = position.account
 
         position.quantity -= transaction.quantity
@@ -226,3 +225,5 @@ class AccountRepository:
         position.save()
         account.save()
         transaction.save()
+        position.quantity_history.cache_clear()
+        position.value_history.cache_clear()
