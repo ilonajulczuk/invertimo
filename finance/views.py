@@ -27,6 +27,7 @@ from finance.serializers import (
     TransactionSerializer,
     AddTransactionKnownAssetSerializer,
     AddTransactionNewAssetSerializer,
+    CorrectTransactionSerializer,
 )
 
 
@@ -137,7 +138,7 @@ class PositionsView(generics.ListAPIView):
                     .order_by("-date")
                     .values("value")[:1]
                 )
-            )
+            ).order_by('id')
         )
 
 
@@ -231,6 +232,7 @@ class TransactionsViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
@@ -259,8 +261,10 @@ class TransactionsViewSet(
             AddTransactionNewAssetSerializer,
         ]
     ]:
-        if self.action in ("create", "update"):
+        if self.action == "create":
             return AddTransactionKnownAssetSerializer
+        elif self.action == "update":
+            return CorrectTransactionSerializer
         elif self.action == "add_with_custom_asset":
             return AddTransactionNewAssetSerializer
         return TransactionSerializer
@@ -309,3 +313,25 @@ class TransactionsViewSet(
         return Response(
             serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )
+
+    def perform_destroy(self, instance):
+        account_repository = accounts.AccountRepository()
+        account_repository.delete_transaction(instance)
+
+    # def update(self, request, *args, **kwargs):
+    #     partial = kwargs.pop('partial', False)
+    #     instance = self.get_object()
+    #     serializer = self.get_serializer(instance, data=request.data, partial=partial)
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_update(serializer)
+
+    #     if getattr(instance, '_prefetched_objects_cache', None):
+    #         # If 'prefetch_related' has been applied to a queryset, we need to
+    #         # forcibly invalidate the prefetch cache on the instance.
+    #         instance._prefetched_objects_cache = {}
+
+    #     return Response(serializer.data)
+
+    def perform_update(self, serializer):
+        account_repository = accounts.AccountRepository()
+        account_repository.correct_transaction(serializer.instance, serializer.validated_data)

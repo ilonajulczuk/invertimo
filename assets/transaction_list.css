@@ -1,10 +1,36 @@
-.position-name {
+.position-card .asset-name {
     display: flex;
     flex-direction: column;
-    flex-basis: 250px;
+    flex-basis: 400px;
 }
 
 .position-symbol {
     font-weight: bold;
     font-size: 1.5em;
+}
+
+.trade-type {
+    font-weight: 1000;
+    font-size: 1.2em;
+}
+
+.trade-type-buy {
+    color: #048349;
+}
+
+.trade-type-sell {
+    color: #ce4036;
+}
+
+.position-card {
+    padding: 0.3em;
+    border-radius: 1px;
+    border: 1px solid #384a5052;
+    border-left: 5px solid #384a5052;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding-left: 10px;
+    padding-right: 10px;
+    align-items: center;
 }

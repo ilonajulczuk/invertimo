@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 
 from finance import exchanges, models
 
+from django.db import transaction
+
 
 class AccountRepository:
     def get(self, user: User, id: int) -> models.Account:
@@ -18,6 +20,7 @@ class AccountRepository:
             user=user, nickname=nickname, description=description, currency=currency
         )
 
+    @transaction.atomic
     def add_transaction(
         self,
         account,
@@ -57,6 +60,7 @@ class AccountRepository:
 
         return transaction
 
+    @transaction.atomic
     def add_transaction_known_asset(
         self,
         account,
@@ -92,6 +96,7 @@ class AccountRepository:
 
         return transaction
 
+    @transaction.atomic
     def add_transaction_custom_asset(
         self,
         account: models.Account,
@@ -132,11 +137,6 @@ class AccountRepository:
             order_id=order_id,
         )
 
-        # We know the price at the tme the asset transacted, let's add it.
-        models.PriceHistory.objects.create(
-            asset=asset, value=price, date=executed_at.date()
-        )
-
         if created:
             position.quantity += quantity
             position.save()
@@ -145,6 +145,7 @@ class AccountRepository:
 
         return transaction
 
+    @transaction.atomic
     def add_event(self, account):
         pass
 
@@ -168,3 +169,50 @@ class AccountRepository:
             return positions[0]
         asset = models.Asset.objects.get(pk=asset_id)
         return models.Position.objects.create(account=account, asset=asset)
+
+    @transaction.atomic
+    def delete_transaction(self, transaction: models.Transaction) -> None:
+
+        position = transaction.position
+        account = position.account
+
+        # This assume no splits and merges support.
+        position.quantity -= transaction.quantity
+        position.save()
+        account.balance -= transaction.total_in_account_currency
+        account.save()
+        transaction.delete()
+
+    @transaction.atomic
+    def correct_transaction(self, transaction, update) -> None:
+        FIELDS_ALLOWED_FOR_UPDATE = set(
+            [
+                "executed_at",
+                "quantity",
+                "price",
+                "local_value",
+                "transaction_costs",
+                "value_in_account_currency",
+                "total_in_account_currency",
+            ]
+        )
+        for field in update.keys():
+            if field not in FIELDS_ALLOWED_FOR_UPDATE:
+                raise ValueError(
+                    f"Correcting transaction with incorrect arguments,"
+                    f"field: '{field}' not allowed "
+                )
+        position = transaction.position
+        account = position.account
+
+        position.quantity -= transaction.quantity
+        account.balance -= transaction.total_in_account_currency
+
+        for attr, value in update.items():
+            setattr(transaction, attr, value)
+
+        position.quantity += transaction.quantity
+        account.balance += transaction.total_in_account_currency
+        position.save()
+        account.save()
+        transaction.save()

@@ -101,6 +101,7 @@ class EmbeddedTransactionSerializer(serializers.ModelSerializer[Transaction]):
             "transaction_costs",
             "order_id",
             "local_value",
+            "value_in_account_currency",
         ]
 
 
@@ -226,6 +227,32 @@ class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction])
             "value_in_account_currency",
             "total_in_account_currency",
             "order_id",
+        ]
+
+
+class CorrectTransactionSerializer(serializers.ModelSerializer[Transaction]):
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
+    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+
+    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
+    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    value_in_account_currency = serializers.DecimalField(
+        max_digits=20, decimal_places=2
+    )
+    total_in_account_currency = serializers.DecimalField(
+        max_digits=20, decimal_places=2
+    )
+
+    class Meta:
+        model = Transaction
+        fields = [
+            "executed_at",
+            "quantity",
+            "price",
+            "transaction_costs",
+            "local_value",
+            "value_in_account_currency",
+            "total_in_account_currency",
         ]
 
 

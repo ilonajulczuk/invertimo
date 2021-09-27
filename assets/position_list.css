@@ -55,6 +55,12 @@ ul.position-list {
     flex-direction: column;
 }
 
+.position-name {
+    display: flex;
+    flex-direction: column;
+    flex-basis: 250px;
+}
+
 .position-card .position-name {
     display: flex;
     flex-direction: column;

@@ -10,12 +10,13 @@ export const themeOptions = {
         primary: {
             light: "hsl(184deg 51% 48%)",
             main: '#1b98a1',
-            dark: "hsl(184deg 61% 36%)"
+            dark: "hsl(184deg 61% 36%)",
         },
         secondary: {
             main: 'hsl(4deg 61% 51%)',
             dark: 'hsl(4deg 70% 42%)',
-            light: 'hsl(4deg 71% 60% / 83%)'
+            light: 'hsl(4deg 71% 60% / 83%)',
+            contrastText: '#fff',
         },
     },
     typography: {

@@ -198,7 +198,7 @@ class Position(models.Model):
     def __str__(self):
         return f"<Position account: {self.account}, " f"asset: {self.asset}>"
 
-    @functools.lru_cache
+    @functools.lru_cache(maxsize=None)
     def quantity_history(
         self,
         from_date: datetime.date,
@@ -241,7 +241,7 @@ class Position(models.Model):
 
     # This seems pretty ugly and will have to be refactored.
     # I might also want to use caching so it's not a performance nightmare.
-    @functools.lru_cache
+    @functools.lru_cache(maxsize=None)
     def value_history(
         self,
         from_date: datetime.date,
@@ -318,7 +318,7 @@ class Position(models.Model):
         return multiply_at_matching_dates(value_history, exchange_rate_tuples)
 
 
-@functools.lru_cache
+@functools.lru_cache(maxsize=10)
 def get_exchange_rates(from_date, to_date, from_currency, to_currency):
     exchange_rates = CurrencyExchangeRate.objects.order_by("-date").filter(
         date__gte=from_date,
@@ -355,7 +355,7 @@ class Transaction(models.Model):
 
     def __str__(self):
         return (
-            f"<Transaction executed_at: {self.executed_at}, position: {self.position}>"
+            f"<Transaction id: {self.pk} executed_at: {self.executed_at}, position: {self.position}>"
         )
 
     class Meta:

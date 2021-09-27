@@ -149,6 +149,8 @@ export default class Portfolio extends React.Component {
         this.getPositionDetail = this.getPositionDetail.bind(this);
         this.handleAddAccount = this.handleAddAccount.bind(this);
         this.handleAddTransaction = this.handleAddTransaction.bind(this);
+        this.handleDeleteTransaction = this.handleDeleteTransaction.bind(this);
+        this.handleCorrectTransaction = this.handleCorrectTransaction.bind(this);
     }
 
     async handleAddAccount(accountData) {
@@ -173,7 +175,19 @@ export default class Portfolio extends React.Component {
         // Reload all the data, e.g. accounts, positions, etc.
         this.refreshFromServer();
         return result;
+    }
 
+    async handleDeleteTransaction(transactionId) {
+        let result = await this.apiClient.deleteTransaction(transactionId);
+        // Reload all the data, e.g. accounts, positions, etc.
+        this.refreshFromServer();
+        return result;
+    }
+
+    async handleCorrectTransaction(transactionId, update) {
+        let result = await this.apiClient.correctTransaction(transactionId, update);
+        this.refreshFromServer();
+        return result;
     }
 
     async getPositionDetail(positionId) {
@@ -217,11 +231,12 @@ export default class Portfolio extends React.Component {
         this.apiClient.getPositions().then(
             positions => {
                 this.setState({ "positions": positions });
+                this.apiClient.getTransactions().then(
+                    transactions => {
+                        this.setState({ "transactions": transactions });
+                    });
             });
-        this.apiClient.getTransactions().then(
-            transactions => {
-                this.setState({ "transactions": transactions });
-            });
+
     }
 
     render() {
@@ -292,6 +307,8 @@ export default class Portfolio extends React.Component {
                             <ErrorBoundary>
                                 <Transactions transactions={this.state.transactions}
                                     handleAddTransaction={this.handleAddTransaction}
+                                    handleDeleteTransaction={this.handleDeleteTransaction}
+                                    handleCorrectTransaction={this.handleCorrectTransaction}
                                     accounts={this.state.accounts} />
                             </ErrorBoundary>
                         </Route>

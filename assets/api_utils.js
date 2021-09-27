@@ -7,9 +7,15 @@ import Cookies from 'js-cookie';
 
 export class APIClientError extends Error { }
 
-
+// TODO: add cache control to get requests.
 export async function fetchDetailResult(url) {
-    let response = await fetch(url);
+    let response = await fetch(url, { cache: 'no-cache', });
+    if (!response.ok) {
+        if (!response.ok) {
+            throw new APIClientError(
+                "failed at fetching data, non successful response");
+        }
+    }
     return await response.json();
 }
 
@@ -18,7 +24,7 @@ export async function fetchAllResults(url) {
 
     while (url) {
         let response;
-        response = await fetch(url);
+        response = await fetch(url, { cache: 'no-cache', });
 
         if (!response.ok) {
             throw new APIClientError(
@@ -37,11 +43,11 @@ export async function fetchAllResults(url) {
 }
 
 
-async function postData(url = '', data = {}) {
+async function submitData(url = '', data = {}, method = 'POST') {
 
     const csrftoken = Cookies.get('csrftoken');
     const response = await fetch(url, {
-        method: 'POST',
+        method: method,
         mode: 'cors',
         cache: 'no-cache',
         credentials: 'same-origin',
@@ -61,11 +67,46 @@ async function postData(url = '', data = {}) {
     }
     if (response.status == 400) {
         let data = await response.json();
+        // TODO: move this translation to a better place.
         // Translate between api and the form.
         if (data.nickname) {
             data.name = data.nickname;
         }
         return { ok: false, errors: data };
+    } else {
+        return { ok: false, message: "Failed on the server side..." };
+    }
+
+}
+
+async function postData(url = '', data = {}) {
+    return submitData(url, data, 'POST');
+}
+
+async function putData(url = '', data = {}) {
+    return submitData(url, data, 'PUT');
+}
+
+async function deleteData(url = '', data = {}) {
+
+    const csrftoken = Cookies.get('csrftoken');
+    const response = await fetch(url, {
+        method: 'DELETE',
+        mode: 'cors',
+        cache: 'no-cache',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+        },
+        redirect: 'follow',
+        referrerPolicy: 'no-referrer',
+        body: JSON.stringify(data),
+    });
+    if (response.ok) {
+        return {
+            ok: true
+        };
     } else {
         return { ok: false, message: "Failed on the server side..." };
     }
@@ -126,5 +167,13 @@ export class APIClient {
 
     async addTransactionWithCustomAsset(data) {
         return await postData(this.baseUrl + '/transactions/add_with_custom_asset/', data);
+    }
+
+    async deleteTransaction(transactionId) {
+        return await deleteData(this.baseUrl + '/transactions/' + transactionId + "/");
+    }
+
+    async correctTransaction(transactionId, update) {
+        return await putData(this.baseUrl + '/transactions/' + transactionId + "/", update);
     }
 }

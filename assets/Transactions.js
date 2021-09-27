@@ -10,16 +10,17 @@ import {
 } from "react-router-dom";
 import { TransactionList } from './TransactionList';
 
+import { TransactionDetail } from './TransactionDetail.js';
 
 export function RecordTransaction(props) {
     return (<div>
         <h2><a href="../#transactions/">Transactions</a> / record</h2>
         <RecordTransactionForm
 
-        {...props}
+            {...props}
         />
 
-        </div>);
+    </div>);
 }
 
 RecordTransaction.propTypes = {
@@ -33,7 +34,6 @@ RecordTransaction.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
 };
 
-
 export function Transactions(props) {
 
     let { path } = useRouteMatch();
@@ -45,12 +45,19 @@ export function Transactions(props) {
             </Route>
             <Route path={`${path}/record`}>
                 <RecordTransaction accounts={props.accounts}
-                 hasTransactions={props.transactions.length > 0}
-                 handleSubmit={props.handleAddTransaction} />
+                    hasTransactions={props.transactions.length > 0}
+                    handleSubmit={props.handleAddTransaction} />
 
             </Route>
+            <Route path={`${path}/:transactionId`}>
+                <TransactionDetail
+                    transactions={props.transactions}
+                    accounts={props.accounts}
+                    handleDeleteTransaction={props.handleDeleteTransaction}
+                    handleCorrectTransaction={props.handleCorrectTransaction}
+                />
+            </Route>
         </Switch>
-
     );
 }
 
@@ -66,4 +73,6 @@ Transactions.propTypes = {
         executed_at: PropTypes.string.isRequired,
     })).isRequired,
     handleAddTransaction: PropTypes.func.isRequired,
+    handleDeleteTransaction: PropTypes.func.isRequired,
+    handleCorrectTransaction: PropTypes.func.isRequired,
 };

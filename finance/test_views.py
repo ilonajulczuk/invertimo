@@ -458,7 +458,7 @@ class TestTransactionsView(ViewTestBase, TestCase):
         self.assertEqual(response.status_code, 400)
 
 
-class TestTransactionsDetailView(ViewTestBase, TestCase):
+class TestTransactionDetailView(ViewTestBase, TestCase):
     URL = "/api/transactions/%s/"
     VIEW_NAME = "transaction-detail"
     DETAIL_VIEW = True
@@ -489,3 +489,80 @@ class TestTransactionsDetailView(ViewTestBase, TestCase):
 
     def get_reversed_url(self):
         return reverse(self.VIEW_NAME, args=[self.transaction.pk])
+
+    def test_delete_transaction(self):
+
+        self.assertEqual(models.Position.objects.count(), 1)
+        position = models.Position.objects.first()
+
+        old_quantity = position.quantity
+        old_account_balance = position.account.balance
+        first_transaction = models.Transaction.objects.first()
+        middle_transaction = models.Transaction.objects.all()[3]
+
+        self.assertEqual(models.Transaction.objects.count(), 8)
+        self.client.delete(reverse(self.VIEW_NAME, args=[first_transaction.pk]))
+
+        self.assertEqual(models.Transaction.objects.count(), 7)
+        position.refresh_from_db()
+        self.assertEqual(position.quantity, old_quantity - first_transaction.quantity)
+        self.assertEqual(
+            position.account.balance,
+            old_account_balance - first_transaction.total_in_account_currency,
+        )
+        # Delete another transaction from the middle.
+        self.client.delete(reverse(self.VIEW_NAME, args=[middle_transaction.pk]))
+
+        # Test if quantity of position has changed.
+        # Test that value history has changed for the position.
+        self.assertEqual(models.Transaction.objects.count(), 6)
+        position.refresh_from_db()
+        self.assertEqual(
+            position.quantity,
+            old_quantity - first_transaction.quantity - middle_transaction.quantity,
+        )
+        self.assertEqual(
+            position.account.balance,
+            old_account_balance
+            - first_transaction.total_in_account_currency
+            - middle_transaction.total_in_account_currency,
+        )
+
+    def test_correct_transaction(self):
+        # Start with a bunch of transactions.
+        # Correcting transaction doesn't change number of transactions.
+        # But can change Position Quantity and quantity history and the account balance.
+
+        self.assertEqual(models.Position.objects.count(), 1)
+        position = models.Position.objects.first()
+
+        old_quantity = position.quantity
+        old_account_balance = position.account.balance
+
+        transaction = models.Transaction.objects.first()
+        middle_transaction = models.Transaction.objects.all()[3]
+
+        self.assertEqual(models.Transaction.objects.count(), 8)
+        response = self.client.put(
+            reverse(self.VIEW_NAME, args=[transaction.pk]),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "quantity": 12,
+                "price": 5.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 183.33,
+                "total_in_account_currency": 153.88,
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(models.Transaction.objects.count(), 8)
+        position.refresh_from_db()
+        corrected_transaction = models.Transaction.objects.get(pk=transaction.pk)
+
+        self.assertEqual(position.quantity, old_quantity - transaction.quantity + corrected_transaction.quantity)
+        self.assertEqual(
+            position.account.balance,
+            old_account_balance - transaction.total_in_account_currency + corrected_transaction.total_in_account_currency,
+        )
