@@ -2,6 +2,7 @@ import datetime
 import decimal
 import functools
 from typing import List, Optional, Tuple, Sequence
+from django.core.exceptions import ValidationError
 
 import pytz
 from django.contrib.auth.models import User
@@ -362,11 +363,24 @@ class Transaction(models.Model):
         ordering = ["-executed_at"]
 
 
+class EventType(models.IntegerChoices):
+    DEPOSIT = 1, _("DEPOSIT")
+    WITHDRAWAL = 2, _("WITHDRAWAL")
+    DIVIDEND = 3, _("DIVIDEND")
+    # TODO: add some cool crypto related ones :).
+    # Another could be split or merge.
+
+_POSITION_REQUIRED_EVENT_TYPES = (
+    EventType.DIVIDEND,
+)
+
 class AccountEvent(models.Model):
     account = models.ForeignKey(
         Account, related_name="events", on_delete=models.CASCADE
     )
     executed_at = models.DateTimeField()
+
+    event_type = models.IntegerField(choices=EventType.choices)
 
     last_modified = models.DateTimeField(auto_now=True)
     position = models.ForeignKey(
@@ -376,6 +390,14 @@ class AccountEvent(models.Model):
         null=True,
         blank=True,
     )
+
+    def clean(self):
+        if self.event_type in _POSITION_REQUIRED_EVENT_TYPES:
+            if not self.position:
+                raise ValidationError(f"Position is required for: {self.event_type}")
+        else:
+            if self.position:
+                raise ValidationError(f"Position can't be set for: {self.event_type}")
 
 
 class CurrencyExchangeRate(models.Model):
