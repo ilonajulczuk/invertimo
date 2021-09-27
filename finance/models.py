@@ -258,9 +258,13 @@ class Position(models.Model):
         )
         price_tuples = [(price.date, price.value) for price in prices]
 
+        def to_datetime(date):
+            dt = datetime.datetime.fromisoformat(date.isoformat())
+            dt = dt.replace(tzinfo=pytz.UTC)
+            return dt
         # Transactions also record price history, so add their data points.
         transactions = self.transactions.filter(
-            executed_at__gte=from_date, executed_at__lte=to_date
+            executed_at__gte=to_datetime(from_date), executed_at__lte=to_datetime(to_date)
         )
         price_tuples_from_transactions = [
             (
