@@ -4,6 +4,7 @@ from finance import models
 from finance import exchanges
 from finance.models import (
     Account,
+    AccountEvent,
     CurrencyExchangeRate,
     Exchange,
     Position,
@@ -407,3 +408,9 @@ class AccountWithValuesSerializer(serializers.ModelSerializer[Account]):
         to_date = self.context["to_date"]
 
         return obj.value_history_per_position(from_date, to_date)
+
+
+class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
+    class Meta:
+        model = AccountEvent
+        fields = '__all__'

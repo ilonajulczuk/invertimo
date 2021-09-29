@@ -259,13 +259,15 @@ class Position(models.Model):
         )
         price_tuples = [(price.date, price.value) for price in prices]
 
-        def to_datetime(date):
+        def to_datetime(date: datetime.date) -> datetime.datetime:
             dt = datetime.datetime.fromisoformat(date.isoformat())
             dt = dt.replace(tzinfo=pytz.UTC)
             return dt
+
         # Transactions also record price history, so add their data points.
         transactions = self.transactions.filter(
-            executed_at__gte=to_datetime(from_date), executed_at__lte=to_datetime(to_date)
+            executed_at__gte=to_datetime(from_date),
+            executed_at__lte=to_datetime(to_date),
         )
         price_tuples_from_transactions = [
             (
@@ -273,7 +275,8 @@ class Position(models.Model):
                 # Alternative solution: use the last price and extend it further
                 # to the future.
                 transaction.executed_at.date() + datetime.timedelta(days=1),
-                transaction.price)
+                transaction.price,
+            )
             for transaction in transactions
         ]
         price_tuples.extend(price_tuples_from_transactions)
@@ -360,9 +363,7 @@ class Transaction(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return (
-            f"<Transaction id: {self.pk} executed_at: {self.executed_at}, position: {self.position}>"
-        )
+        return f"<Transaction id: {self.pk} executed_at: {self.executed_at}, position: {self.position}>"
 
     class Meta:
         ordering = ["-executed_at"]
@@ -375,9 +376,9 @@ class EventType(models.IntegerChoices):
     # TODO: add some cool crypto related ones :).
     # Another could be split or merge.
 
-_POSITION_REQUIRED_EVENT_TYPES = (
-    EventType.DIVIDEND,
-)
+
+_POSITION_REQUIRED_EVENT_TYPES = (EventType.DIVIDEND,)
+
 
 class AccountEvent(models.Model):
     account = models.ForeignKey(
@@ -395,6 +396,8 @@ class AccountEvent(models.Model):
         null=True,
         blank=True,
     )
+
+    amount = models.DecimalField(max_digits=18, decimal_places=6)
 
     def clean(self):
         if self.event_type in _POSITION_REQUIRED_EVENT_TYPES:

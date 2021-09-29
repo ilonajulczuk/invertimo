@@ -152,8 +152,33 @@ class AccountRepository:
         return transaction
 
     @transaction.atomic
-    def add_event(self, account):
-        pass
+    def add_event(self, account, amount, executed_at, event_type, position):
+
+        if event_type == models.EventType.DEPOSIT or event_type == models.EventType.DIVIDEND:
+            assert amount > 0
+        if event_type == models.EventType.WITHDRAWAL:
+            assert amount < 0
+
+        event, created = models.AccountEvent.objects.get_or_create(
+            account=account,
+            amount=amount,
+            executed_at=executed_at,
+            event_type=event_type,
+            position=position,
+        )
+        if created:
+            account.balance += amount
+        account.save()
+
+    @transaction.atomic
+    def delete_event(self, event: models.AccountEvent) -> None:
+        account = event.account
+        # This makes sense for all currently supported events,
+        # but might not in the future.
+        account.balance -= event.amount
+        account.save()
+        event.delete()
+
 
     def _get_or_create_position(
         self, account: models.Account, isin: str, exchange: models.Exchange

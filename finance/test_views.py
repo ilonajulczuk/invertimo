@@ -4,6 +4,8 @@ import decimal
 from django.contrib.auth.models import User
 from django.db.models import Sum
 from django.test import SimpleTestCase, TestCase
+from django.utils import timezone
+
 
 from hypothesis.extra.django import TestCase as HypothesisTestCase, TransactionTestCase
 from django.urls import reverse
@@ -602,3 +604,75 @@ class TestTransactionDetailView(ViewTestBase, TestCase):
             - transaction.total_in_account_currency
             + corrected_transaction.total_in_account_currency,
         )
+
+
+def _add_account_event(account, event_type, amount, executed_at=None, position=None):
+    if executed_at is None:
+        executed_at = timezone.now()
+
+    account_repository = accounts.AccountRepository()
+    account_repository.add_event(
+        account,
+        amount=amount,
+        executed_at=executed_at,
+        event_type=event_type,
+        position=position,
+    )
+
+
+_FAKE_EVENTS_CASH_TRANSFERS = (
+    (models.EventType.DEPOSIT, decimal.Decimal("200")),
+    (models.EventType.DEPOSIT, decimal.Decimal("500")),
+    (models.EventType.WITHDRAWAL, decimal.Decimal("-350")),
+)
+
+
+class TestAccountEventListView(ViewTestBase, TestCase):
+    URL = "/api/account-events/"
+    VIEW_NAME = "account-event-list"
+    DETAIL_VIEW = False
+    QUERY_PARAMS = "?"
+    UNAUTHENTICATED_CODE = 403
+
+    def setUp(self):
+        super().setUp()
+
+        self.isin = "USA123"
+        self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
+            self.user, isin=self.isin
+        )
+        for event in _FAKE_EVENTS_CASH_TRANSFERS:
+            _add_account_event(self.account, event[0], event[1])
+
+    def test_events_present(self):
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 350)
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 3)
+
+
+class TestAccountEventDetailView(ViewTestBase, TestCase):
+    URL = "/api/account-events/%s/"
+    VIEW_NAME = "account-event-detail"
+    DETAIL_VIEW = True
+    QUERY_PARAMS = "?"
+    UNAUTHENTICATED_CODE = 403
+
+    def setUp(self):
+        super().setUp()
+
+        self.isin = "USA123"
+        self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
+            self.user, isin=self.isin
+        )
+        for event in _FAKE_EVENTS_CASH_TRANSFERS:
+            _add_account_event(self.account, event[0], event[1])
+        self.event = models.AccountEvent.objects.first()
+
+    def get_url(self):
+        return self.URL % self.event.pk
+
+    def get_reversed_url(self):
+        return reverse(self.VIEW_NAME, args=[self.event.pk])

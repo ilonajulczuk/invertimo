@@ -24,6 +24,7 @@ from finance.views import (
     TransactionsViewSet,
     CurrencyExchangeRateView,
     AssetPricesView,
+    AccountEventViewSet,
 )
 from rest_framework import routers
 
@@ -32,6 +33,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 router = routers.DefaultRouter()
 router.register(r"transactions", TransactionsViewSet, basename="transaction")
 router.register(r"accounts", AccountsViewSet, basename="account")
+router.register(r"account-events", AccountEventViewSet, basename="account-event")
 urlpatterns = [
     path("", views.index_view, name="index"),
     path("admin/", admin.site.urls),

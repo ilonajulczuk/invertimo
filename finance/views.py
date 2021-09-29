@@ -13,9 +13,16 @@ from rest_framework.decorators import action
 
 
 from finance import accounts, models
-from finance.models import CurrencyExchangeRate, Position, PriceHistory, Transaction
+from finance.models import (
+    CurrencyExchangeRate,
+    Position,
+    PriceHistory,
+    Transaction,
+    AccountEvent,
+)
 from finance.serializers import (
     AccountSerializer,
+    AccountEventSerializer,
     AccountEditSerializer,
     AccountWithValuesSerializer,
     CurrencyExchangeRateSerializer,
@@ -138,7 +145,8 @@ class PositionsView(generics.ListAPIView):
                     .order_by("-date")
                     .values("value")[:1]
                 )
-            ).order_by('id')
+            )
+            .order_by("id")
         )
 
 
@@ -259,6 +267,7 @@ class TransactionsViewSet(
             TransactionSerializer,
             AddTransactionKnownAssetSerializer,
             AddTransactionNewAssetSerializer,
+            CorrectTransactionSerializer,
         ]
     ]:
         if self.action == "create":
@@ -320,12 +329,21 @@ class TransactionsViewSet(
 
     def perform_update(self, serializer):
         account_repository = accounts.AccountRepository()
-        account_repository.correct_transaction(serializer.instance, serializer.validated_data)
+        account_repository.correct_transaction(
+            serializer.instance, serializer.validated_data
+        )
 
 
 class AccountEventViewSet(viewsets.ModelViewSet):
-    model = Transaction
-    serializer_class = TransactionSerializer
+    model = AccountEvent
+    serializer_class = AccountEventSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = LimitOffsetPagination
-    basename = "transaction"
+    basename = "account-event"
+
+    def get_queryset(self):
+        assert isinstance(self.request.user, User)
+        user = self.request.user
+        return (
+            AccountEvent.objects.filter(account__user=user)
+        )
