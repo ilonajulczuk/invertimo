@@ -152,9 +152,19 @@ class AccountRepository:
         return transaction
 
     @transaction.atomic
-    def add_event(self, account, amount, executed_at, event_type, position):
+    def add_event(
+        self,
+        account: models.Account,
+        amount: decimal.Decimal,
+        executed_at: datetime.datetime,
+        event_type: models.EventType,
+        position: Optional[models.Position] = None,
+    ) -> None:
 
-        if event_type == models.EventType.DEPOSIT or event_type == models.EventType.DIVIDEND:
+        if (
+            event_type == models.EventType.DEPOSIT
+            or event_type == models.EventType.DIVIDEND
+        ):
             assert amount > 0
         if event_type == models.EventType.WITHDRAWAL:
             assert amount < 0
@@ -178,7 +188,6 @@ class AccountRepository:
         account.balance -= event.amount
         account.save()
         event.delete()
-
 
     def _get_or_create_position(
         self, account: models.Account, isin: str, exchange: models.Exchange

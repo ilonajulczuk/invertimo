@@ -1,4 +1,10 @@
 from rest_framework import serializers
+from rest_framework.request import Request
+
+from django.db.models import QuerySet
+import datetime
+from typing import Any
+from django.contrib.auth.models import User
 
 from finance import models
 from finance import exchanges
@@ -12,14 +18,15 @@ from finance.models import (
     Asset,
     Transaction,
 )
-import datetime
-from typing import Any
 
 
 class ExchangeSerializer(serializers.ModelSerializer[Exchange]):
     class Meta:
         model = Exchange
         fields = ["id", "name"]
+
+
+# TODO: add some class to handle all this.
 
 
 class CurrencyField(serializers.IntegerField):
@@ -30,7 +37,7 @@ class CurrencyField(serializers.IntegerField):
         try:
             return models.currency_enum_from_string(value)
         except ValueError:
-            raise serializers.ValidationError(f"Invalid value to resprent currency")
+            raise serializers.ValidationError(f"Invalid value to represent currency")
 
 
 class AssetTypeField(serializers.IntegerField):
@@ -41,8 +48,18 @@ class AssetTypeField(serializers.IntegerField):
         try:
             return models.asset_type_enum_from_string(value)
         except ValueError:
-            raise serializers.ValidationError(f"Invalid value to resprent asset type")
+            raise serializers.ValidationError(f"Invalid value to represent asset type")
 
+
+class EventTypeField(serializers.IntegerField):
+    def to_representation(self, value):
+        return models.event_type_string_from_enum(value)
+
+    def to_internal_value(self, value):
+        try:
+            return models.event_type_enum_from_string(value)
+        except ValueError:
+            raise serializers.ValidationError(f"Invalid value to represent event type")
 
 
 class AssetSerializer(serializers.ModelSerializer[Asset]):
@@ -152,8 +169,12 @@ class AddTransactionKnownAssetSerializer(serializers.ModelSerializer[Transaction
     asset = serializers.IntegerField()
 
     def validate_account(self, value):
-        if not models.Account.objects.filter(user=self.context["request"].user, pk=value).exists():
-            raise serializers.ValidationError(f"User doesn't have account with id: '{value}'")
+        if not models.Account.objects.filter(
+            user=self.context["request"].user, pk=value
+        ).exists():
+            raise serializers.ValidationError(
+                f"User doesn't have account with id: '{value}'"
+            )
         return value
 
     def validate_asset(self, value):
@@ -200,15 +221,21 @@ class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction])
     asset_type = AssetTypeField()
 
     def validate_account(self, value):
-        if not models.Account.objects.filter(user=self.context["request"].user, pk=value).exists():
-            raise serializers.ValidationError(f"User doesn't have account with id: '{value}'")
+        if not models.Account.objects.filter(
+            user=self.context["request"].user, pk=value
+        ).exists():
+            raise serializers.ValidationError(
+                f"User doesn't have account with id: '{value}'"
+            )
         return value
 
     def validate_exchange(self, value):
         if value == exchanges.OTHER_OR_NA_EXCHANGE_NAME:
             return value
         if not models.Exchange.objects.filter(name=value).exists():
-            raise serializers.ValidationError(f"There is no exchange with name: '{value}'")
+            raise serializers.ValidationError(
+                f"There is no exchange with name: '{value}'"
+            )
         return value
 
     class Meta:
@@ -411,6 +438,19 @@ class AccountWithValuesSerializer(serializers.ModelSerializer[Account]):
 
 
 class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
+    event_type = EventTypeField()
+
     class Meta:
         model = AccountEvent
-        fields = '__all__'
+        fields = "__all__"
+
+    def get_extra_kwargs(self):
+        kwargs = super().get_extra_kwargs()
+        kwargs["account"] = {"queryset": self.get_account_queryset()}
+        return kwargs
+
+    def get_account_queryset(self) -> QuerySet[models.Account]:
+        request = self.context.get("request")
+        assert isinstance(request, Request)
+        assert isinstance(request.user, User)
+        return models.Account.objects.filter(user=request.user)

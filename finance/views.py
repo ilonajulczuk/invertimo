@@ -55,7 +55,6 @@ class AccountsViewSet(viewsets.ModelViewSet):
     def get_serializer_context(self) -> Dict[str, Any]:
         context: Dict[str, Any] = super().get_serializer_context()
         context["request"] = self.request
-
         query = FromToDatesSerializer(data=self.request.query_params)
 
         if query.is_valid(raise_exception=True):
@@ -341,9 +340,28 @@ class AccountEventViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     basename = "account-event"
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[AccountEvent]:
         assert isinstance(self.request.user, User)
         user = self.request.user
-        return (
-            AccountEvent.objects.filter(account__user=user)
+        return AccountEvent.objects.filter(account__user=user)
+
+    def get_serializer_context(self) -> Dict[str, Any]:
+        context: Dict[str, Any] = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
         )
+        serializer.is_valid(raise_exception=True)
+        assert isinstance(self.request.user, User)
+        account_repository = accounts.AccountRepository()
+        arguments = serializer.validated_data.copy()
+        account_repository.add_event(**arguments)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
+
+    # TODO: delete and update views should use the repository to be correct.

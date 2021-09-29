@@ -380,6 +380,17 @@ class EventType(models.IntegerChoices):
 _POSITION_REQUIRED_EVENT_TYPES = (EventType.DIVIDEND,)
 
 
+def event_type_enum_from_string(event_type: str) -> EventType:
+    try:
+        return EventType[event_type]
+    except KeyError:
+        raise ValueError("Unsupported event_type '%s'" % event_type)
+
+
+def event_type_string_from_enum(event_type: EventType) -> str:
+    return EventType(event_type).label
+
+
 class AccountEvent(models.Model):
     account = models.ForeignKey(
         Account, related_name="events", on_delete=models.CASCADE

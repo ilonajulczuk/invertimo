@@ -652,6 +652,49 @@ class TestAccountEventListView(ViewTestBase, TestCase):
         data = response.json()
         self.assertEqual(len(data), 3)
 
+    def test_add_event(self):
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 350)
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "amount": 4.5,
+            "event_type": "DEPOSIT",
+            "account": self.account.pk,
+        }
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(
+            data,
+            {
+                "account": self.account.pk,
+                "amount": "4.500000",
+                "event_type": "DEPOSIT",
+                "executed_at": "2021-03-04T00:00:00Z",
+                "position": None,
+            },
+        )
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 354.5)
+
+    def test_add_event_to_other_user_account(self):
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 350)
+        user2 = User.objects.create(username="anotheruser", email="test2@example.com")
+        self.client.force_login(user2)
+
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "amount": 4.5,
+            "event_type": "DEPOSIT",
+            "account": self.account.pk,
+        }
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 400)
+
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 350)
+
 
 class TestAccountEventDetailView(ViewTestBase, TestCase):
     URL = "/api/account-events/%s/"
