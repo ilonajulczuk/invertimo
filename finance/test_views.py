@@ -719,3 +719,17 @@ class TestAccountEventDetailView(ViewTestBase, TestCase):
 
     def get_reversed_url(self):
         return reverse(self.VIEW_NAME, args=[self.event.pk])
+
+    def test_delete_event(self):
+        self.assertEqual(models.AccountEvent.objects.count(), 3)
+        event = models.AccountEvent.objects.first()
+        account = event.account
+        old_account_balance = account.balance
+        self.client.delete(reverse(self.VIEW_NAME, args=[event.pk]))
+
+        self.assertEqual(models.AccountEvent.objects.count(), 2)
+        account.refresh_from_db()
+        self.assertEqual(
+            account.balance,
+            old_account_balance - event.amount,
+        )

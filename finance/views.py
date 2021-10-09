@@ -235,14 +235,7 @@ class PositionView(generics.RetrieveAPIView):
         return context
 
 
-class TransactionsViewSet(
-    mixins.ListModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.CreateModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
+class TransactionsViewSet(viewsets.ModelViewSet):
     model = Transaction
     serializer_class = TransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -333,7 +326,13 @@ class TransactionsViewSet(
         )
 
 
-class AccountEventViewSet(viewsets.ModelViewSet):
+class AccountEventViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
     model = AccountEvent
     serializer_class = AccountEventSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -364,4 +363,6 @@ class AccountEventViewSet(viewsets.ModelViewSet):
             serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )
 
-    # TODO: delete and update views should use the repository to be correct.
+    def perform_destroy(self, instance):
+        account_repository = accounts.AccountRepository()
+        account_repository.delete_event(instance)
