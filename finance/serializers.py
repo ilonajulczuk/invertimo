@@ -458,7 +458,6 @@ class RelatedPkField(serializers.IntegerField):
 
 class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
     event_type = EventTypeField()
-
     account = RelatedPkField(model=models.Account)
     position = RelatedPkField(model=models.Position)
 
@@ -505,3 +504,18 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
                 f"User doesn't have a account with id: '{value.pk}'"
             )
         return value
+
+    def validate(self, data):
+        if data["event_type"] == models.EventType.WITHDRAWAL:
+            if data["amount"] >= 0:
+                raise serializers.ValidationError({'amount': "For withdrawal the amount needs to be negative"})
+        else:
+            if data["amount"] < 0:
+                raise serializers.ValidationError({'amount': "Amount can't be negative unless it's a withdrawal"})
+        if data["event_type"] == models.EventType.DIVIDEND:
+            if data["position"] is None:
+                raise serializers.ValidationError({'position': "Position can't be empty for dividend event"})
+        else:
+            if data["position"] is not None:
+                raise serializers.ValidationError({'position': "Position can't be set for this type of event"})
+        return data

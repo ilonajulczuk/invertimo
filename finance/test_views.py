@@ -698,13 +698,93 @@ class TestAccountEventListView(ViewTestBase, TestCase):
         self.assertEqual(self.account.balance, 350)
 
     def test_add_withdrawal(self):
-        # Test validation for amount being negative.
-        pass
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 350)
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "amount": -4.5,
+            "event_type": "WITHDRAWAL",
+            "account": self.account.pk,
+            "position": "",
+        }
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(
+            data,
+            {
+                "account": self.account.pk,
+                "amount": "-4.500000",
+                "event_type": "WITHDRAWAL",
+                "executed_at": "2021-03-04T00:00:00Z",
+                "position": None,
+            },
+        )
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 345.5)
 
     def test_add_dividend(self):
         # Test for position being set correctly.
-        pass
+        self.account.refresh_from_db()
+        for transaction in _FAKE_TRANSACTIONS:
+            _add_transaction(
+                self.account,
+                self.isin,
+                self.exchange,
+                transaction[0],
+                transaction[1],
+                transaction[2],
+            )
 
+        self.assertEqual(self.account.balance, 354)
+
+
+        position = models.Position.objects.first()
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "amount": 4.5,
+            "event_type": "DIVIDEND",
+            "account": self.account.pk,
+            "position": position.pk,
+        }
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(
+            data,
+            {
+                "account": self.account.pk,
+                "amount": "4.500000",
+                "event_type": "DIVIDEND",
+                "executed_at": "2021-03-04T00:00:00Z",
+                "position": position.pk,
+            },
+        )
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 358.5)
+
+        # Now let's test for some invalid inputs.
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "amount": 4.5,
+            "event_type": "DIVIDEND",
+            "account": self.account.pk,
+            "position": "",
+        }
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue("position" in response.json())
+
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "amount": -4.5,
+            "event_type": "DIVIDEND",
+            "account": self.account.pk,
+            "position": position.pk,
+        }
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue("amount" in response.json())
 
 class TestAccountEventDetailView(ViewTestBase, TestCase):
     URL = "/api/account-events/%s/"
