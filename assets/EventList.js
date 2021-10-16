@@ -10,6 +10,7 @@ import './transaction_list.css';
 import Button from '@material-ui/core/Button';
 
 import { makeStyles } from '@material-ui/core/styles';
+import { trimTrailingDecimalZeroes } from './display_utils.js';
 
 const useStyles = makeStyles({
     header: {
@@ -71,7 +72,7 @@ export function EventList(props) {
         };
         eventCopy.amount = {
             displayValue: (
-                event.amount + toSymbol(account.currency)
+                trimTrailingDecimalZeroes(event.amount) + toSymbol(account.currency)
             ),
             comparisonKey: event.amount
         };
