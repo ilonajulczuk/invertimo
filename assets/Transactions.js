@@ -71,7 +71,7 @@ Transactions.propTypes = {
         local_value: PropTypes.string.isRequired,
         transaction_costs: PropTypes.string,
         executed_at: PropTypes.string.isRequired,
-    })).isRequired,
+    })),
     handleAddTransaction: PropTypes.func.isRequired,
     handleDeleteTransaction: PropTypes.func.isRequired,
     handleCorrectTransaction: PropTypes.func.isRequired,

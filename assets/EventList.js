@@ -56,6 +56,10 @@ export function EventList(props) {
 
     let accountsById = new Map(props.accounts.map(account => [account.id, account]));
 
+    if (props.events === null) {
+        return <div>Loading events...</div>;
+    }
+
     const events = props.events.map(event => {
         let eventCopy = { ...event };
         let date = new Date(eventCopy.executed_at);
@@ -124,6 +128,6 @@ export function EventList(props) {
 
 EventList.propTypes = {
     accounts: PropTypes.array.isRequired,
-    events: PropTypes.array.isRequired,
+    events: PropTypes.array,
     positions: PropTypes.array.isRequired,
 };

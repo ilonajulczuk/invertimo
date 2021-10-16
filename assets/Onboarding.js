@@ -104,9 +104,13 @@ export function Onboarding(props) {
         <AccountCard key={account.id} nickname={account.nickname} currency={account.currency} />)
     );
 
+    let numTransactions = "?";
+    let hasTransactions = false;
     const hasAccounts = props.accounts.length > 0;
-    const numTransactions = props.transactions.length;
-    const hasTransactions = numTransactions > 0;
+    if (props.transactions !== null) {
+        numTransactions =  props.transactions.length;
+        hasTransactions = numTransactions > 0;
+    }
 
     const steps = [
         {
@@ -191,7 +195,7 @@ export function Onboarding(props) {
 
 Onboarding.propTypes = {
     accounts: PropTypes.array.isRequired,
-    transactions: PropTypes.array.isRequired,
+    transactions: PropTypes.array,
     handleAddAccount: PropTypes.func.isRequired,
     handleAddTransaction: PropTypes.func.isRequired,
 };

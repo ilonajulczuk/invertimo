@@ -98,7 +98,7 @@ export function TransactionList(props) {
 
     let accountsById = new Map(props.accounts.map(account => [account.id, account]));
 
-    if (props.transactions == null) {
+    if (props.transactions === null) {
         return <div>Loading...</div>;
     }
     const transactions = props.transactions.map(transaction => {
@@ -201,5 +201,5 @@ TransactionList.propTypes = {
         local_value: PropTypes.string.isRequired,
         transaction_costs: PropTypes.string,
         executed_at: PropTypes.string.isRequired,
-    })).isRequired,
+    })),
 };

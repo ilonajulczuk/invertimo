@@ -140,7 +140,7 @@ export default class Portfolio extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            "positions": [],
+            "positions": null,
             "positionDetails": new Map(),
             "accounts": null,
             "transactions": null,
@@ -248,18 +248,62 @@ export default class Portfolio extends React.Component {
     render() {
         const userEmail = JSON.parse(document.getElementById('userEmail').textContent);
 
+
+        const navBar = <nav className="sidenav">
+            <ul>
+                <li>
+                    <NavLink to="/" exact={true}>Home</NavLink>
+                </li>
+                <li>
+                    <NavLink to="/positions">Positions</NavLink>
+                </li>
+                <li>
+                    <NavLink to="/transactions">Transactions</NavLink>
+                </li>
+                <li>
+                    <NavLink to="/events">Events</NavLink>
+                </li>
+            </ul>
+        </nav>;
+
         // If there are no accounts loaded yet, there isn't much to show.
         // TODO: start displaying sth useful even if the big part is still loading.
-        if (this.state.accounts === null || this.state.transactions === null || this.state.events == null) {
+        if (this.state.accounts === null ) {
             return (<div className="main-grid">
                 <Header email={userEmail} />
+                {navBar}
+                <div className="main-content">
+                    <div>
+                        <h2>Portfolio</h2>
+                        <p>Loading basic info...</p>
+                    </div>
+                </div>
+            </div>);
+        }
+        if (this.state.positions === null || this.state.accountValues.size !== this.state.accounts.length) {
+            return (<div className="main-grid">
+                <Header email={userEmail} />
+                {navBar}
+                <div className="main-content">
+                    <h2>Portfolio</h2>
+                    <div>
+                        <p>Loading graphs and counting your investments...</p>
+                    </div>
+                </div>
             </div>);
         }
 
         // If the accounts are loaded, but there is nothing there, start an onboarding wizard.
         const newUser = this.state.accounts.length == 0;
 
-        const noTransactions = this.state.transactions.length == 0;
+        let numTransactions = 0;
+        if (!newUser) {
+            for (let account of this.state.accounts) {
+                numTransactions += account.transactions_count;
+            }
+        }
+        const noTransactions = numTransactions == 0;
+
 
         let accountValues = this.state.accounts.filter(account =>
             this.state.accountValues.get(account.id)).map((account) => {
@@ -294,23 +338,8 @@ export default class Portfolio extends React.Component {
         return (
             <div className="main-grid">
                 <Header email={userEmail} />
-                <nav className="sidenav">
-                    <ul>
-                        <li>
-                            <NavLink to="/" exact={true}>Home</NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/positions">Positions</NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/transactions">Transactions</NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/events">Events</NavLink>
-                        </li>
-                    </ul>
-                </nav>
 
+                {navBar}
                 <div className="main-content">
                     <Switch>
                         <Route path="/transactions">
@@ -342,7 +371,6 @@ export default class Portfolio extends React.Component {
                             />
                         </Route>
                         <Route path="/">
-
                             {redirectOrDisplay}
                         </Route>
 
