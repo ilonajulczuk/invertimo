@@ -331,7 +331,7 @@ export default class Portfolio extends React.Component {
                         <Route path="/events">
                             <ErrorBoundary>
                                 <EventList
-                                    accounts={this.state.accounts} events={this.state.events} />
+                                    accounts={this.state.accounts} events={this.state.events} positions={this.state.positions} />
                             </ErrorBoundary>
                         </Route>
                         <Route path="/start/:stepName">

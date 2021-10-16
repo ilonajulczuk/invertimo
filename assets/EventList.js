@@ -16,8 +16,32 @@ const useStyles = makeStyles({
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
+    },
+    eventType: {
+        display: "flex",
+        alignItems: "center",
     }
 });
+
+function EventTypeDisplay({eventType}) {
+    const classes = useStyles();
+
+    if (eventType === "DEPOSIT") {
+        return <span className={classes.eventType}><Icon>sync_alt</Icon>Deposit</span>;
+    }
+    else if (eventType === "WITHDRAWAL") {
+        return <span className={classes.eventType}><Icon>sync_alt</Icon>Withdrawal</span>;
+    } else if (eventType === "DIVIDEND") {
+        return <span className={classes.eventType}><Icon>paid</Icon>Dividend</span>;
+    } else {
+        <span>{eventType}</span>;
+    }
+}
+
+EventTypeDisplay.propTypes = {
+    eventType: PropTypes.string.isRequired,
+};
+
 
 export function EventList(props) {
 
@@ -28,7 +52,6 @@ export function EventList(props) {
         { id: 'position', label: 'Position' },
         { id: 'amount', label: 'Value' },
         { id: 'executed_at', label: 'Executed At' },
-        { id: 'interaction', label: '' },
     ];
 
     let accountsById = new Map(props.accounts.map(account => [account.id, account]));
@@ -41,6 +64,37 @@ export function EventList(props) {
         eventCopy.account = {
             displayValue: (<a href={`#/accounts/${event.account}`}>{account.nickname}</a>),
             comparisonKey: event.account,
+        };
+        eventCopy.amount = {
+            displayValue: (
+                event.amount + toSymbol(account.currency)
+            ),
+            comparisonKey: event.amount
+        };
+        let positionDisplay = "None";
+        if (event.position) {
+            let position = null;
+            for (let pos of props.positions) {
+                if (event.position === pos.id) {
+                    position = pos;
+                }
+            }
+            if (position) {
+                positionDisplay = (
+                    <div className="position-name">
+                        <span className="card-label">{position.asset.isin}</span>
+                        <a href={`#positions/${position.id}`}><span className="position-symbol">{position.asset.symbol}</span></a>
+                        <span>{position.asset.name}</span>
+                    </div>
+                );
+            }
+        }
+        eventCopy.position = {
+            displayValue: positionDisplay,
+            comparisonKey: event.position,
+        };
+        eventCopy.event_type = {
+            displayValue: <EventTypeDisplay eventType={event.event_type}/>
         };
         return eventCopy;
     });
@@ -71,4 +125,5 @@ export function EventList(props) {
 EventList.propTypes = {
     accounts: PropTypes.array.isRequired,
     events: PropTypes.array.isRequired,
+    positions: PropTypes.array.isRequired,
 };
