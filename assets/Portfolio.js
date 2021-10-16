@@ -1,6 +1,7 @@
 import React from 'react';
 import './portfolio.css';
 import { PositionList } from './PositionList.js';
+import { EventList } from './EventList.js';
 import { AccountValue } from './AccountValue.js';
 import { Header } from './Header.js';
 import { APIClient } from './api_utils.js';
@@ -143,6 +144,7 @@ export default class Portfolio extends React.Component {
             "positionDetails": new Map(),
             "accounts": null,
             "transactions": null,
+            "events": null,
             "accountValues": new Map(),
         };
         this.apiClient = new APIClient('./api');
@@ -236,14 +238,19 @@ export default class Portfolio extends React.Component {
                         this.setState({ "transactions": transactions });
                     });
             });
-
+        this.apiClient.getEvents().then(
+            events => {
+                this.setState({ "events": events });
+            }
+        );
     }
 
     render() {
         const userEmail = JSON.parse(document.getElementById('userEmail').textContent);
 
         // If there are no accounts loaded yet, there isn't much to show.
-        if (this.state.accounts === null || this.state.transactions === null) {
+        // TODO: start displaying sth useful even if the big part is still loading.
+        if (this.state.accounts === null || this.state.transactions === null || this.state.events == null) {
             return (<div className="main-grid">
                 <Header email={userEmail} />
             </div>);
@@ -298,6 +305,9 @@ export default class Portfolio extends React.Component {
                         <li>
                             <NavLink to="/transactions">Transactions</NavLink>
                         </li>
+                        <li>
+                            <NavLink to="/events">Events</NavLink>
+                        </li>
                     </ul>
                 </nav>
 
@@ -316,6 +326,12 @@ export default class Portfolio extends React.Component {
                             <ErrorBoundary>
                                 <PositionList positions={this.state.positions}
                                     accounts={this.state.accounts} getPositionDetail={this.getPositionDetail} />
+                            </ErrorBoundary>
+                        </Route>
+                        <Route path="/events">
+                            <ErrorBoundary>
+                                <EventList
+                                    accounts={this.state.accounts} events={this.state.events} />
                             </ErrorBoundary>
                         </Route>
                         <Route path="/start/:stepName">

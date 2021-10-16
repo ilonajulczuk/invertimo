@@ -660,6 +660,7 @@ class TestAccountEventListView(ViewTestBase, TestCase):
             "amount": 4.5,
             "event_type": "DEPOSIT",
             "account": self.account.pk,
+            "position": "",
         }
         response = self.client.post(self.get_url(), data)
         self.assertEqual(response.status_code, 201)
@@ -688,12 +689,21 @@ class TestAccountEventListView(ViewTestBase, TestCase):
             "amount": 4.5,
             "event_type": "DEPOSIT",
             "account": self.account.pk,
+            "position": "",
         }
         response = self.client.post(self.get_url(), data)
         self.assertEqual(response.status_code, 400)
 
         self.account.refresh_from_db()
         self.assertEqual(self.account.balance, 350)
+
+    def test_add_withdrawal(self):
+        # Test validation for amount being negative.
+        pass
+
+    def test_add_dividend(self):
+        # Test for position being set correctly.
+        pass
 
 
 class TestAccountEventDetailView(ViewTestBase, TestCase):

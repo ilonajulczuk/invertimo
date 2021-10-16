@@ -342,7 +342,7 @@ class AccountEventViewSet(
     def get_queryset(self) -> QuerySet[AccountEvent]:
         assert isinstance(self.request.user, User)
         user = self.request.user
-        return AccountEvent.objects.filter(account__user=user)
+        return AccountEvent.objects.filter(account__user=user).prefetch_related("position").prefetch_related("account")
 
     def get_serializer_context(self) -> Dict[str, Any]:
         context: Dict[str, Any] = super().get_serializer_context()

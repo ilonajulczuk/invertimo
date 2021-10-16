@@ -121,20 +121,17 @@ export class APIClient {
 
     async getAccounts() {
         let url = this.baseUrl + '/accounts/?limit=50';
-        let accounts = await fetchAllResults(url);
-        return accounts;
+        return fetchAllResults(url);
     }
 
     async getPositions() {
         let url = this.baseUrl + '/positions/?limit=50';
-        let positions = await fetchAllResults(url);
-        return positions;
+        return fetchAllResults(url);
     }
 
     async getTransactions() {
         let url = this.baseUrl + '/transactions/?limit=50';
-        let transactions = await fetchAllResults(url);
-        return transactions;
+        return fetchAllResults(url);
     }
 
     async getPositionDetail(positionId) {
@@ -175,5 +172,10 @@ export class APIClient {
 
     async correctTransaction(transactionId, update) {
         return await putData(this.baseUrl + '/transactions/' + transactionId + "/", update);
+    }
+
+    async getEvents() {
+        let url = this.baseUrl + '/account-events/?limit=50';
+        return fetchAllResults(url);
     }
 }

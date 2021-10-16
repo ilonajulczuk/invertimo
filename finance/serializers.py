@@ -51,7 +51,7 @@ class AssetTypeField(serializers.IntegerField):
             raise serializers.ValidationError(f"Invalid value to represent asset type")
 
 
-class EventTypeField(serializers.IntegerField):
+class EventTypeField(serializers.CharField):
     def to_representation(self, value):
         return models.event_type_string_from_enum(value)
 
@@ -437,16 +437,39 @@ class AccountWithValuesSerializer(serializers.ModelSerializer[Account]):
         return obj.value_history_per_position(from_date, to_date)
 
 
+class RelatedPkField(serializers.IntegerField):
+    def __init__(self, model, **kwargs):
+        self._model = model
+        super().__init__(**kwargs)
+
+    def to_internal_value(self, data):
+        if data:
+            try:
+                return self._model.objects.get(pk=data)
+            except self._model.DoesNotExist:
+                raise serializers.ValidationError(
+                    f"User doesn't have a account with id: '{data}'"
+                )
+
+    def to_representation(self, value):
+        if value:
+            return value.pk
+
+
 class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
     event_type = EventTypeField()
 
+    account = RelatedPkField(model=models.Account)
+    position = RelatedPkField(model=models.Position)
+
     class Meta:
         model = AccountEvent
-        fields = "__all__"
+        fields = ["id", "event_type", "executed_at", "amount", "account", "position"]
 
     def get_extra_kwargs(self):
         kwargs = super().get_extra_kwargs()
-        kwargs["account"] = {"queryset": self.get_account_queryset()}
+        kwargs["account"] = kwargs.get("account", {})
+        kwargs["account"]["queryset"] = self.get_account_queryset()
         return kwargs
 
     def get_account_queryset(self) -> QuerySet[models.Account]:
@@ -454,3 +477,31 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
         assert isinstance(request, Request)
         assert isinstance(request.user, User)
         return models.Account.objects.filter(user=request.user)
+
+    def get_position_queryset(self) -> QuerySet[models.Account]:
+        request = self.context.get("request")
+        assert isinstance(request, Request)
+        assert isinstance(request.user, User)
+        return models.Position.objects.filter(account__user=request.user)
+
+    def validate_position(self, value):
+        if value is None:
+            return value
+        if not models.Position.objects.filter(
+            account__user=self.context["request"].user, pk=value.pk
+        ).exists():
+            raise serializers.ValidationError(
+                f"User doesn't have a position with id: '{value.pk}'"
+            )
+        return value
+
+    def validate_account(self, value):
+        if value is None:
+            raise serializers.ValidationError(f"Account can't be empty")
+        if not models.Account.objects.filter(
+            user=self.context["request"].user, pk=value.pk
+        ).exists():
+            raise serializers.ValidationError(
+                f"User doesn't have a account with id: '{value.pk}'"
+            )
+        return value
