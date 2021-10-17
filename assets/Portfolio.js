@@ -1,7 +1,7 @@
 import React from 'react';
 import './portfolio.css';
 import { PositionList } from './PositionList.js';
-import { EventList } from './EventList.js';
+import { Events } from './Events.js';
 import { AccountValue } from './AccountValue.js';
 import { Header } from './Header.js';
 import { APIClient } from './api_utils.js';
@@ -359,7 +359,7 @@ export default class Portfolio extends React.Component {
                         </Route>
                         <Route path="/events">
                             <ErrorBoundary>
-                                <EventList
+                                <Events
                                     accounts={this.state.accounts} events={this.state.events} positions={this.state.positions} />
                             </ErrorBoundary>
                         </Route>

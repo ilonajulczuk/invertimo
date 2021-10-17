@@ -1,16 +1,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import Icon from '@material-ui/core/Icon';
+import Button from '@material-ui/core/Button';
+import { makeStyles } from '@material-ui/core/styles';
+
+import './transaction_list.css';
 
 import { ErrorBoundary } from './error_utils.js';
 import { TableWithSort } from './components/TableWithSort.js';
 import { toSymbol } from './currencies.js';
-import Icon from '@material-ui/core/Icon';
-
-import './transaction_list.css';
-import Button from '@material-ui/core/Button';
-
-import { makeStyles } from '@material-ui/core/styles';
 import { trimTrailingDecimalZeroes } from './display_utils.js';
+
 
 const useStyles = makeStyles({
     header: {
@@ -24,7 +24,8 @@ const useStyles = makeStyles({
     }
 });
 
-function EventTypeDisplay({eventType}) {
+
+function EventTypeDisplay({ eventType }) {
     const classes = useStyles();
 
     if (eventType === "DEPOSIT") {
@@ -38,6 +39,7 @@ function EventTypeDisplay({eventType}) {
         <span>{eventType}</span>;
     }
 }
+
 
 EventTypeDisplay.propTypes = {
     eventType: PropTypes.string.isRequired,
@@ -99,24 +101,34 @@ export function EventList(props) {
             comparisonKey: event.position,
         };
         eventCopy.event_type = {
-            displayValue: <EventTypeDisplay eventType={event.event_type}/>
+            displayValue: <EventTypeDisplay eventType={event.event_type} />
         };
         return eventCopy;
     });
-
 
     return (
         <ErrorBoundary>
             <div className={classes.header}>
                 <h2>Events</h2>
-                <Button
-                    href="#/events/record"
-                    variant="contained"
-                    color="secondary"
-                >
-                    <Icon>create</Icon>
-                    Record event
+                <div style={{display: "flex", gap: "5px"}}>
+                    <Button
+                        href="#/events/record_transfer"
+                        variant="contained"
+                        color="secondary"
+                    >
+                        <Icon>sync_alt</Icon>
+                    Record transfer
                 </Button>
+                    <Button
+                        href="#/events/record_dividend"
+                        variant="contained"
+                        color="secondary"
+                    >
+                        <Icon>paid</Icon>
+                    Record dividend
+                </Button>
+                </div>
+
             </div>
             <TableWithSort
                 rows={events}

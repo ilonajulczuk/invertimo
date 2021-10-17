@@ -1,22 +1,20 @@
 import React from 'react';
-
 import PropTypes from 'prop-types';
-import { RecordTransactionForm } from './forms/RecordTransactionForm.js';
-
 import {
     Switch,
     Route,
     useRouteMatch
 } from "react-router-dom";
-import { TransactionList } from './TransactionList';
 
+import { RecordTransactionForm } from './forms/RecordTransactionForm.js';
+import { TransactionList } from './TransactionList';
 import { TransactionDetail } from './TransactionDetail.js';
+
 
 export function RecordTransaction(props) {
     return (<div>
         <h2><a href="../#transactions/">Transactions</a> / record</h2>
         <RecordTransactionForm
-
             {...props}
         />
 
