@@ -178,4 +178,9 @@ export class APIClient {
         let url = this.baseUrl + '/account-events/?limit=50';
         return fetchAllResults(url);
     }
+
+    async addEvent(data) {
+        let url = this.baseUrl + '/account-events/';
+        return postData(url, data);
+    }
 }

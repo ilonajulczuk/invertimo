@@ -153,6 +153,7 @@ export default class Portfolio extends React.Component {
         this.handleAddTransaction = this.handleAddTransaction.bind(this);
         this.handleDeleteTransaction = this.handleDeleteTransaction.bind(this);
         this.handleCorrectTransaction = this.handleCorrectTransaction.bind(this);
+        this.handleAddEvent = this.handleAddEvent.bind(this);
     }
 
     async handleAddAccount(accountData) {
@@ -212,6 +213,12 @@ export default class Portfolio extends React.Component {
 
     }
 
+    async handleAddEvent(data) {
+        let result = await this.apiClient.addEvent(data);
+        this.refreshFromServer();
+        return result;
+    }
+
     async componentDidMount() {
         this.refreshFromServer();
     }
@@ -268,13 +275,13 @@ export default class Portfolio extends React.Component {
 
         // If there are no accounts loaded yet, there isn't much to show.
         // TODO: start displaying sth useful even if the big part is still loading.
-        if (this.state.accounts === null ) {
+        if (this.state.accounts === null) {
             return (<div className="main-grid">
                 <Header email={userEmail} />
                 {navBar}
                 <div className="main-content">
                     <div>
-                        <h2>Portfolio</h2>
+                        <h2>Loading...</h2>
                         <p>Loading basic info...</p>
                     </div>
                 </div>
@@ -285,7 +292,7 @@ export default class Portfolio extends React.Component {
                 <Header email={userEmail} />
                 {navBar}
                 <div className="main-content">
-                    <h2>Portfolio</h2>
+                    <h2>Loading...</h2>
                     <div>
                         <p>Loading graphs and counting your investments...</p>
                     </div>
@@ -303,7 +310,6 @@ export default class Portfolio extends React.Component {
             }
         }
         const noTransactions = numTransactions == 0;
-
 
         let accountValues = this.state.accounts.filter(account =>
             this.state.accountValues.get(account.id)).map((account) => {
@@ -335,6 +341,23 @@ export default class Portfolio extends React.Component {
                     </ErrorBoundary>
                 </div>);
         }
+        let maybeTransactions = <h2>Loading transactions...</h2>;
+        if (this.state.transactions !== null) {
+            maybeTransactions = <Transactions transactions={this.state.transactions}
+                handleAddTransaction={this.handleAddTransaction}
+                handleDeleteTransaction={this.handleDeleteTransaction}
+                handleCorrectTransaction={this.handleCorrectTransaction}
+                accounts={this.state.accounts} />;
+        }
+        let maybeEvents = <h2>Loading events...</h2>;
+        if (this.state.events !== null) {
+            maybeEvents = (<Events
+                accounts={this.state.accounts}
+                events={this.state.events} positions={this.state.positions}
+                handleAddEvent={this.handleAddEvent}
+                />
+            );
+        }
         return (
             <div className="main-grid">
                 <Header email={userEmail} />
@@ -344,11 +367,7 @@ export default class Portfolio extends React.Component {
                     <Switch>
                         <Route path="/transactions">
                             <ErrorBoundary>
-                                <Transactions transactions={this.state.transactions}
-                                    handleAddTransaction={this.handleAddTransaction}
-                                    handleDeleteTransaction={this.handleDeleteTransaction}
-                                    handleCorrectTransaction={this.handleCorrectTransaction}
-                                    accounts={this.state.accounts} />
+                                {maybeTransactions}
                             </ErrorBoundary>
                         </Route>
                         <Route path="/positions">
@@ -359,8 +378,7 @@ export default class Portfolio extends React.Component {
                         </Route>
                         <Route path="/events">
                             <ErrorBoundary>
-                                <Events
-                                    accounts={this.state.accounts} events={this.state.events} positions={this.state.positions} />
+                                {maybeEvents}
                             </ErrorBoundary>
                         </Route>
                         <Route path="/start/:stepName">

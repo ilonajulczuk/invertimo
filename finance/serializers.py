@@ -446,7 +446,7 @@ class RelatedPkField(serializers.IntegerField):
         if data:
             try:
                 return self._model.objects.get(pk=data)
-            except self._model.DoesNotExist:
+            except (self._model.DoesNotExist, TypeError):
                 raise serializers.ValidationError(
                     f"User doesn't have a account with id: '{data}'"
                 )
