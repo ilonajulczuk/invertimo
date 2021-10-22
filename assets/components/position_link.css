@@ -1,0 +1,18 @@
+.position-name {
+    display: flex;
+    flex-direction: column;
+    flex-basis: 250px;
+}
+
+.card-label {
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #1a777d;
+    font-size: 0.7em;
+    margin-bottom: 0.5em;
+}
+
+.position-symbol {
+    font-weight: bold;
+    font-size: 1.5em;
+}

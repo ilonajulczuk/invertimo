@@ -10,6 +10,7 @@ import { ErrorBoundary } from './error_utils.js';
 import { TableWithSort } from './components/TableWithSort.js';
 import { toSymbol } from './currencies.js';
 import { trimTrailingDecimalZeroes } from './display_utils.js';
+import { PositionLink } from './components/PositionLink';
 
 
 const useStyles = makeStyles({
@@ -83,13 +84,7 @@ export function EventList(props) {
                 }
             }
             if (position) {
-                positionDisplay = (
-                    <div className="position-name">
-                        <span className="card-label">{position.asset.isin}</span>
-                        <a href={`#positions/${position.id}`}><span className="position-symbol">{position.asset.symbol}</span></a>
-                        <span>{position.asset.name}</span>
-                    </div>
-                );
+                positionDisplay = <PositionLink position={position} />;
             }
         }
         eventCopy.position = {
