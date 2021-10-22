@@ -63,7 +63,10 @@ export function EventList(props) {
     const events = props.events.map(event => {
         let eventCopy = { ...event };
         let date = new Date(eventCopy.executed_at);
-        eventCopy.executed_at = date.toLocaleDateString();
+        eventCopy.executed_at = {
+            displayValue: date.toLocaleDateString(),
+            comparisonKey: date,
+        };
         let account = accountsById.get(event.account);
         eventCopy.account = {
             displayValue: (<a href={`#/accounts/${event.account}`}>{account.nickname}</a>),
@@ -94,6 +97,7 @@ export function EventList(props) {
         eventCopy.event_type = {
             displayValue: <EventTypeDisplay eventType={event.event_type} />
         };
+
         return eventCopy;
     });
 

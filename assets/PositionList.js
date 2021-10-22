@@ -29,7 +29,6 @@ export function PositionList(props) {
 
     let accountsById = new Map(props.accounts.map(account => [account.id, account]));
 
-
     let { path } = useRouteMatch();
 
     const positions = props.positions.map(position => {

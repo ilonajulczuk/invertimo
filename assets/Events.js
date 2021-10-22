@@ -8,6 +8,7 @@ import {
 
 import { EventList } from './EventList.js';
 import { RecordTransferForm } from './forms/RecordTransferForm.js';
+import { RecordDividendForm } from './forms/RecordDividendForm.js';
 
 
 export function Events(props) {
@@ -21,6 +22,11 @@ export function Events(props) {
             </Route>
             <Route path={`${path}/record_dividend`}>
                 <h2><a href="#events/">Events</a> / record dividend</h2>
+                <RecordDividendForm
+                    handleSubmit={props.handleAddEvent}
+                    accounts={props.accounts}
+                    positions={props.positions}
+                    />
             </Route>
             <Route path={`${path}/record_transfer`}>
                 <h2><a href="#events/">Events</a> / record transfer</h2>

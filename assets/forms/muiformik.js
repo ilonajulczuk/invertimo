@@ -121,7 +121,7 @@ FormControlSelect.propTypes = {
 export function FormikSelectField({ options, ...props }) {
 
     const selectOptions = options.map(
-        option => (<MenuItem key={option.label} value={option.value}>{option.label}</MenuItem>));
+        option => (<MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>));
     return (
         <Field
             {...props}
