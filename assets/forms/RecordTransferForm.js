@@ -8,7 +8,7 @@ import * as yup from 'yup';
 
 import { toSymbol } from '../currencies.js';
 import { FormikDateField, FormikTextField, FormikSelectField } from './muiformik.js';
-
+import { Snackbar } from '../components/Snackbar.js';
 
 const useStyles = makeStyles((theme) => ({
     inputs: {
@@ -56,6 +56,16 @@ export function RecordTransferForm(props) {
 
     const classes = useStyles();
 
+    const [snackbarOpen, snackbarSetOpen] = React.useState(false);
+
+    const snackbarHandleClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        snackbarSetOpen(false);
+    };
+
     const validationSchema = yup.object().shape({
         amount: yup
             .number().moreThan(0).required(),
@@ -97,8 +107,7 @@ export function RecordTransferForm(props) {
                     result = apiToErrors(result);
                     actions.setSubmitting(false);
                     if (result.ok) {
-                        // TODO: add a nice snackbar :).
-                        alert("event added successfully!");
+                        snackbarSetOpen(true);
                         actions.resetForm();
                     } else {
                         if (result.errors) {
@@ -157,6 +166,11 @@ export function RecordTransferForm(props) {
                             Record
                         </Button>
                     </div>
+                    <Snackbar
+                        snackbarOpen={snackbarOpen}
+                        snackbarHandleClose={snackbarHandleClose}
+                        message="Transfer recorded successfully!"
+                    />
                 </Form>
             )}
         </Formik>
