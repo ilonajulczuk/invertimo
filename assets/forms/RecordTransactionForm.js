@@ -7,9 +7,8 @@ import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
-import { makeStyles } from '@material-ui/core/styles';
 
-import { green, red } from '@material-ui/core/colors';
+
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
@@ -24,6 +23,7 @@ import * as yup from 'yup';
 import 'date-fns';
 import DateFnsUtils from '@date-io/date-fns';
 
+import { useStyles } from './styles.js';
 import { currencyValues, toSymbol } from '../currencies.js';
 import { SelectAssetFormFragment } from './SelectAssetFormFragment.js';
 import { Snackbar } from '../components/Snackbar.js';
@@ -113,54 +113,6 @@ function apiTransactionResponseToErrors(apiResponse) {
 
 }
 
-
-const useStyles = makeStyles((theme) => ({
-    form: {
-        display: "flex",
-        flexWrap: "wrap",
-        flexDirection: "column",
-    },
-    formControl: {
-        minWidth: 120,
-        maxWidth: 300,
-    },
-    symbolInput: {
-        minWidth: 320,
-        maxWidth: 500,
-    },
-    narrowInput: {
-        minWidth: 60,
-        maxWidth: 100,
-    },
-    inputs: {
-        marginTop: theme.spacing(1),
-        marginBottom: theme.spacing(1),
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "10px",
-        alignItems: "baseline",
-    },
-    green: {
-        color: green[600],
-        '& *': {
-            color: green[600],
-        },
-    },
-    red: {
-        color: red[600],
-        '& *': {
-            color: red[600],
-        },
-    },
-    tradeTypes: {
-        display: "flex",
-        flexDirection: "row",
-    },
-    submitButton: {
-        marginTop: "2em",
-        marginBottom: "2em",
-    },
-}));
 
 const validationSchema = yup.object({
     symbol: yup

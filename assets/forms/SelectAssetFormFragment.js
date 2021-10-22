@@ -15,41 +15,13 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogActions from '@material-ui/core/DialogActions';
 import Button from '@material-ui/core/Button';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { useStyles } from './styles.js';
 
 import PropTypes from 'prop-types';
 
 
 const filter = createFilterOptions();
 
-
-const useStyles = makeStyles((theme) => ({
-  formControl: {
-    minWidth: 120,
-    maxWidth: 300,
-  },
-  symbolInput: {
-    minWidth: 320,
-    maxWidth: 500,
-  },
-  narrowInput: {
-    minWidth: 60,
-    maxWidth: 100,
-  },
-  inputs: {
-    marginTop: theme.spacing(1),
-    marginBottom: theme.spacing(1),
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "10px",
-    alignItems: "baseline",
-  },
-  symbolOption: {
-    display: "flex",
-    flexDirection: "column",
-  }
-}
-));
 
 
 export function SelectAssetFormFragment(props) {

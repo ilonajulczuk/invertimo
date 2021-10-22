@@ -1,7 +1,6 @@
 import React from 'react';
 
 import Button from '@material-ui/core/Button';
-import { makeStyles } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
 import { Formik, Form } from 'formik';
 import * as yup from 'yup';
@@ -9,33 +8,7 @@ import * as yup from 'yup';
 import { toSymbol } from '../currencies.js';
 import { FormikDateField, FormikTextField, FormikSelectField } from './muiformik.js';
 import { Snackbar } from '../components/Snackbar.js';
-
-const useStyles = makeStyles((theme) => ({
-    inputs: {
-        marginTop: theme.spacing(1),
-        marginBottom: theme.spacing(1),
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "10px",
-        alignItems: "baseline",
-    },
-    wideInput: {
-        minWidth: "300px",
-    },
-    mediumInput: {
-        minWidth: "200px",
-    },
-    bottomButtons: {
-        marginTop: theme.spacing(4),
-        justifyContent: "right",
-    },
-    form: {
-        display: "flex",
-        flexWrap: "wrap",
-        flexDirection: "column",
-    },
-}));
-
+import { useStyles } from './styles.js';
 
 
 function formUpdateToAPIUpdate(formData) {

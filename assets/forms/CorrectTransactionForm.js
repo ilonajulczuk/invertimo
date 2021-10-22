@@ -1,7 +1,6 @@
 import React from 'react';
 
 import Button from '@material-ui/core/Button';
-import { makeStyles } from '@material-ui/core/styles';
 import PropTypes from 'prop-types';
 import { Formik, Form } from 'formik';
 import * as yup from 'yup';
@@ -9,25 +8,8 @@ import * as yup from 'yup';
 import { matchNumberUpToTwoDecimalPlaces } from './utils.js';
 import { toSymbol } from '../currencies.js';
 import { FormikDateField, FormikTextField } from './muiformik.js';
+import { useStyles } from './styles.js';
 
-
-const useStyles = makeStyles((theme) => ({
-    inputs: {
-        marginTop: theme.spacing(1),
-        marginBottom: theme.spacing(1),
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "10px",
-        alignItems: "baseline",
-    },
-    wideInput: {
-        minWidth: "300px",
-    },
-    bottomButtons: {
-        marginTop: theme.spacing(4),
-        justifyContent: "right",
-    }
-}));
 
 const mapping = new Map(Object.entries({
     'executed_at': 'executedAt',
@@ -56,9 +38,7 @@ function apiToErrors(apiResponse) {
             data.errors[mapping[error]] = apiResponse.errors[error];
         }
     }
-
     return data;
-
 }
 
 export function CorrectTransactionForm(props) {
