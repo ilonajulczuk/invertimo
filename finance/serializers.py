@@ -463,7 +463,7 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
 
     class Meta:
         model = AccountEvent
-        fields = ["id", "event_type", "executed_at", "amount", "account", "position"]
+        fields = ["id", "event_type", "executed_at", "amount", "withheld_taxes", "account", "position"]
 
     def get_extra_kwargs(self):
         kwargs = super().get_extra_kwargs()

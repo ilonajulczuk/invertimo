@@ -409,6 +409,7 @@ class AccountEvent(models.Model):
     )
 
     amount = models.DecimalField(max_digits=18, decimal_places=6)
+    withheld_taxes = models.DecimalField(max_digits=18, decimal_places=6, default=0)
 
     def clean(self):
         if self.event_type in _POSITION_REQUIRED_EVENT_TYPES:

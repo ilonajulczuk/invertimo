@@ -3,10 +3,9 @@ import decimal
 from typing import Optional
 
 from django.contrib.auth.models import User
-
-from finance import exchanges, models
-
 from django.db import transaction
+
+from finance import exchanges, models, prices
 
 
 class AccountRepository:
@@ -159,6 +158,7 @@ class AccountRepository:
         executed_at: datetime.datetime,
         event_type: models.EventType,
         position: Optional[models.Position] = None,
+        withheld_taxes: Optional[decimal.Decimal] = None,
     ) -> None:
 
         if (
@@ -175,9 +175,26 @@ class AccountRepository:
             executed_at=executed_at,
             event_type=event_type,
             position=position,
+            withheld_taxes=withheld_taxes or 0,
         )
         if created:
-            account.balance += amount
+            balance_change = amount
+            if withheld_taxes:
+                balance_change -= withheld_taxes
+
+            if event_type == models.EventType.DIVIDEND and position:
+                position_currency = position.asset.currency
+                account_currency = account.currency
+                if position_currency != account_currency:
+                    exchange_rate = prices.get_closest_exchange_rate(
+                        date=executed_at.date(),
+                        from_currency=position_currency, to_currency=account_currency)
+                    if exchange_rate is None:
+                        raise ValueError(f"Can't convert between currencies: "
+                                         f"{position_currency} and {account_currency}")
+                    balance_change *= exchange_rate.value
+
+            account.balance += balance_change
         account.save()
 
     @transaction.atomic

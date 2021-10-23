@@ -738,7 +738,15 @@ class TestAccountEventListView(ViewTestBase, TestCase):
 
         self.assertEqual(self.account.balance, 354)
 
-
+        # If dividend was paid in a different currency than the account currency
+        # we will need to convert currencies and for that we need to have some exchange
+        # rates.
+        models.CurrencyExchangeRate.objects.create(
+            from_currency=models.Currency.USD,
+            to_currency=models.Currency.EUR,
+            date=datetime.date.fromisoformat("2021-05-03"),
+            value=0.84,
+        )
         position = models.Position.objects.first()
         data = {
             "executed_at": "2021-03-04T00:00:00Z",
@@ -746,6 +754,7 @@ class TestAccountEventListView(ViewTestBase, TestCase):
             "event_type": "DIVIDEND",
             "account": self.account.pk,
             "position": position.pk,
+            "withheld_taxes": 0.2,
         }
         response = self.client.post(self.get_url(), data)
         self.assertEqual(response.status_code, 201)
@@ -755,13 +764,16 @@ class TestAccountEventListView(ViewTestBase, TestCase):
             {
                 "account": self.account.pk,
                 "amount": "4.500000",
+                "withheld_taxes": "0.200000",
                 "event_type": "DIVIDEND",
                 "executed_at": "2021-03-04T00:00:00Z",
                 "position": position.pk,
             },
         )
         self.account.refresh_from_db()
-        self.assertEqual(self.account.balance, 358.5)
+        # If the currencies matched the balance would be: 358.3, but due to EUR to USD
+        # conversion the end balance is smaller.
+        self.assertEqual(self.account.balance, decimal.Decimal("357.612"))
 
         # Now let's test for some invalid inputs.
         data = {
@@ -785,6 +797,7 @@ class TestAccountEventListView(ViewTestBase, TestCase):
         response = self.client.post(self.get_url(), data)
         self.assertEqual(response.status_code, 400)
         self.assertTrue("amount" in response.json())
+
 
 class TestAccountEventDetailView(ViewTestBase, TestCase):
     URL = "/api/account-events/%s/"

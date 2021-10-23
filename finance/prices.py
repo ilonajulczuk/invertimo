@@ -1,7 +1,9 @@
 import requests
+import logging
+import datetime
+
 from django.conf import settings
 from finance import models
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +45,18 @@ symbol_to_currency_pair = {
         "to_currency": models.Currency.GBP,
     },
 }
+
+
+def get_closest_exchange_rate(
+    date: datetime.date, from_currency: models.Currency, to_currency: models.Currency
+):
+    rates = models.CurrencyExchangeRate.objects.filter(
+        from_currency=from_currency, to_currency=to_currency
+    )
+    rate = rates.filter(date__lte=date).order_by('-date').first()
+    if rate is None:
+        rate = rates.filter(date__gte=date).order_by('date').first()
+    return rate
 
 
 def collect_exchange_rates():
@@ -89,19 +103,19 @@ def collect_exchange_rates():
 
 def collect_prices(asset):
     symbol = asset.symbol
-    exchange_code = asset.exchange.identifiers.get(id_type=models.ExchangeIDType.CODE).value
+    exchange_code = asset.exchange.identifiers.get(
+        id_type=models.ExchangeIDType.CODE
+    ).value
     from_date = "2020-01-01"
     last_record = (
-        models.PriceHistory.objects.filter(asset=asset)
-        .order_by("date")
-        .last()
+        models.PriceHistory.objects.filter(asset=asset).order_by("date").last()
     )
     if last_record:
         from_date = str(last_record.date)
 
     r = requests.get(
-            f"https://eodhistoricaldata.com/api/eod/{symbol}.{exchange_code}?api_token={settings.EOD_APIKEY}&order=d&fmt=json&from={from_date}"
-        )
+        f"https://eodhistoricaldata.com/api/eod/{symbol}.{exchange_code}?api_token={settings.EOD_APIKEY}&order=d&fmt=json&from={from_date}"
+    )
     records = []
     try:
         records = r.json()
