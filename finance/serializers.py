@@ -1,9 +1,16 @@
 from rest_framework import serializers
+from rest_framework.request import Request
+
+from django.db.models import QuerySet
+import datetime
+from typing import Any
+from django.contrib.auth.models import User
 
 from finance import models
 from finance import exchanges
 from finance.models import (
     Account,
+    AccountEvent,
     CurrencyExchangeRate,
     Exchange,
     Position,
@@ -11,14 +18,15 @@ from finance.models import (
     Asset,
     Transaction,
 )
-import datetime
-from typing import Any
 
 
 class ExchangeSerializer(serializers.ModelSerializer[Exchange]):
     class Meta:
         model = Exchange
         fields = ["id", "name"]
+
+
+# TODO: add some class to handle all this.
 
 
 class CurrencyField(serializers.IntegerField):
@@ -29,7 +37,7 @@ class CurrencyField(serializers.IntegerField):
         try:
             return models.currency_enum_from_string(value)
         except ValueError:
-            raise serializers.ValidationError(f"Invalid value to resprent currency")
+            raise serializers.ValidationError(f"Invalid value to represent currency")
 
 
 class AssetTypeField(serializers.IntegerField):
@@ -40,8 +48,18 @@ class AssetTypeField(serializers.IntegerField):
         try:
             return models.asset_type_enum_from_string(value)
         except ValueError:
-            raise serializers.ValidationError(f"Invalid value to resprent asset type")
+            raise serializers.ValidationError(f"Invalid value to represent asset type")
 
+
+class EventTypeField(serializers.CharField):
+    def to_representation(self, value):
+        return models.event_type_string_from_enum(value)
+
+    def to_internal_value(self, value):
+        try:
+            return models.event_type_enum_from_string(value)
+        except ValueError:
+            raise serializers.ValidationError(f"Invalid value to represent event type")
 
 
 class AssetSerializer(serializers.ModelSerializer[Asset]):
@@ -151,8 +169,12 @@ class AddTransactionKnownAssetSerializer(serializers.ModelSerializer[Transaction
     asset = serializers.IntegerField()
 
     def validate_account(self, value):
-        if not models.Account.objects.filter(user=self.context["request"].user, pk=value).exists():
-            raise serializers.ValidationError(f"User doesn't have account with id: '{value}'")
+        if not models.Account.objects.filter(
+            user=self.context["request"].user, pk=value
+        ).exists():
+            raise serializers.ValidationError(
+                f"User doesn't have account with id: '{value}'"
+            )
         return value
 
     def validate_asset(self, value):
@@ -199,15 +221,21 @@ class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction])
     asset_type = AssetTypeField()
 
     def validate_account(self, value):
-        if not models.Account.objects.filter(user=self.context["request"].user, pk=value).exists():
-            raise serializers.ValidationError(f"User doesn't have account with id: '{value}'")
+        if not models.Account.objects.filter(
+            user=self.context["request"].user, pk=value
+        ).exists():
+            raise serializers.ValidationError(
+                f"User doesn't have account with id: '{value}'"
+            )
         return value
 
     def validate_exchange(self, value):
         if value == exchanges.OTHER_OR_NA_EXCHANGE_NAME:
             return value
         if not models.Exchange.objects.filter(name=value).exists():
-            raise serializers.ValidationError(f"There is no exchange with name: '{value}'")
+            raise serializers.ValidationError(
+                f"There is no exchange with name: '{value}'"
+            )
         return value
 
     class Meta:
@@ -407,3 +435,87 @@ class AccountWithValuesSerializer(serializers.ModelSerializer[Account]):
         to_date = self.context["to_date"]
 
         return obj.value_history_per_position(from_date, to_date)
+
+
+class RelatedPkField(serializers.IntegerField):
+    def __init__(self, model, **kwargs):
+        self._model = model
+        super().__init__(**kwargs)
+
+    def to_internal_value(self, data):
+        if data:
+            try:
+                return self._model.objects.get(pk=data)
+            except (self._model.DoesNotExist, TypeError):
+                raise serializers.ValidationError(
+                    f"User doesn't have a account with id: '{data}'"
+                )
+
+    def to_representation(self, value):
+        if value:
+            return value.pk
+
+
+class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
+    event_type = EventTypeField()
+    account = RelatedPkField(model=models.Account)
+    position = RelatedPkField(model=models.Position)
+
+    class Meta:
+        model = AccountEvent
+        fields = ["id", "event_type", "executed_at", "amount", "withheld_taxes", "account", "position"]
+
+    def get_extra_kwargs(self):
+        kwargs = super().get_extra_kwargs()
+        kwargs["account"] = kwargs.get("account", {})
+        kwargs["account"]["queryset"] = self.get_account_queryset()
+        return kwargs
+
+    def get_account_queryset(self) -> QuerySet[models.Account]:
+        request = self.context.get("request")
+        assert isinstance(request, Request)
+        assert isinstance(request.user, User)
+        return models.Account.objects.filter(user=request.user)
+
+    def get_position_queryset(self) -> QuerySet[models.Account]:
+        request = self.context.get("request")
+        assert isinstance(request, Request)
+        assert isinstance(request.user, User)
+        return models.Position.objects.filter(account__user=request.user)
+
+    def validate_position(self, value):
+        if value is None:
+            return value
+        if not models.Position.objects.filter(
+            account__user=self.context["request"].user, pk=value.pk
+        ).exists():
+            raise serializers.ValidationError(
+                f"User doesn't have a position with id: '{value.pk}'"
+            )
+        return value
+
+    def validate_account(self, value):
+        if value is None:
+            raise serializers.ValidationError(f"Account can't be empty")
+        if not models.Account.objects.filter(
+            user=self.context["request"].user, pk=value.pk
+        ).exists():
+            raise serializers.ValidationError(
+                f"User doesn't have a account with id: '{value.pk}'"
+            )
+        return value
+
+    def validate(self, data):
+        if data["event_type"] == models.EventType.WITHDRAWAL:
+            if data["amount"] >= 0:
+                raise serializers.ValidationError({'amount': "For withdrawal the amount needs to be negative"})
+        else:
+            if data["amount"] < 0:
+                raise serializers.ValidationError({'amount': "Amount can't be negative unless it's a withdrawal"})
+        if data["event_type"] == models.EventType.DIVIDEND:
+            if data["position"] is None:
+                raise serializers.ValidationError({'position': "Position can't be empty for dividend event"})
+        else:
+            if data["position"] is not None:
+                raise serializers.ValidationError({'position': "Position can't be set for this type of event"})
+        return data

@@ -10,6 +10,7 @@ import './transaction_list.css';
 import Button from '@material-ui/core/Button';
 
 import { makeStyles } from '@material-ui/core/styles';
+import { PositionLink } from './components/PositionLink.js';
 
 const embeddedTransactionHeadCells = [
     { id: 'type', label: 'Type' },
@@ -98,9 +99,6 @@ export function TransactionList(props) {
 
     let accountsById = new Map(props.accounts.map(account => [account.id, account]));
 
-    if (props.transactions == null) {
-        return <div>Loading...</div>;
-    }
     const transactions = props.transactions.map(transaction => {
         let transactionCopy = { ...transaction };
         let date = new Date(transactionCopy.executed_at);
@@ -110,13 +108,7 @@ export function TransactionList(props) {
         };
 
         let position = transactionCopy.position;
-        let positionField = (
-            <div className="position-name">
-                <span className="card-label">{position.asset.isin}</span>
-                <a href={`#positions/${position.id}`}><span className="position-symbol">{position.asset.symbol}</span></a>
-                <span>{position.asset.name}</span>
-            </div>
-        );
+        let positionField = <PositionLink position={position} />;
         transactionCopy.position = {
             displayValue: positionField,
             comparisonKey: position.asset.symbol,

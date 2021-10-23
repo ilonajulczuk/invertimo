@@ -13,9 +13,16 @@ from rest_framework.decorators import action
 
 
 from finance import accounts, models
-from finance.models import CurrencyExchangeRate, Position, PriceHistory, Transaction
+from finance.models import (
+    CurrencyExchangeRate,
+    Position,
+    PriceHistory,
+    Transaction,
+    AccountEvent,
+)
 from finance.serializers import (
     AccountSerializer,
+    AccountEventSerializer,
     AccountEditSerializer,
     AccountWithValuesSerializer,
     CurrencyExchangeRateSerializer,
@@ -48,7 +55,6 @@ class AccountsViewSet(viewsets.ModelViewSet):
     def get_serializer_context(self) -> Dict[str, Any]:
         context: Dict[str, Any] = super().get_serializer_context()
         context["request"] = self.request
-
         query = FromToDatesSerializer(data=self.request.query_params)
 
         if query.is_valid(raise_exception=True):
@@ -138,7 +144,8 @@ class PositionsView(generics.ListAPIView):
                     .order_by("-date")
                     .values("value")[:1]
                 )
-            ).order_by('id')
+            )
+            .order_by("id")
         )
 
 
@@ -228,14 +235,7 @@ class PositionView(generics.RetrieveAPIView):
         return context
 
 
-class TransactionsViewSet(
-    mixins.ListModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.CreateModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
-):
+class TransactionsViewSet(viewsets.ModelViewSet):
     model = Transaction
     serializer_class = TransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -259,6 +259,7 @@ class TransactionsViewSet(
             TransactionSerializer,
             AddTransactionKnownAssetSerializer,
             AddTransactionNewAssetSerializer,
+            CorrectTransactionSerializer,
         ]
     ]:
         if self.action == "create":
@@ -318,20 +319,50 @@ class TransactionsViewSet(
         account_repository = accounts.AccountRepository()
         account_repository.delete_transaction(instance)
 
-    # def update(self, request, *args, **kwargs):
-    #     partial = kwargs.pop('partial', False)
-    #     instance = self.get_object()
-    #     serializer = self.get_serializer(instance, data=request.data, partial=partial)
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_update(serializer)
-
-    #     if getattr(instance, '_prefetched_objects_cache', None):
-    #         # If 'prefetch_related' has been applied to a queryset, we need to
-    #         # forcibly invalidate the prefetch cache on the instance.
-    #         instance._prefetched_objects_cache = {}
-
-    #     return Response(serializer.data)
-
     def perform_update(self, serializer):
         account_repository = accounts.AccountRepository()
-        account_repository.correct_transaction(serializer.instance, serializer.validated_data)
+        account_repository.correct_transaction(
+            serializer.instance, serializer.validated_data
+        )
+
+
+class AccountEventViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    model = AccountEvent
+    serializer_class = AccountEventSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = LimitOffsetPagination
+    basename = "account-event"
+
+    def get_queryset(self) -> QuerySet[AccountEvent]:
+        assert isinstance(self.request.user, User)
+        user = self.request.user
+        return AccountEvent.objects.filter(account__user=user).prefetch_related("position").prefetch_related("account")
+
+    def get_serializer_context(self) -> Dict[str, Any]:
+        context: Dict[str, Any] = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        assert isinstance(self.request.user, User)
+        account_repository = accounts.AccountRepository()
+        arguments = serializer.validated_data.copy()
+        account_repository.add_event(**arguments)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
+
+    def perform_destroy(self, instance):
+        account_repository = accounts.AccountRepository()
+        account_repository.delete_event(instance)

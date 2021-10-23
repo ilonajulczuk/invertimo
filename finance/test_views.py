@@ -4,6 +4,8 @@ import decimal
 from django.contrib.auth.models import User
 from django.db.models import Sum
 from django.test import SimpleTestCase, TestCase
+from django.utils import timezone
+
 
 from hypothesis.extra.django import TestCase as HypothesisTestCase, TransactionTestCase
 from django.urls import reverse
@@ -491,7 +493,6 @@ class TestTransactionDetailView(ViewTestBase, TestCase):
         return reverse(self.VIEW_NAME, args=[self.transaction.pk])
 
     def test_delete_transaction(self):
-
         self.assertEqual(models.Position.objects.count(), 1)
         position = models.Position.objects.first()
 
@@ -528,6 +529,38 @@ class TestTransactionDetailView(ViewTestBase, TestCase):
             - middle_transaction.total_in_account_currency,
         )
 
+    def test_delete_transaction_quantity_history_changes(self):
+        self.assertEqual(models.Position.objects.count(), 1)
+        position = models.Position.objects.first()
+
+        old_quantity = position.quantity
+        old_account_balance = position.account.balance
+        first_transaction = models.Transaction.objects.first()
+
+        old_position_response = self.client.get(
+            reverse("api-position", args=[position.pk])
+        )
+        self.assertEqual(old_position_response.status_code, 200)
+        self.assertEqual(models.Transaction.objects.count(), 8)
+        self.client.delete(reverse(self.VIEW_NAME, args=[first_transaction.pk]))
+
+        self.assertEqual(models.Transaction.objects.count(), 7)
+        position.refresh_from_db()
+        self.assertEqual(position.quantity, old_quantity - first_transaction.quantity)
+        self.assertEqual(
+            position.account.balance,
+            old_account_balance - first_transaction.total_in_account_currency,
+        )
+
+        new_position_response = self.client.get(
+            reverse("api-position", args=[position.pk])
+        )
+        self.assertEqual(new_position_response.status_code, 200)
+        self.assertNotEqual(
+            old_position_response.json()["quantities"],
+            new_position_response.json()["quantities"],
+        )
+
     def test_correct_transaction(self):
         # Start with a bunch of transactions.
         # Correcting transaction doesn't change number of transactions.
@@ -561,8 +594,245 @@ class TestTransactionDetailView(ViewTestBase, TestCase):
         position.refresh_from_db()
         corrected_transaction = models.Transaction.objects.get(pk=transaction.pk)
 
-        self.assertEqual(position.quantity, old_quantity - transaction.quantity + corrected_transaction.quantity)
+        self.assertEqual(
+            position.quantity,
+            old_quantity - transaction.quantity + corrected_transaction.quantity,
+        )
         self.assertEqual(
             position.account.balance,
-            old_account_balance - transaction.total_in_account_currency + corrected_transaction.total_in_account_currency,
+            old_account_balance
+            - transaction.total_in_account_currency
+            + corrected_transaction.total_in_account_currency,
+        )
+
+
+def _add_account_event(account, event_type, amount, executed_at=None, position=None):
+    if executed_at is None:
+        executed_at = timezone.now()
+
+    account_repository = accounts.AccountRepository()
+    account_repository.add_event(
+        account,
+        amount=amount,
+        executed_at=executed_at,
+        event_type=event_type,
+        position=position,
+    )
+
+
+_FAKE_EVENTS_CASH_TRANSFERS = (
+    (models.EventType.DEPOSIT, decimal.Decimal("200")),
+    (models.EventType.DEPOSIT, decimal.Decimal("500")),
+    (models.EventType.WITHDRAWAL, decimal.Decimal("-350")),
+)
+
+
+class TestAccountEventListView(ViewTestBase, TestCase):
+    URL = "/api/account-events/"
+    VIEW_NAME = "account-event-list"
+    DETAIL_VIEW = False
+    QUERY_PARAMS = "?"
+    UNAUTHENTICATED_CODE = 403
+
+    def setUp(self):
+        super().setUp()
+
+        self.isin = "USA123"
+        self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
+            self.user, isin=self.isin
+        )
+        for event in _FAKE_EVENTS_CASH_TRANSFERS:
+            _add_account_event(self.account, event[0], event[1])
+
+    def test_events_present(self):
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 350)
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 3)
+
+    def test_add_event(self):
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 350)
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "amount": 4.5,
+            "event_type": "DEPOSIT",
+            "account": self.account.pk,
+            "position": "",
+        }
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(
+            data,
+            {
+                "account": self.account.pk,
+                "amount": "4.500000",
+                "event_type": "DEPOSIT",
+                "executed_at": "2021-03-04T00:00:00Z",
+                "position": None,
+            },
+        )
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 354.5)
+
+    def test_add_event_to_other_user_account(self):
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 350)
+        user2 = User.objects.create(username="anotheruser", email="test2@example.com")
+        self.client.force_login(user2)
+
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "amount": 4.5,
+            "event_type": "DEPOSIT",
+            "account": self.account.pk,
+            "position": "",
+        }
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 400)
+
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 350)
+
+    def test_add_withdrawal(self):
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 350)
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "amount": -4.5,
+            "event_type": "WITHDRAWAL",
+            "account": self.account.pk,
+            "position": "",
+        }
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(
+            data,
+            {
+                "account": self.account.pk,
+                "amount": "-4.500000",
+                "event_type": "WITHDRAWAL",
+                "executed_at": "2021-03-04T00:00:00Z",
+                "position": None,
+            },
+        )
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.balance, 345.5)
+
+    def test_add_dividend(self):
+        # Test for position being set correctly.
+        self.account.refresh_from_db()
+        for transaction in _FAKE_TRANSACTIONS:
+            _add_transaction(
+                self.account,
+                self.isin,
+                self.exchange,
+                transaction[0],
+                transaction[1],
+                transaction[2],
+            )
+
+        self.assertEqual(self.account.balance, 354)
+
+        # If dividend was paid in a different currency than the account currency
+        # we will need to convert currencies and for that we need to have some exchange
+        # rates.
+        models.CurrencyExchangeRate.objects.create(
+            from_currency=models.Currency.USD,
+            to_currency=models.Currency.EUR,
+            date=datetime.date.fromisoformat("2021-05-03"),
+            value=0.84,
+        )
+        position = models.Position.objects.first()
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "amount": 4.5,
+            "event_type": "DIVIDEND",
+            "account": self.account.pk,
+            "position": position.pk,
+            "withheld_taxes": 0.2,
+        }
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(
+            data,
+            {
+                "account": self.account.pk,
+                "amount": "4.500000",
+                "withheld_taxes": "0.200000",
+                "event_type": "DIVIDEND",
+                "executed_at": "2021-03-04T00:00:00Z",
+                "position": position.pk,
+            },
+        )
+        self.account.refresh_from_db()
+        # If the currencies matched the balance would be: 358.3, but due to EUR to USD
+        # conversion the end balance is smaller.
+        self.assertEqual(self.account.balance, decimal.Decimal("357.612"))
+
+        # Now let's test for some invalid inputs.
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "amount": 4.5,
+            "event_type": "DIVIDEND",
+            "account": self.account.pk,
+            "position": "",
+        }
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue("position" in response.json())
+
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "amount": -4.5,
+            "event_type": "DIVIDEND",
+            "account": self.account.pk,
+            "position": position.pk,
+        }
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue("amount" in response.json())
+
+
+class TestAccountEventDetailView(ViewTestBase, TestCase):
+    URL = "/api/account-events/%s/"
+    VIEW_NAME = "account-event-detail"
+    DETAIL_VIEW = True
+    QUERY_PARAMS = "?"
+    UNAUTHENTICATED_CODE = 403
+
+    def setUp(self):
+        super().setUp()
+
+        self.isin = "USA123"
+        self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
+            self.user, isin=self.isin
+        )
+        for event in _FAKE_EVENTS_CASH_TRANSFERS:
+            _add_account_event(self.account, event[0], event[1])
+        self.event = models.AccountEvent.objects.first()
+
+    def get_url(self):
+        return self.URL % self.event.pk
+
+    def get_reversed_url(self):
+        return reverse(self.VIEW_NAME, args=[self.event.pk])
+
+    def test_delete_event(self):
+        self.assertEqual(models.AccountEvent.objects.count(), 3)
+        event = models.AccountEvent.objects.first()
+        account = event.account
+        old_account_balance = account.balance
+        self.client.delete(reverse(self.VIEW_NAME, args=[event.pk]))
+
+        self.assertEqual(models.AccountEvent.objects.count(), 2)
+        account.refresh_from_db()
+        self.assertEqual(
+            account.balance,
+            old_account_balance - event.amount,
         )

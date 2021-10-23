@@ -1,6 +1,7 @@
 import React from 'react';
 import './portfolio.css';
 import { PositionList } from './PositionList.js';
+import { Events } from './Events.js';
 import { AccountValue } from './AccountValue.js';
 import { Header } from './Header.js';
 import { APIClient } from './api_utils.js';
@@ -139,10 +140,11 @@ export default class Portfolio extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            "positions": [],
+            "positions": null,
             "positionDetails": new Map(),
             "accounts": null,
             "transactions": null,
+            "events": null,
             "accountValues": new Map(),
         };
         this.apiClient = new APIClient('./api');
@@ -151,6 +153,8 @@ export default class Portfolio extends React.Component {
         this.handleAddTransaction = this.handleAddTransaction.bind(this);
         this.handleDeleteTransaction = this.handleDeleteTransaction.bind(this);
         this.handleCorrectTransaction = this.handleCorrectTransaction.bind(this);
+        this.handleAddEvent = this.handleAddEvent.bind(this);
+        this.handleDeleteEvent = this.handleDeleteEvent.bind(this);
     }
 
     async handleAddAccount(accountData) {
@@ -210,6 +214,19 @@ export default class Portfolio extends React.Component {
 
     }
 
+    async handleAddEvent(data) {
+        let result = await this.apiClient.addEvent(data);
+        this.refreshFromServer();
+        return result;
+    }
+
+    async handleDeleteEvent(eventId) {
+        let result = await this.apiClient.deleteEvent(eventId);
+        // Reload all the data, e.g. accounts, positions, etc.
+        this.refreshFromServer();
+        return result;
+    }
+
     async componentDidMount() {
         this.refreshFromServer();
     }
@@ -236,23 +253,71 @@ export default class Portfolio extends React.Component {
                         this.setState({ "transactions": transactions });
                     });
             });
-
+        this.apiClient.getEvents().then(
+            events => {
+                this.setState({ "events": events });
+            }
+        );
     }
 
     render() {
         const userEmail = JSON.parse(document.getElementById('userEmail').textContent);
 
+
+        const navBar = <nav className="sidenav">
+            <ul>
+                <li>
+                    <NavLink to="/" exact={true}>Home</NavLink>
+                </li>
+                <li>
+                    <NavLink to="/positions">Positions</NavLink>
+                </li>
+                <li>
+                    <NavLink to="/transactions">Transactions</NavLink>
+                </li>
+                <li>
+                    <NavLink to="/events">Events</NavLink>
+                </li>
+            </ul>
+        </nav>;
+
         // If there are no accounts loaded yet, there isn't much to show.
-        if (this.state.accounts === null || this.state.transactions === null) {
+        // TODO: start displaying sth useful even if the big part is still loading.
+        if (this.state.accounts === null) {
             return (<div className="main-grid">
                 <Header email={userEmail} />
+                {navBar}
+                <div className="main-content">
+                    <div>
+                        <h2>Loading...</h2>
+                        <p>Loading basic info...</p>
+                    </div>
+                </div>
+            </div>);
+        }
+        if (this.state.positions === null || this.state.accountValues.size !== this.state.accounts.length) {
+            return (<div className="main-grid">
+                <Header email={userEmail} />
+                {navBar}
+                <div className="main-content">
+                    <h2>Loading...</h2>
+                    <div>
+                        <p>Loading graphs and counting your investments...</p>
+                    </div>
+                </div>
             </div>);
         }
 
         // If the accounts are loaded, but there is nothing there, start an onboarding wizard.
         const newUser = this.state.accounts.length == 0;
 
-        const noTransactions = this.state.transactions.length == 0;
+        let numTransactions = 0;
+        if (!newUser) {
+            for (let account of this.state.accounts) {
+                numTransactions += account.transactions_count;
+            }
+        }
+        const noTransactions = numTransactions == 0;
 
         let accountValues = this.state.accounts.filter(account =>
             this.state.accountValues.get(account.id)).map((account) => {
@@ -284,38 +349,45 @@ export default class Portfolio extends React.Component {
                     </ErrorBoundary>
                 </div>);
         }
+        let maybeTransactions = <h2>Loading transactions...</h2>;
+        if (this.state.transactions !== null) {
+            maybeTransactions = <Transactions transactions={this.state.transactions}
+                handleAddTransaction={this.handleAddTransaction}
+                handleDeleteTransaction={this.handleDeleteTransaction}
+                handleCorrectTransaction={this.handleCorrectTransaction}
+                accounts={this.state.accounts} />;
+        }
+        let maybeEvents = <h2>Loading events...</h2>;
+        if (this.state.events !== null) {
+            maybeEvents = (<Events
+                accounts={this.state.accounts}
+                events={this.state.events} positions={this.state.positions}
+                handleAddEvent={this.handleAddEvent}
+                handleDeleteEvent={this.handleDeleteEvent}
+                />
+            );
+        }
         return (
             <div className="main-grid">
                 <Header email={userEmail} />
-                <nav className="sidenav">
-                    <ul>
-                        <li>
-                            <NavLink to="/" exact={true}>Home</NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/positions">Positions</NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/transactions">Transactions</NavLink>
-                        </li>
-                    </ul>
-                </nav>
 
+                {navBar}
                 <div className="main-content">
                     <Switch>
                         <Route path="/transactions">
                             <ErrorBoundary>
-                                <Transactions transactions={this.state.transactions}
-                                    handleAddTransaction={this.handleAddTransaction}
-                                    handleDeleteTransaction={this.handleDeleteTransaction}
-                                    handleCorrectTransaction={this.handleCorrectTransaction}
-                                    accounts={this.state.accounts} />
+                                {maybeTransactions}
                             </ErrorBoundary>
                         </Route>
                         <Route path="/positions">
                             <ErrorBoundary>
                                 <PositionList positions={this.state.positions}
                                     accounts={this.state.accounts} getPositionDetail={this.getPositionDetail} />
+                            </ErrorBoundary>
+                        </Route>
+                        <Route path="/events">
+                            <ErrorBoundary>
+                                {maybeEvents}
                             </ErrorBoundary>
                         </Route>
                         <Route path="/start/:stepName">
@@ -326,7 +398,6 @@ export default class Portfolio extends React.Component {
                             />
                         </Route>
                         <Route path="/">
-
                             {redirectOrDisplay}
                         </Route>
 

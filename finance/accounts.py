@@ -3,10 +3,9 @@ import decimal
 from typing import Optional
 
 from django.contrib.auth.models import User
-
-from finance import exchanges, models
-
 from django.db import transaction
+
+from finance import exchanges, models, prices
 
 
 class AccountRepository:
@@ -40,6 +39,8 @@ class AccountRepository:
             raise ValueError(
                 f"Failed to create a position from a transaction record, isin: {isin}, exchange ref: {exchange}"
             )
+        position.quantity_history.cache_clear()
+        position.value_history.cache_clear()
 
         transaction, created = models.Transaction.objects.get_or_create(
             executed_at=executed_at,
@@ -76,6 +77,8 @@ class AccountRepository:
     ) -> models.Transaction:
 
         position = self._get_or_create_position_for_asset(account, asset_id)
+        position.quantity_history.cache_clear()
+        position.value_history.cache_clear()
 
         transaction, created = models.Transaction.objects.get_or_create(
             executed_at=executed_at,
@@ -124,7 +127,6 @@ class AccountRepository:
             added_by=account.user,
         )
         position = self._get_or_create_position_for_asset(account, asset.pk)
-
         transaction, created = models.Transaction.objects.get_or_create(
             executed_at=executed_at,
             position=position,
@@ -143,11 +145,84 @@ class AccountRepository:
             account.balance += total_in_account_currency
             account.save()
 
+        position.quantity_history.cache_clear()
+        position.value_history.cache_clear()
+
         return transaction
 
     @transaction.atomic
-    def add_event(self, account):
-        pass
+    def add_event(
+        self,
+        account: models.Account,
+        amount: decimal.Decimal,
+        executed_at: datetime.datetime,
+        event_type: models.EventType,
+        position: Optional[models.Position] = None,
+        withheld_taxes: Optional[decimal.Decimal] = None,
+    ) -> None:
+
+        if (
+            event_type == models.EventType.DEPOSIT
+            or event_type == models.EventType.DIVIDEND
+        ):
+            assert amount > 0
+        if event_type == models.EventType.WITHDRAWAL:
+            assert amount < 0
+
+        event, created = models.AccountEvent.objects.get_or_create(
+            account=account,
+            amount=amount,
+            executed_at=executed_at,
+            event_type=event_type,
+            position=position,
+            withheld_taxes=withheld_taxes or 0,
+        )
+        if created:
+            balance_change = amount
+            if withheld_taxes:
+                balance_change -= withheld_taxes
+
+            if event_type == models.EventType.DIVIDEND and position:
+                position_currency = position.asset.currency
+                account_currency = account.currency
+                if position_currency != account_currency:
+                    exchange_rate = prices.get_closest_exchange_rate(
+                        date=executed_at.date(),
+                        from_currency=position_currency, to_currency=account_currency)
+                    if exchange_rate is None:
+                        raise ValueError(f"Can't convert between currencies: "
+                                         f"{position_currency} and {account_currency}")
+                    balance_change *= exchange_rate.value
+
+            account.balance += balance_change
+        account.save()
+
+    @transaction.atomic
+    def delete_event(self, event: models.AccountEvent) -> None:
+        account = event.account
+        # This makes sense for all currently supported events,
+        # but might not in the future.
+
+        balance_change = event.amount
+        if event.withheld_taxes:
+            balance_change -= event.withheld_taxes
+
+        if event.event_type == models.EventType.DIVIDEND and event.position:
+            position_currency = event.position.asset.currency
+            account_currency = account.currency
+            if position_currency != account_currency:
+                exchange_rate = prices.get_closest_exchange_rate(
+                    date=event.executed_at.date(),
+                    from_currency=position_currency, to_currency=account_currency)
+                if exchange_rate is None:
+                    raise ValueError(f"Can't convert between currencies: "
+                                        f"{position_currency} and {account_currency}")
+                balance_change *= exchange_rate.value
+
+        account.balance -= balance_change
+
+        account.save()
+        event.delete()
 
     def _get_or_create_position(
         self, account: models.Account, isin: str, exchange: models.Exchange
@@ -174,6 +249,7 @@ class AccountRepository:
     def delete_transaction(self, transaction: models.Transaction) -> None:
 
         position = transaction.position
+
         account = position.account
 
         # This assume no splits and merges support.
@@ -182,6 +258,8 @@ class AccountRepository:
         account.balance -= transaction.total_in_account_currency
         account.save()
         transaction.delete()
+        position.quantity_history.cache_clear()
+        position.value_history.cache_clear()
 
     @transaction.atomic
     def correct_transaction(self, transaction, update) -> None:
@@ -216,3 +294,5 @@ class AccountRepository:
         position.save()
         account.save()
         transaction.save()
+        position.quantity_history.cache_clear()
+        position.value_history.cache_clear()

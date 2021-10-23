@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { TableWithSort } from './components/TableWithSort.js';
 import { toSymbol } from './currencies.js';
 import { PositionDetail } from './PositionDetail.js';
-
+import { PositionLink } from './components/PositionLink.js';
 import { ErrorBoundary } from './error_utils.js';
 
 
@@ -29,7 +29,6 @@ export function PositionList(props) {
 
     let accountsById = new Map(props.accounts.map(account => [account.id, account]));
 
-
     let { path } = useRouteMatch();
 
     const positions = props.positions.map(position => {
@@ -44,13 +43,7 @@ export function PositionList(props) {
         let displayConvertedValue = (data.asset.currency != account.currency && data.latest_exchange_rate);
 
         positionRow.product = {
-            displayValue: (
-                <div className="position-name">
-                    <span className="card-label">{data.asset.isin}</span>
-                    <a href={`#positions/${position.id}`}><span className="position-symbol">{data.asset.symbol}</span></a>
-                    <span>{data.asset.name}</span>
-                </div>
-            ),
+            displayValue: <PositionLink position={data}/>,
             comparisonKey: data.asset.symbol,
         };
         positionRow.exchange = data.asset.exchange.name;

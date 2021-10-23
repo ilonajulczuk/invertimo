@@ -275,6 +275,9 @@ jest.mock("./api_utils", () => {
         getTransactions: () => {
           return Promise.resolve(_ACCOUNT_TRANSACTIONS);
         },
+        getEvents: () => {
+          return Promise.resolve([]);
+        },
       };
     }),
   };

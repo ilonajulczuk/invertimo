@@ -2,6 +2,7 @@ import datetime
 import decimal
 import functools
 from typing import List, Optional, Tuple, Sequence
+from django.core.exceptions import ValidationError
 
 import pytz
 from django.contrib.auth.models import User
@@ -58,6 +59,7 @@ class Account(models.Model):
 
     class Meta:
         unique_together = [["user", "nickname"]]
+        ordering = ["-id"]
 
 
 class Exchange(models.Model):
@@ -257,9 +259,15 @@ class Position(models.Model):
         )
         price_tuples = [(price.date, price.value) for price in prices]
 
+        def to_datetime(date: datetime.date) -> datetime.datetime:
+            dt = datetime.datetime.fromisoformat(date.isoformat())
+            dt = dt.replace(tzinfo=pytz.UTC)
+            return dt
+
         # Transactions also record price history, so add their data points.
         transactions = self.transactions.filter(
-            executed_at__gte=from_date, executed_at__lte=to_date
+            executed_at__gte=to_datetime(from_date),
+            executed_at__lte=to_datetime(to_date),
         )
         price_tuples_from_transactions = [
             (
@@ -267,7 +275,8 @@ class Position(models.Model):
                 # Alternative solution: use the last price and extend it further
                 # to the future.
                 transaction.executed_at.date() + datetime.timedelta(days=1),
-                transaction.price)
+                transaction.price,
+            )
             for transaction in transactions
         ]
         price_tuples.extend(price_tuples_from_transactions)
@@ -354,12 +363,32 @@ class Transaction(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return (
-            f"<Transaction id: {self.pk} executed_at: {self.executed_at}, position: {self.position}>"
-        )
+        return f"<Transaction id: {self.pk} executed_at: {self.executed_at}, position: {self.position}>"
 
     class Meta:
         ordering = ["-executed_at"]
+
+
+class EventType(models.IntegerChoices):
+    DEPOSIT = 1, _("DEPOSIT")
+    WITHDRAWAL = 2, _("WITHDRAWAL")
+    DIVIDEND = 3, _("DIVIDEND")
+    # TODO: add some cool crypto related ones :).
+    # Another could be split or merge.
+
+
+_POSITION_REQUIRED_EVENT_TYPES = (EventType.DIVIDEND,)
+
+
+def event_type_enum_from_string(event_type: str) -> EventType:
+    try:
+        return EventType[event_type]
+    except KeyError:
+        raise ValueError("Unsupported event_type '%s'" % event_type)
+
+
+def event_type_string_from_enum(event_type: EventType) -> str:
+    return EventType(event_type).label
 
 
 class AccountEvent(models.Model):
@@ -367,6 +396,8 @@ class AccountEvent(models.Model):
         Account, related_name="events", on_delete=models.CASCADE
     )
     executed_at = models.DateTimeField()
+
+    event_type = models.IntegerField(choices=EventType.choices)
 
     last_modified = models.DateTimeField(auto_now=True)
     position = models.ForeignKey(
@@ -376,6 +407,20 @@ class AccountEvent(models.Model):
         null=True,
         blank=True,
     )
+
+    amount = models.DecimalField(max_digits=18, decimal_places=6)
+    withheld_taxes = models.DecimalField(max_digits=18, decimal_places=6, default=0)
+
+    def clean(self):
+        if self.event_type in _POSITION_REQUIRED_EVENT_TYPES:
+            if not self.position:
+                raise ValidationError(f"Position is required for: {self.event_type}")
+        else:
+            if self.position:
+                raise ValidationError(f"Position can't be set for: {self.event_type}")
+
+    class Meta:
+        ordering = ["-executed_at"]
 
 
 class CurrencyExchangeRate(models.Model):

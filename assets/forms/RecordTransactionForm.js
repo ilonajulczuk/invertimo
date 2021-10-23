@@ -7,29 +7,28 @@ import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
-import { makeStyles } from '@material-ui/core/styles';
-import PropTypes from 'prop-types';
-import { currencyValues, toSymbol } from '../currencies.js';
-import { useFormik } from 'formik';
-import * as yup from 'yup';
 
-import Snackbar from '@material-ui/core/Snackbar';
-import MuiAlert from '@material-ui/lab/Alert';
 
-import { green, red } from '@material-ui/core/colors';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import { SelectAssetFormFragment } from './SelectAssetFormFragment.js';
-
-import 'date-fns';
-import DateFnsUtils from '@date-io/date-fns';
 import {
     MuiPickersUtilsProvider,
     KeyboardDatePicker,
 } from '@material-ui/pickers';
 
+import PropTypes from 'prop-types';
+import { useFormik } from 'formik';
+import * as yup from 'yup';
+import 'date-fns';
+import DateFnsUtils from '@date-io/date-fns';
+
+import { useStyles } from './styles.js';
+import { currencyValues, toSymbol } from '../currencies.js';
+import { SelectAssetFormFragment } from './SelectAssetFormFragment.js';
+import { Snackbar } from '../components/Snackbar.js';
 import { matchNumberUpToTwoDecimalPlaces } from './utils.js';
+
 
 function formTransactionToAPITransaction(formData) {
     let data = { ...formData };
@@ -68,7 +67,7 @@ function formTransactionToAPITransaction(formData) {
     let value = data["totalValueAccountCurrency"];
     const emptyAccountCurrencyValue = value === "";
     data["value_in_account_currency"] = (
-        emptyAccountCurrencyValue ? data["local_value"]: -value * multiplier);
+        emptyAccountCurrencyValue ? data["local_value"] : -value * multiplier);
 
     delete data["totalValueAccountCurrency"];
 
@@ -98,7 +97,7 @@ function formTransactionToAPITransaction(formData) {
 
 
 function apiTransactionResponseToErrors(apiResponse) {
-    let response = {ok: apiResponse.ok};
+    let response = { ok: apiResponse.ok };
 
     if (apiResponse.errors) {
         response.errors["totalCostAccountCurrency"] = apiResponse.errors["total_in_account_currency"];
@@ -114,57 +113,6 @@ function apiTransactionResponseToErrors(apiResponse) {
 
 }
 
-function Alert(props) {
-    return <MuiAlert elevation={6} variant="filled" {...props} />;
-}
-
-const useStyles = makeStyles((theme) => ({
-    form: {
-        display: "flex",
-        flexWrap: "wrap",
-        flexDirection: "column",
-    },
-    formControl: {
-        minWidth: 120,
-        maxWidth: 300,
-    },
-    symbolInput: {
-        minWidth: 320,
-        maxWidth: 500,
-    },
-    narrowInput: {
-        minWidth: 60,
-        maxWidth: 100,
-    },
-    inputs: {
-        marginTop: theme.spacing(1),
-        marginBottom: theme.spacing(1),
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "10px",
-        alignItems: "baseline",
-    },
-    green: {
-        color: green[600],
-        '& *': {
-            color: green[600],
-        },
-    },
-    red: {
-        color: red[600],
-        '& *': {
-            color: red[600],
-        },
-    },
-    tradeTypes: {
-        display: "flex",
-        flexDirection: "row",
-    },
-    submitButton: {
-        marginTop: "2em",
-        marginBottom: "2em",
-    },
-}));
 
 const validationSchema = yup.object({
     symbol: yup
@@ -290,7 +238,7 @@ export function RecordTransactionForm(props) {
         formattedAccountCurrency = toSymbol(formik.values.account.currency);
     }
 
-    const sameCurrency =  formik.values.account ? formik.values.account.currency == formik.values.currency : false;
+    const sameCurrency = formik.values.account ? formik.values.account.currency == formik.values.currency : false;
     if (!sameCurrency) {
 
         valueBlock = <>
@@ -494,15 +442,10 @@ export function RecordTransactionForm(props) {
             </div>
 
             <Snackbar
-                anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'left',
-                }}
-                open={snackbarOpen} autoHideDuration={6000} onClose={snackbarHandleClose}>
-                <Alert onClose={snackbarHandleClose} severity="success">
-                    Transaction recorded successfully!
-                </Alert>
-            </Snackbar>
+                snackbarOpen={snackbarOpen}
+                snackbarHandleClose={snackbarHandleClose}
+                message="Transaction recorded successfully!"
+            />
         </form>
     );
 }

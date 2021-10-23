@@ -7,12 +7,14 @@ import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
-import { makeStyles } from '@material-ui/core/styles';
+
 import PropTypes from 'prop-types';
-import { currencyValues } from '../currencies.js';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 
+
+import { currencyValues } from '../currencies.js';
+import { useStyles } from './styles.js';
 
 
 const validationSchema = yup.object({
@@ -24,28 +26,6 @@ const validationSchema = yup.object({
         .oneOf(currencyValues)
         .required('Currency is required'),
 });
-
-
-const useStyles = makeStyles((theme) => ({
-    form: {
-        display: "flex",
-        flexWrap: "wrap",
-        flexDirection: "column",
-        marginTop: "20px",
-        marginBottom: "20px",
-    },
-    formControl: {
-        minWidth: 120,
-        maxWidth: 300,
-    },
-    inputs: {
-        marginTop: theme.spacing(1),
-        marginBottom: theme.spacing(1),
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "10px",
-    }
-}));
 
 
 export function CreateAccountForm(props) {
@@ -79,7 +59,7 @@ export function CreateAccountForm(props) {
     const submitButtonText = props.hasAccounts ? "Create another account" : "Create account";
 
     return (
-        <form className={classes.form} onSubmit={formik.handleSubmit}>
+        <form className={classes.formWithMargins} onSubmit={formik.handleSubmit}>
             <div className={classes.inputs}>
                 <TextField
                     id="account-name"
