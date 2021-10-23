@@ -202,7 +202,25 @@ class AccountRepository:
         account = event.account
         # This makes sense for all currently supported events,
         # but might not in the future.
-        account.balance -= event.amount
+
+        balance_change = event.amount
+        if event.withheld_taxes:
+            balance_change -= event.withheld_taxes
+
+        if event.event_type == models.EventType.DIVIDEND and event.position:
+            position_currency = event.position.asset.currency
+            account_currency = account.currency
+            if position_currency != account_currency:
+                exchange_rate = prices.get_closest_exchange_rate(
+                    date=event.executed_at.date(),
+                    from_currency=position_currency, to_currency=account_currency)
+                if exchange_rate is None:
+                    raise ValueError(f"Can't convert between currencies: "
+                                        f"{position_currency} and {account_currency}")
+                balance_change *= exchange_rate.value
+
+        account.balance -= balance_change
+
         account.save()
         event.delete()
 

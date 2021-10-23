@@ -154,6 +154,7 @@ export default class Portfolio extends React.Component {
         this.handleDeleteTransaction = this.handleDeleteTransaction.bind(this);
         this.handleCorrectTransaction = this.handleCorrectTransaction.bind(this);
         this.handleAddEvent = this.handleAddEvent.bind(this);
+        this.handleDeleteEvent = this.handleDeleteEvent.bind(this);
     }
 
     async handleAddAccount(accountData) {
@@ -215,6 +216,13 @@ export default class Portfolio extends React.Component {
 
     async handleAddEvent(data) {
         let result = await this.apiClient.addEvent(data);
+        this.refreshFromServer();
+        return result;
+    }
+
+    async handleDeleteEvent(eventId) {
+        let result = await this.apiClient.deleteEvent(eventId);
+        // Reload all the data, e.g. accounts, positions, etc.
         this.refreshFromServer();
         return result;
     }
@@ -355,6 +363,7 @@ export default class Portfolio extends React.Component {
                 accounts={this.state.accounts}
                 events={this.state.events} positions={this.state.positions}
                 handleAddEvent={this.handleAddEvent}
+                handleDeleteEvent={this.handleDeleteEvent}
                 />
             );
         }

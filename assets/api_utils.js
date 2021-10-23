@@ -183,4 +183,9 @@ export class APIClient {
         let url = this.baseUrl + '/account-events/';
         return postData(url, data);
     }
+
+    async deleteEvent(eventId) {
+        let url = this.baseUrl + '/account-events/' + eventId + "/";
+        return deleteData(url);
+    }
 }

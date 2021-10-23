@@ -10,7 +10,8 @@ import { ErrorBoundary } from './error_utils.js';
 import { TableWithSort } from './components/TableWithSort.js';
 import { toSymbol } from './currencies.js';
 import { trimTrailingDecimalZeroes } from './display_utils.js';
-import { PositionLink } from './components/PositionLink';
+import { PositionLink } from './components/PositionLink.js';
+import { EventTypeDisplay } from './components/EventTypeDisplay.js';
 
 
 const useStyles = makeStyles({
@@ -19,32 +20,7 @@ const useStyles = makeStyles({
         justifyContent: "space-between",
         alignItems: "center",
     },
-    eventType: {
-        display: "flex",
-        alignItems: "center",
-    }
 });
-
-
-function EventTypeDisplay({ eventType }) {
-    const classes = useStyles();
-
-    if (eventType === "DEPOSIT") {
-        return <span className={classes.eventType}><Icon>sync_alt</Icon>Deposit</span>;
-    }
-    else if (eventType === "WITHDRAWAL") {
-        return <span className={classes.eventType}><Icon>sync_alt</Icon>Withdrawal</span>;
-    } else if (eventType === "DIVIDEND") {
-        return <span className={classes.eventType}><Icon>paid</Icon>Dividend</span>;
-    } else {
-        <span>{eventType}</span>;
-    }
-}
-
-
-EventTypeDisplay.propTypes = {
-    eventType: PropTypes.string.isRequired,
-};
 
 
 export function EventList(props) {
@@ -56,6 +32,7 @@ export function EventList(props) {
         { id: 'position', label: 'Position' },
         { id: 'amount', label: 'Value' },
         { id: 'executed_at', label: 'Executed At' },
+        { id: 'interaction', label: '' },
     ];
 
     let accountsById = new Map(props.accounts.map(account => [account.id, account]));
@@ -72,12 +49,8 @@ export function EventList(props) {
             displayValue: (<a href={`#/accounts/${event.account}`}>{account.nickname}</a>),
             comparisonKey: event.account,
         };
-        eventCopy.amount = {
-            displayValue: (
-                trimTrailingDecimalZeroes(event.amount) + toSymbol(account.currency)
-            ),
-            comparisonKey: event.amount
-        };
+
+        let currency = toSymbol(account.currency);
         let positionDisplay = "None";
         if (event.position) {
             let position = null;
@@ -87,15 +60,31 @@ export function EventList(props) {
                 }
             }
             if (position) {
+                currency = toSymbol(position.asset.currency);
                 positionDisplay = <PositionLink position={position} />;
             }
         }
+        eventCopy.amount = {
+            displayValue: (
+                trimTrailingDecimalZeroes(event.amount) + currency
+            ),
+            comparisonKey: event.amount
+        };
         eventCopy.position = {
             displayValue: positionDisplay,
             comparisonKey: event.position,
         };
         eventCopy.event_type = {
             displayValue: <EventTypeDisplay eventType={event.event_type} />
+        };
+
+        eventCopy.interaction = {
+            displayValue: <div className="column-stack">
+                <Button
+                    href={"#/events/" + event.id}
+                >Details</Button>
+
+            </div>
         };
 
         return eventCopy;

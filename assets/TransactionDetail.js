@@ -1,10 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import './transaction_list.css';
-import { toSymbol } from './currencies.js';
-import { CorrectTransactionForm } from './forms/CorrectTransactionForm.js';
-
 import {
     Switch,
     Route,
@@ -21,6 +17,13 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogActions from '@material-ui/core/DialogActions';
 
 import { makeStyles } from '@material-ui/core/styles';
+
+
+import './transaction_list.css';
+import { toSymbol } from './currencies.js';
+import { CorrectTransactionForm } from './forms/CorrectTransactionForm.js';
+import { PositionLink } from './components/PositionLink.js';
+
 
 const useStyles = makeStyles({
     header: {
@@ -85,14 +88,7 @@ export function TransactionDetail(props) {
     let topInfo = (
         <div className="position-card">
             {transactionTypeDisplay}
-            <div className="asset-name">
-                {transaction.position.asset.isin ? <span className="card-label">{transaction.position.asset.isin}</span> : null}
-                <a href={`#positions/${transaction.position.id}`}>
-                    <span className="position-symbol">
-                        {transaction.position.asset.symbol}</span>
-                </a>
-                <span>{transaction.position.asset.name}</span>
-            </div>
+            <PositionLink position={transaction.position} />
 
             <div>
                 {transaction.position.asset.exchange.name}
