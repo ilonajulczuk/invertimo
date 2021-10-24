@@ -69,7 +69,6 @@ export function FormikDateField({ name, ...props }) {
                         autoOk={true}
                         error={Boolean(form.errors[name])}
                         onChange={(_, value) => {
-                            console.log("setting date", name, value);
                             form.setFieldValue(name, value);
                         }}
                         helperText={form.errors[name]}

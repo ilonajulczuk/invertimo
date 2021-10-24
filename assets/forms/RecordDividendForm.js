@@ -14,6 +14,7 @@ import { useStyles } from './styles.js';
 function formUpdateToAPIUpdate(formData, positionsById) {
     let data = { ...formData };
     data["event_type"] = "DIVIDEND";
+    data["executed_at"] = new Date(data["executed_at"]).toISOString().slice(0, 10) + "T00:00";
     data["account"] = positionsById.get(data.position).account;
     return data;
 }

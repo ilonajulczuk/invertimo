@@ -16,6 +16,10 @@ function formUpdateToAPIUpdate(formData) {
     if (data.event_type == "WITHDRAWAL") {
         data.amount = -data.amount;
     }
+    // Data needs to be in ISO format and include minutes.
+    // Since we don't really care about the minutes, I cut them
+    // and replace with 00:00 time.
+    data["executed_at"] = new Date(data["executed_at"]).toISOString().slice(0, 10) + "T00:00";
     data["position"] = "";
     return data;
 }
