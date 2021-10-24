@@ -55,6 +55,7 @@ describe('transaction detail tests', () => {
                     "currency": "USD",
                     "name": 'The Walt Disney Company',
                     "id": 123,
+                    "isin": "",
                     "exchange": {
                         name: "USA Stocks"
                     }

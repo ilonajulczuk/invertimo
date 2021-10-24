@@ -28,19 +28,17 @@ function sortByFirstValue(positions) {
 
 }
 
-function trimDataUntilDate(timeSeries, date) {
-    // Data is expected from newest to oldest.
+function trimDataUntilDate(timeSeries, date, reverse) {
+    // Data is expected from newest to oldest, unless it's
+    // in reverse order.
     let trimmedTimeSeries = [];
     for (let i = 0; i < timeSeries.length; i++) {
-        if (new Date(timeSeries[i][0]) > date) {
-            trimmedTimeSeries.push(timeSeries[i]);
+        const index = reverse ? timeSeries.length - i - 1: i;
+        if (new Date(timeSeries[index][0]) > date) {
+            trimmedTimeSeries.push(timeSeries[index]);
         } else {
             break;
         }
-    }
-    // In case there aren't any values left, leave the first one.
-    if (trimmedTimeSeries.length < 1) {
-        return timeSeries.slice(0, 1);
     }
     return trimmedTimeSeries;
 }
@@ -64,7 +62,8 @@ export function AccountValue(props) {
     let sortedValues = sortByFirstValue(props.values.slice());
 
     sortedValues = sortedValues.map(positionIdAndValues => ([positionIdAndValues[0],
-    trimDataUntilDate(positionIdAndValues[1], startDay)]));
+    trimDataUntilDate(positionIdAndValues[1], startDay)
+    ]));
 
     // Filter positions that don't have any price data.
     sortedValues = sortedValues.filter(positionIdAndValues => positionIdAndValues[1].length > 0);
@@ -97,6 +96,10 @@ export function AccountValue(props) {
     });
 
     let remainingValuesCombined = addAcrossDatesWithFill(valuesOfRemainingPositions, (a, b) => new Date(b) - new Date(a));
+    remainingValuesCombined = trimDataUntilDate(
+        remainingValuesCombined,
+        startDay,
+        true);
     remainingValuesCombined = remainingValuesCombined.map(elem => {
         let exactDate = new Date(elem[0]);
         return {
@@ -118,6 +121,9 @@ export function AccountValue(props) {
     // It backfills the values from the last one for a given row.
     // It flips the order of dates from oldest to youngest.
     let allValuesCombined = addAcrossDatesWithFill(sortedValues.map(positionIdAndValues => positionIdAndValues[1]));
+    allValuesCombined = trimDataUntilDate(
+        allValuesCombined, startDay, true);
+
     allValuesCombined = allValuesCombined.map(elem => {
         let exactDate = new Date(elem[0]);
         return {
@@ -142,7 +148,7 @@ export function AccountValue(props) {
         let positionPercentages = valuesOfBiggestPositions.map(values => {
             if (allValuesCombined.length > 0) {
                 return Math.round(
-                    values[1][0][1] * 100 * 100 / allValuesCombined[allValuesCombined.length -1].y) / 100;
+                    values[1][0][1] * 100 * 100 / allValuesCombined[0].y) / 100;
             } else {
                 return "NaN";
             }
