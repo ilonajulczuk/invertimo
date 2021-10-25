@@ -897,7 +897,6 @@ class TestAssetListView(ViewTestBase, TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(len(data), 3)
-
         ids = [entry["id"] for entry in data]
         self.assertTrue(self.asset.id in ids)
         self.assertTrue(self.custom_asset.id in ids)

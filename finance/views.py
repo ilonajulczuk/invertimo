@@ -388,12 +388,4 @@ class AssetViewSet(
     def get_queryset(self) -> QuerySet[Asset]:
         assert isinstance(self.request.user, User)
         user = self.request.user
-        # Without custom ordering this could be as simple as:
-        # return Asset.objects.filter(Q(added_by=None) | Q(added_by=user)).select_related('exchange')
-        assets_with_last_transactions = Asset.objects.filter(
-            positions__account__user=user,
-            added_by=None,
-        ).order_by("-positions__last_modified").select_related('exchange')
-        assets_added_by_user = Asset.objects.filter(added_by=user).select_related('exchange')
-        other_assets = Asset.objects.filter(added_by=None).exclude(positions__account__user=user).select_related('exchange')
-        return assets_added_by_user.union(other_assets).union(assets_with_last_transactions)
+        return Asset.objects.filter(Q(added_by=None) | Q(added_by=user)).select_related('exchange')
