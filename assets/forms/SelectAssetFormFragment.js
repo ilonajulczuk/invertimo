@@ -3,6 +3,8 @@ import React, { useEffect } from 'react';
 import TextField from '@material-ui/core/TextField';
 import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
 
+import { CircularProgress } from '@mui/material';
+
 import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
@@ -16,12 +18,11 @@ import DialogActions from '@material-ui/core/DialogActions';
 import Button from '@material-ui/core/Button';
 
 import { useStyles } from './styles.js';
-
+import { getAssets } from '../api_utils.js';
 import PropTypes from 'prop-types';
 
 
 const filter = createFilterOptions();
-
 
 export function SelectAssetFormFragment(props) {
 
@@ -33,17 +34,20 @@ export function SelectAssetFormFragment(props) {
   const [openFill, toggleOpenFill] = React.useState(false);
   const [otherFieldsDisabled, toggleDisable] = React.useState(false);
 
-  const [options, setOptions] = React.useState(assetOptions);
+  const [loading, setLoading] = React.useState(true);
+  const [options, setOptions] = React.useState(props.defaultAssetOptions);
 
-  useEffect(() => {
-    setTimeout(() => { setOptions(assetOptions); }, 1);
-  });
+  useEffect(async () => {
+    const assets = await getAssets();
+    setOptions(assets);
+    setLoading(false);
+  }, [props.defaultAssetOptions]);
 
   const handleFill = () => {
     const newValue = formik.values.symbol;
     formik.setFieldValue('currency', newValue.currency);
     // TODO: support more than one asset type.
-    formik.setFieldValue('assetType', "stock");
+    formik.setFieldValue('assetType', newValue.asset_type);
     formik.setFieldValue('exchange', newValue.exchange.name);
     toggleDisable(true);
     toggleOpenFill(false);
@@ -138,7 +142,7 @@ export function SelectAssetFormFragment(props) {
                 ...params.InputProps,
                 endAdornment: (
                   <React.Fragment>
-                    {options.length == 0 ? "loading..." : null}
+                    {loading ? <CircularProgress color="inherit" size={20} /> : null}
                     {params.InputProps.endAdornment}
                   </React.Fragment>
                 ),
@@ -161,9 +165,9 @@ export function SelectAssetFormFragment(props) {
             className={classes.formControl}
             disabled={otherFieldsDisabled}
           >
-            <MenuItem value={"stock"}>Stock</MenuItem>
-            <MenuItem value={"fund"}>Fund</MenuItem>
-            <MenuItem value={"bond"}>Bond</MenuItem>
+            <MenuItem value={"Stock"}>Stock</MenuItem>
+            <MenuItem value={"Fund"}>Fund</MenuItem>
+            <MenuItem value={"Bond"}>Bond</MenuItem>
           </Select>
           <FormHelperText>{(formik.touched.assetType && formik.errors.assetType) ||
             `Different types of assets are supported`}</FormHelperText>
@@ -262,43 +266,6 @@ export function SelectAssetFormFragment(props) {
 
 SelectAssetFormFragment.propTypes = {
   formik: PropTypes.any.isRequired,
+  defaultAssetOptions: PropTypes.array.isRequired,
 };
 
-const assetOptions = [
-  {
-    "id": 30,
-    "isin": "US0846707026",
-    "symbol": "BRK-B",
-    "name": "Berkshire Hathaway Inc",
-    "exchange": {
-      "id": 132,
-      "name": "USA Stocks"
-    },
-    "currency": "USD",
-    "country": "USA"
-  },
-  {
-    "id": 28,
-    "isin": "US2561631068",
-    "symbol": "DOCU",
-    "name": "DocuSign, Inc",
-    "exchange": {
-      "id": 132,
-      "name": "USA Stocks"
-    },
-    "currency": "USD",
-    "country": "USA"
-  },
-  {
-    "id": 26,
-    "isin": "US30303M1027",
-    "symbol": "FB",
-    "name": "Facebook, Inc",
-    "exchange": {
-      "id": 132,
-      "name": "USA Stocks"
-    },
-    "currency": "USD",
-    "country": "USA"
-  },
-];

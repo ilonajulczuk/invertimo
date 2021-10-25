@@ -144,6 +144,8 @@ class AccountRepository:
             position.save()
             account.balance += total_in_account_currency
             account.save()
+            # For a custom asset the transaction price will be a price history record.
+            models.PriceHistory.objects.create(asset=asset, value=price, date=executed_at.date())
 
         position.quantity_history.cache_clear()
         position.value_history.cache_clear()

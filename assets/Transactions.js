@@ -36,6 +36,13 @@ export function Transactions(props) {
 
     let { path } = useRouteMatch();
 
+    const assetsFromTransactionsMap = new Map(
+        props.transactions.map(
+            transaction => [transaction.position.asset.id, transaction.position.asset]));
+    let assetsFromTransactions = [];
+    for (let asset of assetsFromTransactionsMap.values()) {
+        assetsFromTransactions.push(asset);
+    }
     return (
         <Switch>
             <Route exact path={path}>
@@ -44,7 +51,9 @@ export function Transactions(props) {
             <Route path={`${path}/record`}>
                 <RecordTransaction accounts={props.accounts}
                     hasTransactions={props.transactions.length > 0}
-                    handleSubmit={props.handleAddTransaction} />
+                    handleSubmit={props.handleAddTransaction}
+                    defaultAssetOptions={assetsFromTransactions}
+                />
 
             </Route>
             <Route path={`${path}/:transactionId`}>
@@ -69,6 +78,7 @@ Transactions.propTypes = {
         local_value: PropTypes.string.isRequired,
         transaction_costs: PropTypes.string,
         executed_at: PropTypes.string.isRequired,
+        position: PropTypes.object.isRequired,
     })).isRequired,
     handleAddTransaction: PropTypes.func.isRequired,
     handleDeleteTransaction: PropTypes.func.isRequired,

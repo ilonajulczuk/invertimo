@@ -12,6 +12,59 @@ import { RecordTransactionForm } from "./RecordTransactionForm.js";
 
 let container = null;
 
+
+const assetOptions = [
+    {
+        "id": 30,
+        "isin": "US0846707026",
+        "symbol": "BRK-B",
+        "name": "Berkshire Hathaway Inc",
+        "asset_type": "Stock",
+        "exchange": {
+            "id": 132,
+            "name": "USA Stocks"
+        },
+        "currency": "USD",
+        "country": "USA"
+    },
+    {
+        "id": 28,
+        "isin": "US2561631068",
+        "symbol": "DOCU",
+        "name": "DocuSign, Inc",
+        "asset_type": "Stock",
+        "exchange": {
+            "id": 132,
+            "name": "USA Stocks"
+        },
+        "currency": "USD",
+        "country": "USA"
+    },
+    {
+        "id": 26,
+        "isin": "US30303M1027",
+        "symbol": "FB",
+        "name": "Facebook, Inc",
+        "asset_type": "Stock",
+        "exchange": {
+            "id": 132,
+            "name": "USA Stocks"
+        },
+        "currency": "USD",
+        "country": "USA"
+    },
+];
+
+
+jest.mock("../api_utils", () => {
+    // The form will send a request for assets.
+    // Let's return it our default asset Options for simplicity.
+    return {
+        getAssets: jest.fn(() => assetOptions)
+    };
+});
+
+
 describe('form for recording transactions', () => {
     beforeEach(() => {
         // setup a DOM element as a render target.
@@ -49,7 +102,7 @@ describe('form for recording transactions', () => {
 
         act(() => {
             render(
-                <RecordTransactionForm accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false} />,
+                <RecordTransactionForm accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false} defaultAssetOptions={assetOptions} />,
                 container
             );
         });
@@ -98,6 +151,7 @@ describe('form for recording transactions', () => {
                 <RecordTransactionForm
                     accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
                     executedAtDate={new Date("2021-08-10")}
+                    defaultAssetOptions={assetOptions}
                 />,
 
             );
@@ -193,6 +247,7 @@ describe('form for recording transactions', () => {
                 <RecordTransactionForm
                     accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
                     executedAtDate={new Date("2021-08-10")}
+                    defaultAssetOptions={assetOptions}
                 />,
 
             );
@@ -292,6 +347,7 @@ describe('form for recording transactions', () => {
                 <RecordTransactionForm
                     accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
                     executedAtDate={new Date("2021-08-10")}
+                    defaultAssetOptions={assetOptions}
                 />,
 
             );
@@ -358,7 +414,7 @@ describe('form for recording transactions', () => {
         const expectedValue = {
             account: accounts[0].id,
             symbol: "brrrrrr",
-            "asset_type": "stock",
+            "asset_type": "Stock",
             currency: "USD",
             exchange: "USA Stocks",
             "executed_at": new Date("2021-08-10"),
@@ -397,6 +453,7 @@ describe('form for recording transactions', () => {
                 <RecordTransactionForm
                     accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
                     executedAtDate={new Date("2021-08-10")}
+                    defaultAssetOptions={assetOptions}
                 />,
 
             );
@@ -497,6 +554,7 @@ describe('form for recording transactions', () => {
                 <RecordTransactionForm
                     accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
                     executedAtDate={new Date("2021-08-10")}
+                    defaultAssetOptions={assetOptions}
                 />,
 
             );

@@ -187,7 +187,7 @@ export function RecordTransactionForm(props) {
         executedAt: props.executedAtDate || new Date(),
         account: "",
         exchange: "",
-        assetType: "stock",
+        assetType: "Stock",
         price: "",
         quantity: "",
         totalCostAccountCurrency: "",
@@ -334,7 +334,8 @@ export function RecordTransactionForm(props) {
             </div></>);
     }
 
-    const selectAssetBlock = <SelectAssetFormFragment formik={formik} />;
+    const selectAssetBlock = <SelectAssetFormFragment formik={formik}
+     defaultAssetOptions={props.defaultAssetOptions} />;
 
     return (
         <form className={classes.form} onSubmit={formik.handleSubmit}>
@@ -456,6 +457,7 @@ RecordTransactionForm.propTypes = {
         nickname: PropTypes.string.isRequired,
         currency: PropTypes.oneOf(['EUR', 'GBP', 'USD']),
     })),
+    defaultAssetOptions: PropTypes.array.isRequired,
     hasTransactions: PropTypes.bool.isRequired,
     handleSubmit: PropTypes.func.isRequired,
     executedAtDate: PropTypes.instanceOf(Date),

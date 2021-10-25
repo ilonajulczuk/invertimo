@@ -189,3 +189,9 @@ export class APIClient {
         return deleteData(url);
     }
 }
+
+const baseUrl = "./api";
+
+export function getAssets() {
+    return fetchAllResults(baseUrl + "/assets/?limit=50");
+}
