@@ -25,6 +25,7 @@ from finance.views import (
     CurrencyExchangeRateView,
     AssetPricesView,
     AccountEventViewSet,
+    AssetViewSet,
 )
 from rest_framework import routers
 
@@ -34,6 +35,8 @@ router = routers.DefaultRouter()
 router.register(r"transactions", TransactionsViewSet, basename="transaction")
 router.register(r"accounts", AccountsViewSet, basename="account")
 router.register(r"account-events", AccountEventViewSet, basename="account-event")
+router.register(r"assets", AssetViewSet, basename="asset")
+
 urlpatterns = [
     path("", views.index_view, name="index"),
     path("admin/", admin.site.urls),

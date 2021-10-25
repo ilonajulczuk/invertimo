@@ -162,6 +162,8 @@ class Asset(models.Model):
             f"currency: {self.get_currency_display()}, country: {self.country}>"
         )
 
+    class Meta:
+        ordering = ["-id", "symbol"]
 
 def multiply_at_matching_dates(
     first_sequence: Sequence[Tuple[datetime.date, decimal.Decimal]],

@@ -1,5 +1,5 @@
 /* eslint-disable no-use-before-define */
-import React from 'react';
+import React, { useEffect } from 'react';
 import TextField from '@material-ui/core/TextField';
 import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
 
@@ -23,7 +23,6 @@ import PropTypes from 'prop-types';
 const filter = createFilterOptions();
 
 
-
 export function SelectAssetFormFragment(props) {
 
   const formik = props.formik;
@@ -33,6 +32,12 @@ export function SelectAssetFormFragment(props) {
   // also resets the disabled state.
   const [openFill, toggleOpenFill] = React.useState(false);
   const [otherFieldsDisabled, toggleDisable] = React.useState(false);
+
+  const [options, setOptions] = React.useState(assetOptions);
+
+  useEffect(() => {
+    setTimeout(() => { setOptions(assetOptions); }, 1);
+  });
 
   const handleFill = () => {
     const newValue = formik.values.symbol;
@@ -97,7 +102,7 @@ export function SelectAssetFormFragment(props) {
 
             return filtered;
           }}
-          options={assetOptions}
+          options={options}
           getOptionLabel={(option) => {
             // e.g value selected with enter, right from the input.
             if (typeof option === 'string') {
@@ -120,8 +125,7 @@ export function SelectAssetFormFragment(props) {
             }
             return (
               <div className={classes.symbolOption}>
-                <h5>{`${option.symbol}`}</h5>
-                <p>{`${option.name} - ${option.isin}`}</p>
+                <p>{`${option.symbol}`}: {`${option.name} - ${option.isin}`}</p>
               </div>);
           }}
           style={{ width: 400, display: "flex" }}
@@ -130,6 +134,16 @@ export function SelectAssetFormFragment(props) {
             <TextField {...params}
               id="symbol"
               label="Symbol or Name"
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <React.Fragment>
+                    {options.length == 0 ? "loading..." : null}
+                    {params.InputProps.endAdornment}
+                  </React.Fragment>
+                ),
+              }}
+
               error={formik.touched.symbol && Boolean(formik.errors.symbol)}
               helperText={(formik.touched.symbol && formik.errors.symbol) || "Stock symbol like 'DIS' or ISIN"} />
           )}
@@ -159,7 +173,7 @@ export function SelectAssetFormFragment(props) {
       <div className={classes.inputs}>
         <FormControl className={classes.formControl}>
           <InputLabel id="exchange-label"
-           error={formik.touched.exchange && Boolean(formik.errors.exchange)}>Exchange</InputLabel>
+            error={formik.touched.exchange && Boolean(formik.errors.exchange)}>Exchange</InputLabel>
           <Select
             id="exchange"
             name="exchange"

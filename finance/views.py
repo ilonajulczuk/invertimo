@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 from typing import Any, Dict, Union, Type
 from rest_framework.decorators import action
 
+from django.db.models import Q
 
 from finance import accounts, models
 from finance.models import (
@@ -19,8 +20,10 @@ from finance.models import (
     PriceHistory,
     Transaction,
     AccountEvent,
+    Asset,
 )
 from finance.serializers import (
+    AssetSerializer,
     AccountSerializer,
     AccountEventSerializer,
     AccountEditSerializer,
@@ -342,7 +345,11 @@ class AccountEventViewSet(
     def get_queryset(self) -> QuerySet[AccountEvent]:
         assert isinstance(self.request.user, User)
         user = self.request.user
-        return AccountEvent.objects.filter(account__user=user).prefetch_related("position").prefetch_related("account")
+        return (
+            AccountEvent.objects.filter(account__user=user)
+            .prefetch_related("position")
+            .prefetch_related("account")
+        )
 
     def get_serializer_context(self) -> Dict[str, Any]:
         context: Dict[str, Any] = super().get_serializer_context()
@@ -366,3 +373,27 @@ class AccountEventViewSet(
     def perform_destroy(self, instance):
         account_repository = accounts.AccountRepository()
         account_repository.delete_event(instance)
+
+
+class AssetViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
+    model = Asset
+    serializer_class = AssetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = LimitOffsetPagination
+    basename = "account-event"
+
+    def get_queryset(self) -> QuerySet[Asset]:
+        assert isinstance(self.request.user, User)
+        user = self.request.user
+        # Without custom ordering this could be as simple as:
+        # return Asset.objects.filter(Q(added_by=None) | Q(added_by=user)).select_related('exchange')
+        assets_with_last_transactions = Asset.objects.filter(
+            positions__account__user=user,
+            added_by=None,
+        ).order_by("-positions__last_modified").select_related('exchange')
+        assets_added_by_user = Asset.objects.filter(added_by=user).select_related('exchange')
+        other_assets = Asset.objects.filter(added_by=None).exclude(positions__account__user=user).select_related('exchange')
+        return assets_added_by_user.union(other_assets).union(assets_with_last_transactions)

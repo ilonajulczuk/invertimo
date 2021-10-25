@@ -309,7 +309,6 @@ describe('form for recording transactions', () => {
             listbox = await screen.findByRole('listbox');
             fireEvent.click(within(listbox).getByText(/USA Stocks/i));
 
-
             selector = document.getElementById("account");
             fireEvent.mouseDown(selector);
             listbox = await screen.findByRole('listbox');

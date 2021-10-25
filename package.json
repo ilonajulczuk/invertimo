@@ -8,6 +8,7 @@
     "dev": "webpack --mode development"
   },
   "jest": {
+    "testEnvironment": "jsdom",
     "transform": {
       ".*": "<rootDir>/node_modules/babel-jest"
     },

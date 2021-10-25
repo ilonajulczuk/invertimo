@@ -836,3 +836,70 @@ class TestAccountEventDetailView(ViewTestBase, TestCase):
             account.balance,
             old_account_balance - event.amount,
         )
+
+
+
+class TestAssetListView(ViewTestBase, TestCase):
+    URL = "/api/assets/"
+    VIEW_NAME = "asset-list"
+    DETAIL_VIEW = False
+    QUERY_PARAMS = "?"
+    UNAUTHENTICATED_CODE = 403
+
+    def setUp(self):
+        super().setUp()
+
+        self.isin = "USA123"
+        self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
+            self.user, isin=self.isin
+        )
+        for transaction in _FAKE_TRANSACTIONS:
+            _add_transaction(
+                self.account,
+                self.isin,
+                self.exchange,
+                transaction[0],
+                transaction[1],
+                transaction[2],
+            )
+
+        self.another_asset = models.Asset.objects.create(
+            isin="USA234",
+            symbol="MOONIES2",
+            name="stockson",
+            currency=models.Currency.USD,
+            exchange=self.exchange,
+            tracked=True,
+        )
+
+        self.custom_asset = models.Asset.objects.create(
+            symbol="mystockson",
+            currency=models.Currency.EUR,
+            exchange=self.exchange,
+            tracked=False,
+            added_by=self.user,
+        )
+
+        user2 = User.objects.create(
+                username="anotheruser", email="test2@example.com"
+            )
+
+        self.custom_asset_of_another_user = models.Asset.objects.create(
+            symbol="mystockson",
+            currency=models.Currency.GBP,
+            exchange=self.exchange,
+            tracked=False,
+            added_by=user2,
+        )
+
+    def test_assets_listed(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 3)
+
+        ids = [entry["id"] for entry in data]
+        self.assertTrue(self.asset.id in ids)
+        self.assertTrue(self.custom_asset.id in ids)
+        self.assertTrue(self.another_asset.id in ids)
+        self.assertFalse(self.custom_asset_of_another_user.id in ids)

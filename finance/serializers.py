@@ -65,10 +65,11 @@ class EventTypeField(serializers.CharField):
 class AssetSerializer(serializers.ModelSerializer[Asset]):
     exchange = ExchangeSerializer()
     currency = CurrencyField()
+    asset_type = AssetTypeField()
 
     class Meta:
         model = Asset
-        fields = ["id", "isin", "symbol", "name", "exchange", "currency", "country"]
+        fields = ["id", "isin", "symbol", "name", "exchange", "currency", "country", "asset_type"]
 
 
 class PositionSerializer(serializers.ModelSerializer[Position]):
