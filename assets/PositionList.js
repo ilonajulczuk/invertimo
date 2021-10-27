@@ -20,6 +20,7 @@ export function PositionList(props) {
 
     const positionHeadCells = [
         { id: 'product', label: 'Product' },
+        { id: 'assetType', label: 'Asset type'},
         { id: 'exchange', label: 'Exchange' },
         { id: 'quantity', label: 'Quantity' },
         { id: 'price', label: 'Price' },
@@ -46,6 +47,7 @@ export function PositionList(props) {
             displayValue: <PositionLink position={data}/>,
             comparisonKey: data.asset.symbol,
         };
+        positionRow.assetType = data.asset.asset_type;
         positionRow.exchange = data.asset.exchange.name;
         positionRow.quantity = quantity;
         positionRow.price = {

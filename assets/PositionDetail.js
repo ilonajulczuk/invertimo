@@ -12,13 +12,72 @@ import { AreaChartWithCursor, LineChartWithCursor } from './components/charts.js
 import { toSymbol } from './currencies';
 
 import './position_list.css';
-import {APIClientError} from './api_utils.js';
+import { APIClientError } from './api_utils.js';
+
+
+function PositionHeader({ position, positionCurrency, accountCurrency }) {
+    const value = Math.round(100 * position.quantity * position.latest_price) / 100;
+    const displayConvertedValue = (
+        positionCurrency != accountCurrency
+        && position.latest_exchange_rate);
+
+    return (
+        <div className="position-card">
+            <div className="position-name">
+                <span className="card-label">{position.asset.isin}</span>
+                <span className="position-symbol">{position.asset.symbol}</span>
+                <span>{position.asset.name}</span>
+            </div>
+
+            <div>
+                <span className="card-label">Asset type</span>
+                {position.asset.asset_type}
+            </div>
+            <div>
+                <span className="card-label">Exchange</span>
+                <span style={{textAlign: "center"}}>{position.asset.exchange.name}</span>
+            </div>
+            <div>
+                <span className="card-label">Quantity</span>{position.quantity}
+            </div>
+            <div>
+                <span className="card-label">Price as of {position.latest_price_date}</span>
+                {position.latest_price} {positionCurrency}
+            </div>
+            <div className="position-values">
+                <div className="column-stack">
+                    <span className="card-label">Value as of {position.latest_price_date}</span>
+                    <span>
+                        {value} {positionCurrency}
+                    </span>
+                    <span>
+                        {displayConvertedValue ? Math.round(100 * value * position.latest_exchange_rate) / 100 : ""}
+                        {displayConvertedValue ? " " + accountCurrency : ""}
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+
+}
+
+PositionHeader.propTypes = {
+    position: PropTypes.shape({
+        latest_price_date: PropTypes.string.isRequired,
+        quantity: PropTypes.string.isRequired,
+        latest_exchange_rate: PropTypes.string,
+        latest_price: PropTypes.string.isRequired,
+        asset: PropTypes.object.isRequired,
+    }),
+    positionCurrency: PropTypes.string.isRequired,
+    accountCurrency: PropTypes.string.isRequired,
+};
 
 export function PositionDetail(props) {
 
     const [chartTimeSelectorOptionId, setChartTimeSelectorOptionId] = useState(3);
     const [chartTimePeriod, setChartTimePeriod] = useState({ months: 3 });
-    const [data, setData] = useState(0);
+    const [data, setData] = useState(null);
     const [failedLoading, setFailedLoading] = useState(false);
 
     let handleChartTimeSelectorChange = (selectorOptionId, selectorData) => {
@@ -74,43 +133,11 @@ export function PositionDetail(props) {
 
     const accountCurrency = toSymbol(account.currency);
     const positionCurrency = toSymbol(basicData.asset.currency);
-    const value = Math.round(100 * basicData.quantity * basicData.latest_price) / 100;
-    let displayConvertedValue = (basicData.asset.currency != account.currency && basicData.latest_exchange_rate);
-    let basicHeader = (
-        <div className="position-card">
-            <div className="position-name">
-                <span className="card-label">{basicData.asset.isin}</span>
-                <span className="position-symbol">{basicData.asset.symbol}</span>
-                <span>{basicData.asset.name}</span>
-            </div>
+    let basicHeader = <PositionHeader position={basicData}
+        accountCurrency={accountCurrency}
+        positionCurrency={positionCurrency} />;
 
-            <div>
-                {basicData.asset.exchange.name}
-            </div>
-            <div>
-                <span className="card-label"> Quantity</span>{basicData.quantity}
-            </div>
-            <div>
-                <span className="card-label">Price as of {basicData.latest_price_date}</span>
-                {basicData.latest_price} {positionCurrency}
-            </div>
-            <div className="position-values">
-                <div className="column-stack">
-                    <span className="card-label">Value as of {basicData.latest_price_date}</span>
-                    <span>
-                        {value} {positionCurrency}
-                    </span>
-                    <span>
-                        {displayConvertedValue ? Math.round(100 * value * basicData.latest_exchange_rate) / 100 : ""}
-                        {displayConvertedValue ? " " + accountCurrency : ""}
-                    </span>
-                </div>
-
-            </div>
-
-        </div>
-    );
-    if (data === 0) {
+    if (data === null) {
         return <div> <h2><a href="../#positions/">Positions</a> / {basicData.asset.symbol}</h2>
             {basicHeader}
             <div>Loading...</div></div>;
@@ -185,7 +212,7 @@ export function PositionDetail(props) {
 
                 </div>
                 <div>
-                    <h3>Transactions & Events</h3>
+                    <h3>Transactions</h3>
                     <EmbeddedTransactionList transactions={data.transactions} />
                 </div>
 
