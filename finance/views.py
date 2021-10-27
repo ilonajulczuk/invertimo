@@ -219,6 +219,7 @@ class PositionView(generics.RetrieveAPIView):
             .prefetch_related("asset__pricehistory_set")
             .select_related("asset__exchange")
             .prefetch_related("transactions")
+            .prefetch_related("events")
         )
 
     def get_serializer_context(self):

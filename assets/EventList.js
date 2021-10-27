@@ -94,7 +94,7 @@ export function EventList(props) {
         <ErrorBoundary>
             <div className={classes.header}>
                 <h2>Events</h2>
-                <div style={{display: "flex", gap: "5px"}}>
+                <div style={{ display: "flex", gap: "5px" }}>
                     <Button
                         href="#/events/record_transfer"
                         variant="contained"
@@ -127,4 +127,75 @@ EventList.propTypes = {
     accounts: PropTypes.array.isRequired,
     events: PropTypes.array.isRequired,
     positions: PropTypes.array.isRequired,
+};
+
+
+export function EmbeddedDividendList(props) {
+    const eventHeadCells = [
+        { id: 'account', label: 'Account' },
+        { id: 'amount', label: 'Value' },
+        { id: 'withheld_taxes', label: 'Withheld taxes' },
+        { id: 'executed_at', label: 'Executed At' },
+        { id: 'interaction', label: '' },
+    ];
+
+    let accountsById = new Map(props.accounts.map(account => [account.id, account]));
+
+    const events = props.events.map(event => {
+
+        let eventCopy = { ...event };
+        let date = new Date(eventCopy.executed_at);
+        eventCopy.executed_at = {
+            displayValue: date.toLocaleDateString(),
+            comparisonKey: date,
+        };
+        let account = accountsById.get(event.account);
+        eventCopy.account = {
+            displayValue: (<a href={`#/accounts/${event.account}`}>{account.nickname}</a>),
+            comparisonKey: event.account,
+        };
+
+        const currency = toSymbol(props.position.asset.currency);
+
+        eventCopy.amount = {
+            displayValue: (
+                trimTrailingDecimalZeroes(event.amount) + currency
+            ),
+            comparisonKey: event.amount
+        };
+
+        eventCopy.withheld_taxes = {
+            displayValue: (
+                trimTrailingDecimalZeroes(event.withheld_taxes) + currency
+            ),
+            comparisonKey: event.withheld_taxes
+        };
+
+        eventCopy.event_type = {
+            displayValue: <EventTypeDisplay eventType={event.event_type} />
+        };
+
+        eventCopy.interaction = {
+            displayValue: (
+                <div className="column-stack">
+                    <Button
+                        href={"#/events/" + event.id}
+                    >Details</Button>
+                </div>)
+        };
+
+        return eventCopy;
+    });
+    return (
+        <ErrorBoundary>
+            <TableWithSort rows={events} headCells={eventHeadCells} />
+        </ErrorBoundary>
+    );
+}
+
+
+EmbeddedDividendList.propTypes = {
+    accounts: PropTypes.array.isRequired,
+    events: PropTypes.array.isRequired,
+    position: PropTypes.object.isRequired,
 };

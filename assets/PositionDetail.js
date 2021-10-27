@@ -8,6 +8,7 @@ import {
 import { filterPointsWithNoChange, filterPoints } from './timeseries_utils.js';
 import { TimeSelector, daysFromDurationObject } from './TimeSelector.js';
 import { EmbeddedTransactionList } from './TransactionList.js';
+import { EmbeddedDividendList } from './EventList.js';
 import { AreaChartWithCursor, LineChartWithCursor } from './components/charts.js';
 import { toSymbol } from './currencies';
 
@@ -214,6 +215,10 @@ export function PositionDetail(props) {
                 <div>
                     <h3>Transactions</h3>
                     <EmbeddedTransactionList transactions={data.transactions} />
+                </div>
+                <div>
+                    <h3>Dividends</h3>
+                    <EmbeddedDividendList events={data.events} position={basicData} accounts={props.accounts} />
                 </div>
 
             </div>

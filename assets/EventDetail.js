@@ -86,12 +86,11 @@ export function EventDetail(props) {
             currency = toSymbol(position.asset.currency);
         }
     }
-
     let topInfo = (
         <div className="position-card">
             <div><EventTypeDisplay eventType={event.event_type} /></div>
             <div><span className="card-label">Amount</span> {trimTrailingDecimalZeroes(event.amount) + currency}</div>
-            {Number(event.withheld_taxes) !== 0 ? <div>
+            {(event.event_type) === "DIVIDEND" ? <div>
                 <span className="card-label">Withheld taxes</span> {
                 trimTrailingDecimalZeroes(event.withheld_taxes) + currency}</div>
             : null}

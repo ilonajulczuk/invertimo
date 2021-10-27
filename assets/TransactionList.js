@@ -12,57 +12,59 @@ import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 import { PositionLink } from './components/PositionLink.js';
 
-const embeddedTransactionHeadCells = [
-    { id: 'type', label: 'Type' },
-    { id: 'quantity', label: 'Quantity' },
-    { id: 'price', label: 'Price' },
-    { id: 'local_value', label: 'Total value' },
-    { id: 'executed_at', label: 'Executed At' },
-    { id: 'transaction_costs', label: 'Fees' },
-    { id: 'interaction', label: '' },
-];
 
+export function EmbeddedTransactionList(props) {
 
-export class EmbeddedTransactionList extends React.Component {
+    const embeddedTransactionHeadCells = [
+        { id: 'type', label: 'Type' },
+        { id: 'quantity', label: 'Quantity' },
+        { id: 'price', label: 'Price' },
+        { id: 'local_value', label: 'Total value' },
+        { id: 'executed_at', label: 'Executed At' },
+        { id: 'transaction_costs', label: 'Fees' },
+        { id: 'interaction', label: '' },
+    ];
 
-    render() {
-        const transactions = this.props.transactions.map(transaction => {
+    const transactions = props.transactions.map(transaction => {
 
-            let transactionCopy = { ...transaction };
-            let date = new Date(transactionCopy.executed_at);
-            transactionCopy.executed_at = date.toLocaleString();
-            let transactionTypeDisplay = null;
-            if (transaction.value_in_account_currency < 0) {
-                transactionTypeDisplay = (
-                    <div className="trade-type trade-type-buy">Buy</div>
-                );
-            } else {
-                transactionTypeDisplay = (
-                    <div className="trade-type trade-type-sell">Sell</div>
-                );
-            }
-            transactionCopy.type = {
-                displayValue: transactionTypeDisplay,
-                comparisonKey: transaction.value_in_account_currency,
-            };
-            transactionCopy.interaction = {
-                displayValue: <div className="column-stack">
-                    <Button
-                        href={"#/transactions/" + transaction.id}
-                    >Details</Button>
+        let transactionCopy = { ...transaction };
+        let date = new Date(transactionCopy.executed_at);
+        transactionCopy.executed_at = {
+            displayValue: date.toLocaleDateString(),
+            comparisonKey: date,
+        };
+        let transactionTypeDisplay = null;
+        if (transaction.value_in_account_currency < 0) {
+            transactionTypeDisplay = (
+                <div className="trade-type trade-type-buy">Buy</div>
+            );
+        } else {
+            transactionTypeDisplay = (
+                <div className="trade-type trade-type-sell">Sell</div>
+            );
+        }
+        transactionCopy.type = {
+            displayValue: transactionTypeDisplay,
+            comparisonKey: transaction.value_in_account_currency,
+        };
+        transactionCopy.interaction = {
+            displayValue: <div className="column-stack">
+                <Button
+                    href={"#/transactions/" + transaction.id}
+                >Details</Button>
 
-                </div>
-            };
+            </div>
+        };
 
-            return transactionCopy;
-        });
-        return (
-            <ErrorBoundary>
-                <TableWithSort rows={transactions} headCells={embeddedTransactionHeadCells} />
-            </ErrorBoundary>
-        );
-    }
+        return transactionCopy;
+    });
+    return (
+        <ErrorBoundary>
+            <TableWithSort rows={transactions} headCells={embeddedTransactionHeadCells} />
+        </ErrorBoundary>
+    );
 }
+
 
 EmbeddedTransactionList.propTypes = {
     transactions: PropTypes.arrayOf(PropTypes.shape({
@@ -89,7 +91,7 @@ export function TransactionList(props) {
     const transactionHeadCells = [
         { id: 'type', label: 'Type' },
         { id: 'position', label: 'Position' },
-        { id: 'assetType', label: 'Asset type'},
+        { id: 'assetType', label: 'Asset type' },
         { id: 'quantity', label: 'Quantity' },
         { id: 'price', label: 'Price' },
         { id: 'value', label: 'Value' },

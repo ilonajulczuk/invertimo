@@ -404,8 +404,8 @@ class AccountEvent(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
     position = models.ForeignKey(
         Position,
-        on_delete=models.SET_NULL,
         related_name="events",
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )

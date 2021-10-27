@@ -26,7 +26,23 @@ class ExchangeSerializer(serializers.ModelSerializer[Exchange]):
         fields = ["id", "name"]
 
 
-# TODO: add some class to handle all this.
+class RelatedPkField(serializers.IntegerField):
+    def __init__(self, model, **kwargs):
+        self._model = model
+        super().__init__(**kwargs)
+
+    def to_internal_value(self, data):
+        if data:
+            try:
+                return self._model.objects.get(pk=data)
+            except (self._model.DoesNotExist, TypeError):
+                raise serializers.ValidationError(
+                    f"User doesn't have a account with id: '{data}'"
+                )
+
+    def to_representation(self, value):
+        if value:
+            return value.pk
 
 
 class CurrencyField(serializers.IntegerField):
@@ -122,6 +138,14 @@ class EmbeddedTransactionSerializer(serializers.ModelSerializer[Transaction]):
             "local_value",
             "value_in_account_currency",
         ]
+
+
+class EmbeddedAccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
+    event_type = EventTypeField()
+
+    class Meta:
+        model = AccountEvent
+        fields = ["id", "event_type", "executed_at", "amount", "withheld_taxes", "account"]
 
 
 class TransactionSerializer(serializers.ModelSerializer[Transaction]):
@@ -291,6 +315,7 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer[Position]):
     values = serializers.SerializerMethodField()
     values_account_currency = serializers.SerializerMethodField()
     transactions = EmbeddedTransactionSerializer(many=True)
+    events = EmbeddedAccountEventSerializer(many=True)
 
     class Meta:
         model = Position
@@ -301,6 +326,7 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer[Position]):
             "quantity",
             "quantities",
             "transactions",
+            "events",
             "values",
             "values_account_currency",
         ]
@@ -438,25 +464,6 @@ class AccountWithValuesSerializer(serializers.ModelSerializer[Account]):
         return obj.value_history_per_position(from_date, to_date)
 
 
-class RelatedPkField(serializers.IntegerField):
-    def __init__(self, model, **kwargs):
-        self._model = model
-        super().__init__(**kwargs)
-
-    def to_internal_value(self, data):
-        if data:
-            try:
-                return self._model.objects.get(pk=data)
-            except (self._model.DoesNotExist, TypeError):
-                raise serializers.ValidationError(
-                    f"User doesn't have a account with id: '{data}'"
-                )
-
-    def to_representation(self, value):
-        if value:
-            return value.pk
-
-
 class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
     event_type = EventTypeField()
     account = RelatedPkField(model=models.Account)
@@ -478,7 +485,7 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
         assert isinstance(request.user, User)
         return models.Account.objects.filter(user=request.user)
 
-    def get_position_queryset(self) -> QuerySet[models.Account]:
+    def get_position_queryset(self) -> QuerySet[models.Position]:
         request = self.context.get("request")
         assert isinstance(request, Request)
         assert isinstance(request.user, User)
