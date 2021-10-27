@@ -47,7 +47,7 @@ const useStyles = makeStyles({
 export function TransactionDetail(props) {
     const classes = useStyles();
 
-    let match  = useRouteMatch("/transactions/:transactionId");
+    let match = useRouteMatch("/transactions/:transactionId");
     let path = match.path;
     let transactionId = match.params.transactionId;
     let history = useHistory();
@@ -89,12 +89,17 @@ export function TransactionDetail(props) {
         <div className="position-card">
             {transactionTypeDisplay}
             <PositionLink position={transaction.position} />
-
             <div>
+                <span className="card-label">Asset type</span>
+                {transaction.position.asset.asset_type}
+            </div>
+            <div>
+                <span className="card-label">Exchange</span>
                 {transaction.position.asset.exchange.name}
             </div>
             <div>
-                <span className="card-label">Quantity</span> {transaction.quantity}
+                <span className="card-label">Quantity</span>
+                {transaction.quantity}
             </div>
             <div>
                 <span className="card-label">Price</span>
@@ -102,10 +107,8 @@ export function TransactionDetail(props) {
             </div>
             <div className="column-stack">
                 <span className="card-label">Value</span>
-
                 <span>{Number(transaction.value_in_account_currency) + accountCurrencySymbol}</span>
                 <span>{Number(transaction.local_value) + positionCurrencySymbol}</span>
-
             </div>
             <div>
                 <span className="card-label">Fees</span> {transaction.transaction_costs}
@@ -113,9 +116,9 @@ export function TransactionDetail(props) {
             <div>
                 <span className="card-label">Executed at</span> {transaction.executed_at.slice(0, 10)}
             </div>
-
         </div>
     );
+
     const handleDelete = () => {
         props.handleDeleteTransaction(transaction.id);
         history.push("/transactions");
@@ -154,10 +157,13 @@ export function TransactionDetail(props) {
 
             {topInfo}
             <div className={classes.transactionDetails}>
-
-                <p>Executed in account <a href={`#accounts/${account.id}`}>{account.nickname}</a> {transaction.order_id ? `with order id: #${transaction.order_id}` : ""}</p> {transaction.order_id}
-
+                <p>Executed in account
+                    <a href={`#accounts/${account.id}`}> {account.nickname}</a>
+                    {transaction.order_id ? `with order id: #${transaction.order_id}` : ""}
+                </p>
+                {transaction.order_id}
             </div>
+
             <Switch>
                 <Route path={`${path}/correct`}>
                     <Dialog
@@ -169,7 +175,7 @@ export function TransactionDetail(props) {
                         <DialogTitle id="correct-transaction-dialog-title">{"Correct details of the transaction"}</DialogTitle>
                         <DialogContent>
                             <DialogContentText id="correct-transaction-dialog-description">
-                                    If you want to change the details not available here, consider deleting this transaction and recording a new one.
+                                If you want to change the details not available here, consider deleting this transaction and recording a new one.
                             </DialogContentText>
                             <CorrectTransactionForm
                                 account={account}

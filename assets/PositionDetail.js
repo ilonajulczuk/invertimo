@@ -218,7 +218,6 @@ export function PositionDetail(props) {
 
             </div>
         </div>
-
     );
 }
 

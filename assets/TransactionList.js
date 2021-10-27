@@ -89,6 +89,7 @@ export function TransactionList(props) {
     const transactionHeadCells = [
         { id: 'type', label: 'Type' },
         { id: 'position', label: 'Position' },
+        { id: 'assetType', label: 'Asset type'},
         { id: 'quantity', label: 'Quantity' },
         { id: 'price', label: 'Price' },
         { id: 'value', label: 'Value' },
@@ -114,6 +115,7 @@ export function TransactionList(props) {
             comparisonKey: position.asset.symbol,
         };
 
+        transactionCopy.assetType = position.asset.asset_type;
         let transactionTypeDisplay = null;
         if (transaction.value_in_account_currency < 0) {
             transactionTypeDisplay = (
