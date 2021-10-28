@@ -165,6 +165,7 @@ class Asset(models.Model):
     class Meta:
         ordering = ["-id", "symbol"]
 
+
 def multiply_at_matching_dates(
     first_sequence: Sequence[Tuple[datetime.date, decimal.Decimal]],
     second_sequence: Sequence[Tuple[datetime.date, decimal.Decimal]],
@@ -442,3 +443,35 @@ class PriceHistory(models.Model):
 
     class Meta:
         ordering = ["-date"]
+
+
+class Lot(models.Model):
+    quantity = models.DecimalField(max_digits=12, decimal_places=5)
+    buy_date = models.DateField()
+    buy_price = models.DecimalField(max_digits=12, decimal_places=5)
+    cost_basis_account_currency = models.DecimalField(max_digits=12, decimal_places=5)
+
+    sell_date = models.DateField(null=True)
+    sell_price = models.DecimalField(max_digits=12, decimal_places=5, null=True)
+    sell_basis_account_currency = models.DecimalField(
+        max_digits=12, decimal_places=5, null=True
+    )
+    realized_gain_account_currency = models.DecimalField(
+        max_digits=12, decimal_places=5, null=True
+    )
+
+    position = models.ForeignKey(
+        Position, related_name="lots", on_delete=models.CASCADE
+    )
+
+    buy_transaction = models.ForeignKey(
+        Transaction, related_name="buy_lots", on_delete=models.CASCADE
+    )
+
+    sell_transaction = models.ForeignKey(
+        Transaction, related_name="sell_lots", on_delete=models.SET_NULL,
+        null=True
+    )
+
+    class Meta:
+        ordering = ["buy_date"]

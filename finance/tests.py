@@ -333,3 +333,33 @@ class TestPosition(TestCase):
             for (date, value) in expected_value_history
         ]
         self.assertEqual(value_history, expected_value_history)
+
+    def test_lots_based_on_transactions(self):
+        transaction_costs = decimal.Decimal('0.5')
+        local_value = decimal.Decimal('12.2')
+        value_in_account_currency = decimal.Decimal('10.5')
+        total_in_account_currency = decimal.Decimal(11)
+        quantity = 10
+        price = decimal.Decimal('1.22')
+        order_id = "123"
+        executed_at = "2021-04-27 10:00Z"
+        account_repository = accounts.AccountRepository()
+        account_repository.add_transaction(
+            self.account,
+            self.isin,
+            self.exchange,
+            executed_at,
+            quantity,
+            price,
+            transaction_costs,
+            local_value,
+            value_in_account_currency,
+            total_in_account_currency,
+            order_id,
+        )
+
+        self.assertEqual(models.Lot.objects.count(), 1)
+        lot = models.Lot.objects.first()
+        self.assertEqual(lot.quantity, quantity)
+        self.assertEqual(lot.buy_price, price)
+        self.assertEqual(lot.cost_basis_account_currency, total_in_account_currency)
