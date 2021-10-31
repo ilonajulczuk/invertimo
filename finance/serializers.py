@@ -149,16 +149,16 @@ class EmbeddedAccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
 
 
 class TransactionSerializer(serializers.ModelSerializer[Transaction]):
-    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
-    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
+    price = serializers.DecimalField(max_digits=12, decimal_places=5)
     position = EmbeddedPositionSerializer()
-    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
-    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    transaction_costs = serializers.DecimalField(max_digits=12, decimal_places=5)
+    local_value = serializers.DecimalField(max_digits=12, decimal_places=5)
     value_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
     total_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
 
     class Meta:
@@ -179,16 +179,16 @@ class TransactionSerializer(serializers.ModelSerializer[Transaction]):
 
 
 class AddTransactionKnownAssetSerializer(serializers.ModelSerializer[Transaction]):
-    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
-    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
+    price = serializers.DecimalField(max_digits=12, decimal_places=5)
 
-    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
-    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    transaction_costs = serializers.DecimalField(max_digits=12, decimal_places=5)
+    local_value = serializers.DecimalField(max_digits=12, decimal_places=5)
     value_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
     total_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
     account = serializers.IntegerField()
     asset = serializers.IntegerField()
@@ -225,16 +225,16 @@ class AddTransactionKnownAssetSerializer(serializers.ModelSerializer[Transaction
 
 
 class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction]):
-    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
-    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
+    price = serializers.DecimalField(max_digits=12, decimal_places=5)
 
-    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
-    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    transaction_costs = serializers.DecimalField(max_digits=12, decimal_places=5)
+    local_value = serializers.DecimalField(max_digits=12, decimal_places=5)
     value_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
     total_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
     account = serializers.IntegerField()
 
@@ -284,16 +284,16 @@ class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction])
 
 
 class CorrectTransactionSerializer(serializers.ModelSerializer[Transaction]):
-    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
-    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
+    price = serializers.DecimalField(max_digits=12, decimal_places=5)
 
-    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
-    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    transaction_costs = serializers.DecimalField(max_digits=12, decimal_places=5)
+    local_value = serializers.DecimalField(max_digits=12, decimal_places=5)
     value_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
     total_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
 
     class Meta:

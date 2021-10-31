@@ -335,10 +335,10 @@ class TestPosition(TestCase):
         self.assertEqual(value_history, expected_value_history)
 
     def test_lots_based_on_transactions(self):
-        transaction_costs = decimal.Decimal('0.5')
-        local_value = decimal.Decimal('12.2')
-        value_in_account_currency = decimal.Decimal('10.5')
-        total_in_account_currency = decimal.Decimal(11)
+        transaction_costs = decimal.Decimal('-0.5')
+        local_value = decimal.Decimal('-12.2')
+        value_in_account_currency = decimal.Decimal('-10.5')
+        total_in_account_currency = decimal.Decimal(-11)
         quantity = 10
         price = decimal.Decimal('1.22')
         order_id = "123"
@@ -363,3 +363,28 @@ class TestPosition(TestCase):
         self.assertEqual(lot.quantity, quantity)
         self.assertEqual(lot.buy_price, price)
         self.assertEqual(lot.cost_basis_account_currency, total_in_account_currency)
+
+        executed_at = "2021-04-27 11:00Z"
+
+        account_repository.add_transaction(
+            self.account,
+            self.isin,
+            self.exchange,
+            executed_at,
+            -7,
+            decimal.Decimal('3.22'),
+            transaction_costs,
+            decimal.Decimal('22.54'),
+            decimal.Decimal('20.54'),
+            decimal.Decimal('20.04'),
+            order_id,
+        )
+
+        self.assertEqual(models.Lot.objects.count(), 2)
+        lots = models.Lot.objects.order_by('id').all()
+
+        self.assertEqual(lots[0].quantity, 7)
+        self.assertEqual(lots[1].quantity, 3)
+
+        # -11 * 0.7 + 20.04 = 12.34
+        self.assertEqual(lots[0].realized_gain_account_currency, decimal.Decimal('12.34'))

@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 
 from django.utils.dateparse import parse_datetime
-from finance import exchanges, models, prices
+from finance import exchanges, models, prices, gains
 
 
 class AccountRepository:
@@ -20,6 +20,7 @@ class AccountRepository:
             user=user, nickname=nickname, description=description, currency=currency
         )
 
+    @transaction.atomic
     def _add_transaction(
         self,
         account,
@@ -58,15 +59,7 @@ class AccountRepository:
                     asset=position.asset, value=price, date=executed_at.date()
                 )
 
-            buy_date = executed_at.date()
-            models.Lot.objects.create(
-                quantity=quantity,
-                buy_date=buy_date,
-                buy_price=price,
-                cost_basis_account_currency=total_in_account_currency,
-                position=position,
-                buy_transaction=transaction,
-            )
+            gains.update_lots(position)
         return transaction
 
     @transaction.atomic
