@@ -44,7 +44,7 @@ export function PositionList(props) {
         let displayConvertedValue = (data.asset.currency != account.currency && data.latest_exchange_rate);
 
         positionRow.product = {
-            displayValue: <PositionLink position={data}/>,
+            displayValue: <PositionLink position={data} account={account}/>,
             comparisonKey: data.asset.symbol,
         };
         positionRow.assetType = data.asset.asset_type;

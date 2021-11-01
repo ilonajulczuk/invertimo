@@ -4,6 +4,9 @@
     flex-basis: 250px;
 }
 
+.position-name * {
+    text-align: left;
+}
 .card-label {
     text-transform: uppercase;
     font-weight: bold;

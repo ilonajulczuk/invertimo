@@ -90,7 +90,7 @@ export function TransactionDetail(props) {
     let topInfo = (
         <div className="position-card">
             {transactionTypeDisplay}
-            <PositionLink position={transaction.position} />
+            <PositionLink position={transaction.position} account={account} />
             <div>
                 <span className="card-label">Asset type</span>
                 {transaction.position.asset.asset_type}

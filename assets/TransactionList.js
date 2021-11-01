@@ -60,7 +60,11 @@ export function EmbeddedTransactionList(props) {
     });
     return (
         <ErrorBoundary>
-            <TableWithSort rows={transactions} headCells={embeddedTransactionHeadCells} />
+            <TableWithSort
+                rows={transactions}
+                headCells={embeddedTransactionHeadCells}
+                defaultOrder="desc"
+                defaultOrderBy="executed_at" />
         </ErrorBoundary>
     );
 }
@@ -109,9 +113,10 @@ export function TransactionList(props) {
             displayValue: date.toLocaleDateString(),
             comparisonKey: date,
         };
+        let account = accountsById.get(transaction.position.account);
 
         let position = transactionCopy.position;
-        let positionField = <PositionLink position={position} />;
+        let positionField = <PositionLink position={position} account={account} />;
         transactionCopy.position = {
             displayValue: positionField,
             comparisonKey: position.asset.symbol,
@@ -132,7 +137,6 @@ export function TransactionList(props) {
             displayValue: transactionTypeDisplay,
             comparisonKey: transaction.value_in_account_currency,
         };
-        let account = accountsById.get(transaction.position.account);
         const accountCurrencySymbol = toSymbol(account.currency);
         const positionCurrencySymbol = toSymbol(transaction.position.asset.currency);
 

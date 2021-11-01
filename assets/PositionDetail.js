@@ -18,9 +18,10 @@ import { toSymbol } from './currencies';
 
 import './position_list.css';
 import { APIClientError } from './api_utils.js';
+import { PositionLink } from './components/PositionLink.js';
 
 
-function PositionHeader({ position, positionCurrency, accountCurrency }) {
+function PositionHeader({ position, positionCurrency, accountCurrency, account }) {
     const value = Math.round(100 * position.quantity * position.latest_price) / 100;
     const displayConvertedValue = (
         positionCurrency != accountCurrency
@@ -28,11 +29,7 @@ function PositionHeader({ position, positionCurrency, accountCurrency }) {
 
     return (
         <div className="position-card">
-            <div className="position-name">
-                <span className="card-label">{position.asset.isin}</span>
-                <span className="position-symbol">{position.asset.symbol}</span>
-                <span>{position.asset.name}</span>
-            </div>
+            <PositionLink position={position} account={account} />
 
             <div>
                 <span className="card-label">Asset type</span>
@@ -40,7 +37,7 @@ function PositionHeader({ position, positionCurrency, accountCurrency }) {
             </div>
             <div>
                 <span className="card-label">Exchange</span>
-                <span style={{ textAlign: "center" }}>{position.asset.exchange.name}</span>
+                <span>{position.asset.exchange.name}</span>
             </div>
             <div>
                 <span className="card-label">Quantity</span>{position.quantity}
@@ -74,6 +71,7 @@ PositionHeader.propTypes = {
         latest_price: PropTypes.string.isRequired,
         asset: PropTypes.object.isRequired,
     }),
+    account: PropTypes.object.isRequired,
     positionCurrency: PropTypes.string.isRequired,
     accountCurrency: PropTypes.string.isRequired,
 };
@@ -149,7 +147,7 @@ export function PositionDetail(props) {
 
     const accountCurrency = toSymbol(account.currency);
     const positionCurrency = toSymbol(basicData.asset.currency);
-    let basicHeader = <PositionHeader position={basicData}
+    let basicHeader = <PositionHeader position={basicData} account={account}
         accountCurrency={accountCurrency}
         positionCurrency={positionCurrency} />;
 
