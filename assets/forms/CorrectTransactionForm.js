@@ -34,10 +34,11 @@ function apiToErrors(apiResponse) {
     let data = { ...apiResponse };
     data.errors = {};
     if (apiResponse.errors) {
-        for (let error of apiResponse.errors) {
-            data.errors[mapping[error]] = apiResponse.errors[error];
+        for (let [from, to] of mapping.entries()) {
+            data.errors[to] = apiResponse.errors[from];
         }
     }
+
     return data;
 }
 

@@ -100,7 +100,7 @@ class ViewTestBase:
     def test_cant_access_without_logging_in(self):
         self.client.logout()
         response = self.client.get(self.get_reversed_url() + self.QUERY_PARAMS)
-        # If UNAUTHENTICATE_CODE is overriden to None, it means that it shouldn't
+        # If UNAUTHENTICATE_CODE is overridden to None, it means that it shouldn't
         # be disallowed.
         if self.UNAUTHENTICATED_CODE:
             self.assertEquals(response.status_code, self.UNAUTHENTICATED_CODE)
@@ -371,6 +371,41 @@ class TestTransactionsView(ViewTestBase, TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+    def test_add_transaction_for_sell_more_than_owned_fails(self):
+        response = self.client.post(
+            reverse(self.VIEW_NAME),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "asset": self.asset.pk,
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": -123.56,
+                "value_in_account_currency": -123.33,
+                "total_in_account_currency": -123.33,
+                "currency": "EUR",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+
+        response = self.client.post(
+            reverse(self.VIEW_NAME),
+            {
+                "executed_at": "2021-03-05T00:00:00Z",
+                "account": self.account.pk,
+                "asset": self.asset.pk,
+                "quantity": -100,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+                "currency": "EUR",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+
     def test_add_transaction_for_known_asset_for_not_owned_account_fails(self):
 
         self.other_user = User.objects.create(
@@ -603,6 +638,43 @@ class TestTransactionDetailView(ViewTestBase, TestCase):
             old_account_balance
             - transaction.total_in_account_currency
             + corrected_transaction.total_in_account_currency,
+        )
+
+    def test_correct_transaction_sell_more_than_has(self):
+        # Start with a bunch of transactions.
+        # Correcting transaction doesn't change number of transactions.
+        # But can change Position Quantity and quantity history and the account balance.
+
+        self.assertEqual(models.Position.objects.count(), 1)
+        position = models.Position.objects.first()
+
+        old_quantity = position.quantity
+        old_account_balance = position.account.balance
+
+        transaction = models.Transaction.objects.first()
+        middle_transaction = models.Transaction.objects.all()[3]
+
+        self.assertEqual(models.Transaction.objects.count(), 8)
+        response = self.client.put(
+            reverse(self.VIEW_NAME, args=[transaction.pk]),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "quantity": -1200,
+                "price": 5.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 183.33,
+                "total_in_account_currency": 153.88,
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(models.Transaction.objects.count(), 8)
+
+        position.refresh_from_db()
+        self.assertEqual(
+            position.quantity,
+            old_quantity,
         )
 
 

@@ -327,7 +327,14 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         )
         arguments = serializer.validated_data.copy()
         arguments.pop("account")
-        account_repository.add_transaction_custom_asset(account, **arguments)
+        try:
+            account_repository.add_transaction_custom_asset(account, **arguments)
+        except gains.SoldBeforeBought:
+            raise serializers.ValidationError(
+                {
+                    "quantity": ["Can't sell asset before buying it."],
+                }
+            )
         headers = self.get_success_headers(serializer.data)
         return Response(
             serializer.data, status=status.HTTP_201_CREATED, headers=headers
@@ -335,13 +342,27 @@ class TransactionsViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         account_repository = accounts.AccountRepository()
-        account_repository.delete_transaction(instance)
+        try:
+            account_repository.delete_transaction(instance)
+        except gains.SoldBeforeBought:
+            raise serializers.ValidationError(
+                {
+                    "quantity": ["Can't sell asset before buying it."],
+                }
+            )
 
     def perform_update(self, serializer):
         account_repository = accounts.AccountRepository()
-        account_repository.correct_transaction(
+        try:
+            account_repository.correct_transaction(
             serializer.instance, serializer.validated_data
         )
+        except gains.SoldBeforeBought:
+            raise serializers.ValidationError(
+                {
+                    "quantity": ["Can't sell asset before buying it."],
+                }
+            )
 
 
 class AccountEventViewSet(
