@@ -293,6 +293,7 @@ class AccountRepository:
         account.balance -= transaction.total_in_account_currency
         account.save()
         transaction.delete()
+        gains.update_lots(position)
         position.quantity_history.cache_clear()
         position.value_history.cache_clear()
 
@@ -329,5 +330,6 @@ class AccountRepository:
         position.save()
         account.save()
         transaction.save()
+        gains.update_lots(position)
         position.quantity_history.cache_clear()
         position.value_history.cache_clear()

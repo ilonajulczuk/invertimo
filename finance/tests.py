@@ -366,7 +366,7 @@ class TestPosition(TestCase):
 
         executed_at = "2021-04-27 11:00Z"
 
-        account_repository.add_transaction(
+        transaction = account_repository.add_transaction(
             self.account,
             self.isin,
             self.exchange,
@@ -388,3 +388,18 @@ class TestPosition(TestCase):
 
         # -11 * 0.7 + 20.04 = 12.34
         self.assertEqual(lots[0].realized_gain_account_currency, decimal.Decimal('12.34'))
+
+        account_repository.correct_transaction(transaction, {"quantity": -5})
+
+        self.assertEqual(models.Lot.objects.count(), 2)
+        lots = models.Lot.objects.order_by('id').all()
+
+        self.assertEqual(lots[0].quantity, 5)
+        self.assertEqual(lots[1].quantity, 5)
+
+        account_repository.delete_transaction(transaction)
+        self.assertEqual(models.Lot.objects.count(), 1)
+        lots = models.Lot.objects.order_by('id').all()
+
+        self.assertEqual(lots[0].quantity, 10)
+        self.assertEqual(lots[0].realized_gain_account_currency, None)
