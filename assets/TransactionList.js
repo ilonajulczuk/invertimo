@@ -1,16 +1,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { ErrorBoundary } from './error_utils.js';
-import { TableWithSort } from './components/TableWithSort.js';
-import { toSymbol } from './currencies.js';
 import Icon from '@material-ui/core/Icon';
-
-import './transaction_list.css';
 import Button from '@material-ui/core/Button';
 
 import { makeStyles } from '@material-ui/core/styles';
+
+import { toSymbol } from './currencies.js';
+import { TableWithSort } from './components/TableWithSort.js';
+import { ErrorBoundary } from './error_utils.js';
 import { PositionLink } from './components/PositionLink.js';
+import './transaction_list.css';
 
 
 export function EmbeddedTransactionList(props) {
