@@ -27,6 +27,9 @@ function PositionHeader({ position, positionCurrency, accountCurrency, account }
         positionCurrency != accountCurrency
         && position.latest_exchange_rate);
 
+    const valueAccountCurrency = displayConvertedValue ? Math.round(100 * value * position.latest_exchange_rate) / 100 : value;
+    const unrealizedGain = Math.round(100 * (Number(position.cost_basis) + Number(valueAccountCurrency))) / 100;
+
     return (
         <div className="position-card">
             <PositionLink position={position} account={account} />
@@ -53,8 +56,22 @@ function PositionHeader({ position, positionCurrency, accountCurrency, account }
                         {value} {positionCurrency}
                     </span>
                     <span>
-                        {displayConvertedValue ? Math.round(100 * value * position.latest_exchange_rate) / 100 : ""}
-                        {displayConvertedValue ? " " + accountCurrency : ""}
+                        {displayConvertedValue ? valueAccountCurrency + " " + accountCurrency : ""}
+                    </span>
+
+                </div>
+            </div>
+            <div className="position-values">
+                <div className="column-stack">
+                    <span className="card-label">Unrealized gain</span>
+                    <span>
+                        {unrealizedGain + " " + accountCurrency}
+
+                    </span>
+
+                    <span className="card-label">Realized gain</span>
+                    <span>
+                        {Number(position.realized_gain) + " " + accountCurrency}
                     </span>
                 </div>
             </div>
@@ -70,6 +87,8 @@ PositionHeader.propTypes = {
         latest_exchange_rate: PropTypes.string,
         latest_price: PropTypes.string.isRequired,
         asset: PropTypes.object.isRequired,
+        realized_gain: PropTypes.string.isRequired,
+        cost_basis: PropTypes.string.isRequired,
     }),
     account: PropTypes.object.isRequired,
     positionCurrency: PropTypes.string.isRequired,
@@ -200,25 +219,7 @@ export function PositionDetail(props) {
             <h2><a href="../#positions/">Positions</a> / {data.asset.symbol}</h2>
             {basicHeader}
             <div className="position-card-expanded-content">
-                <div>
-                    <h3>Gains</h3>
-                    <div style={{display: "flex", gap: "1em", marginBottom: "2em"}}>
-                    <div className="column-stack">
-                        <span className="card-label">Unrealized gain</span>
-                        <span>
-                            {data.unrealized_gain + " " + accountCurrency}
-                        </span>
-                    </div>
-                    <div className="column-stack">
-                        <span className="card-label">Realized gain</span>
-                        <span>
-                            {data.realized_gain + " " + accountCurrency}
 
-                        </span>
-                    </div>
-                    </div>
-
-                </div>
                 <div className="position-card-charts-header">
                     <h3>Charts</h3>
                     <TimeSelector activeId={chartTimeSelectorOptionId} onClick={handleChartTimeSelectorChange} />

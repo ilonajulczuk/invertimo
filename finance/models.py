@@ -201,6 +201,10 @@ class Position(models.Model):
     quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     last_modified = models.DateTimeField(auto_now=True)
 
+    # Both are n account currency.
+    realized_gain = models.DecimalField(max_digits=12, decimal_places=5, default=0)
+    cost_basis = models.DecimalField(max_digits=12, decimal_places=5, default=0)
+
     def __str__(self):
         return (
             f"<Position ({self.id}) account: {self.account}, " f"asset: {self.asset}>"
@@ -247,16 +251,6 @@ class Position(models.Model):
 
         return dates_with_quantities
 
-    def realized_gain(self):
-        query = self.lots.aggregate(realized_gain=Sum("realized_gain_account_currency"))
-        return query["realized_gain"] or 0
-
-    def total_cost_basis(self):
-        query = self.lots.filter(sell_transaction=None).aggregate(
-            total_cost_basis=Sum("cost_basis_account_currency")
-        )
-        return query["total_cost_basis"] or 0
-
     def latest_value_account_currency(self):
         latest_price = self.asset.pricehistory_set.order_by("-date").first().value
         to_currency = self.account.currency
@@ -276,7 +270,7 @@ class Position(models.Model):
         return self.quantity * latest_price * latest_exchange_rate
 
     def unrealized_gain(self):
-        return self.latest_value_account_currency() + self.total_cost_basis()
+        return self.latest_value_account_currency() + self.cost_basis
 
     # This seems pretty ugly and will have to be refactored.
     # I might also want to use caching so it's not a performance nightmare.

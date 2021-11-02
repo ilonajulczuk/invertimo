@@ -113,6 +113,8 @@ class PositionSerializer(serializers.ModelSerializer[Position]):
             "latest_price",
             "latest_price_date",
             "latest_exchange_rate",
+            "realized_gain",
+            "cost_basis",
         ]
 
 
@@ -333,9 +335,6 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer[Position]):
     transactions = EmbeddedTransactionSerializer(many=True)
     events = EmbeddedAccountEventSerializer(many=True)
 
-    unrealized_gain = serializers.SerializerMethodField()
-    realized_gain = serializers.SerializerMethodField()
-
     class Meta:
         model = Position
         fields = [
@@ -349,7 +348,7 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer[Position]):
             "values",
             "values_account_currency",
             "realized_gain",
-            "unrealized_gain",
+            "cost_basis",
         ]
 
     def get_quantities(self, obj):
@@ -372,12 +371,6 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer[Position]):
         from_date = self.context["from_date"]
         to_date = self.context["to_date"]
         return obj.value_history_in_account_currency(from_date, to_date)
-
-    def get_realized_gain(self, obj):
-        return obj.realized_gain()
-
-    def get_unrealized_gain(self, obj):
-        return obj.unrealized_gain()
 
 
 class CurrencyExchangeRateSerializer(serializers.ModelSerializer[CurrencyExchangeRate]):

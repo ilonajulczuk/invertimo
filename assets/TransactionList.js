@@ -26,7 +26,7 @@ export function EmbeddedTransactionList(props) {
     ];
 
     const transactions = props.transactions.map(transaction => {
-
+        // TODO: display currencies.
         let transactionCopy = { ...transaction };
         let date = new Date(transactionCopy.executed_at);
         transactionCopy.executed_at = {
@@ -43,6 +43,8 @@ export function EmbeddedTransactionList(props) {
                 <div className="trade-type trade-type-sell">Sell</div>
             );
         }
+        transactionCopy.transaction_costs = Number(transactionCopy.transaction_costs);
+        transactionCopy.price = Number(transactionCopy.price);
         transactionCopy.type = {
             displayValue: transactionTypeDisplay,
             comparisonKey: transaction.value_in_account_currency,
@@ -133,6 +135,9 @@ export function TransactionList(props) {
                 <div className="trade-type trade-type-sell">SELL</div>
             );
         }
+        transactionCopy.transaction_costs = Number(transactionCopy.transaction_costs);
+        transactionCopy.price = Number(transactionCopy.price);
+
         transactionCopy.type = {
             displayValue: transactionTypeDisplay,
             comparisonKey: transaction.value_in_account_currency,

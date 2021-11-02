@@ -1,5 +1,6 @@
 from finance import models
 from django.db import transaction
+from django.db.models import Sum
 
 
 class SoldBeforeBought(ValueError):
@@ -118,4 +119,15 @@ def update_lots(position, transaction=None):
                 raise SoldBeforeBought(
                     f"Invalid transactions for position: {position}, selling more than owned (potentially transactions added with wrong dates)."
                 )
+    _update_position_fields(position)
 
+def _update_position_fields(position):
+    realized_gain = position.lots.aggregate(
+        realized_gain=Sum("realized_gain_account_currency")
+    )["realized_gain"]
+    position.realized_gain = realized_gain or 0
+    cost_basis = position.lots.filter(sell_transaction=None).aggregate(
+        cost_basis=Sum("cost_basis_account_currency")
+    )["cost_basis"]
+    position.cost_basis = cost_basis or 0
+    position.save()
