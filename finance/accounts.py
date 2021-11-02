@@ -59,7 +59,7 @@ class AccountRepository:
                     asset=position.asset, value=price, date=executed_at.date()
                 )
 
-            gains.update_lots(position)
+            gains.update_lots(position, transaction)
         return transaction
 
     @transaction.atomic
