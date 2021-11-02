@@ -7,7 +7,7 @@ from typing import Any
 from django.contrib.auth.models import User
 
 from finance import models
-from finance import exchanges
+from finance import exchanges, gains
 from finance.models import (
     Account,
     AccountEvent,
@@ -85,7 +85,16 @@ class AssetSerializer(serializers.ModelSerializer[Asset]):
 
     class Meta:
         model = Asset
-        fields = ["id", "isin", "symbol", "name", "exchange", "currency", "country", "asset_type"]
+        fields = [
+            "id",
+            "isin",
+            "symbol",
+            "name",
+            "exchange",
+            "currency",
+            "country",
+            "asset_type",
+        ]
 
 
 class PositionSerializer(serializers.ModelSerializer[Position]):
@@ -145,7 +154,14 @@ class EmbeddedAccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
 
     class Meta:
         model = AccountEvent
-        fields = ["id", "event_type", "executed_at", "amount", "withheld_taxes", "account"]
+        fields = [
+            "id",
+            "event_type",
+            "executed_at",
+            "amount",
+            "withheld_taxes",
+            "account",
+        ]
 
 
 class TransactionSerializer(serializers.ModelSerializer[Transaction]):
@@ -317,6 +333,9 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer[Position]):
     transactions = EmbeddedTransactionSerializer(many=True)
     events = EmbeddedAccountEventSerializer(many=True)
 
+    unrealized_gain = serializers.SerializerMethodField()
+    realized_gain = serializers.SerializerMethodField()
+
     class Meta:
         model = Position
         fields = [
@@ -329,6 +348,8 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer[Position]):
             "events",
             "values",
             "values_account_currency",
+            "realized_gain",
+            "unrealized_gain",
         ]
 
     def get_quantities(self, obj):
@@ -351,6 +372,12 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer[Position]):
         from_date = self.context["from_date"]
         to_date = self.context["to_date"]
         return obj.value_history_in_account_currency(from_date, to_date)
+
+    def get_realized_gain(self, obj):
+        return obj.realized_gain()
+
+    def get_unrealized_gain(self, obj):
+        return obj.unrealized_gain()
 
 
 class CurrencyExchangeRateSerializer(serializers.ModelSerializer[CurrencyExchangeRate]):
@@ -471,7 +498,15 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
 
     class Meta:
         model = AccountEvent
-        fields = ["id", "event_type", "executed_at", "amount", "withheld_taxes", "account", "position"]
+        fields = [
+            "id",
+            "event_type",
+            "executed_at",
+            "amount",
+            "withheld_taxes",
+            "account",
+            "position",
+        ]
 
     def get_extra_kwargs(self):
         kwargs = super().get_extra_kwargs()
@@ -516,14 +551,22 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
     def validate(self, data):
         if data["event_type"] == models.EventType.WITHDRAWAL:
             if data["amount"] >= 0:
-                raise serializers.ValidationError({'amount': "For withdrawal the amount needs to be negative"})
+                raise serializers.ValidationError(
+                    {"amount": "For withdrawal the amount needs to be negative"}
+                )
         else:
             if data["amount"] < 0:
-                raise serializers.ValidationError({'amount': "Amount can't be negative unless it's a withdrawal"})
+                raise serializers.ValidationError(
+                    {"amount": "Amount can't be negative unless it's a withdrawal"}
+                )
         if data["event_type"] == models.EventType.DIVIDEND:
             if data["position"] is None:
-                raise serializers.ValidationError({'position': "Position can't be empty for dividend event"})
+                raise serializers.ValidationError(
+                    {"position": "Position can't be empty for dividend event"}
+                )
         else:
             if data["position"] is not None:
-                raise serializers.ValidationError({'position': "Position can't be set for this type of event"})
+                raise serializers.ValidationError(
+                    {"position": "Position can't be set for this type of event"}
+                )
         return data

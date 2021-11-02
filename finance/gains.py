@@ -63,7 +63,7 @@ def update_lots(position, transaction=None):
                     lot.sell_transaction = transaction
                     lot.sell_price = transaction.price
                     # This is proportional to how much was sold within this lot.
-                    lot.sell_basis_account_currency = (
+                    lot.sell_basis_account_currency = -(
                         transaction.total_in_account_currency
                         * lot.quantity
                         / transaction.quantity
@@ -118,3 +118,4 @@ def update_lots(position, transaction=None):
                 raise SoldBeforeBought(
                     f"Invalid transactions for position: {position}, selling more than owned (potentially transactions added with wrong dates)."
                 )
+

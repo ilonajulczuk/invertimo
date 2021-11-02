@@ -200,6 +200,25 @@ export function PositionDetail(props) {
             <h2><a href="../#positions/">Positions</a> / {data.asset.symbol}</h2>
             {basicHeader}
             <div className="position-card-expanded-content">
+                <div>
+                    <h3>Gains</h3>
+                    <div style={{display: "flex", gap: "1em", marginBottom: "2em"}}>
+                    <div className="column-stack">
+                        <span className="card-label">Unrealized gain</span>
+                        <span>
+                            {data.unrealized_gain + " " + accountCurrency}
+                        </span>
+                    </div>
+                    <div className="column-stack">
+                        <span className="card-label">Realized gain</span>
+                        <span>
+                            {data.realized_gain + " " + accountCurrency}
+
+                        </span>
+                    </div>
+                    </div>
+
+                </div>
                 <div className="position-card-charts-header">
                     <h3>Charts</h3>
                     <TimeSelector activeId={chartTimeSelectorOptionId} onClick={handleChartTimeSelectorChange} />
@@ -240,7 +259,7 @@ export function PositionDetail(props) {
                     <EmbeddedTransactionList transactions={data.transactions} />
                 </div>
                 <div>
-                <div className={classes.header}>
+                    <div className={classes.header}>
                         <h3>Dividends</h3>
                         <Button
                             href="#/events/record_dividend"

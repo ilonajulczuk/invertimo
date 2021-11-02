@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 import pytz
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Sum
 from django.utils.translation import gettext_lazy as _
 
 from finance import utils
@@ -201,7 +202,9 @@ class Position(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"<Position account: {self.account}, " f"asset: {self.asset}>"
+        return (
+            f"<Position ({self.id}) account: {self.account}, " f"asset: {self.asset}>"
+        )
 
     @functools.lru_cache(maxsize=None)
     def quantity_history(
@@ -243,6 +246,37 @@ class Position(models.Model):
             dates_with_quantities.append((date, quantity))
 
         return dates_with_quantities
+
+    def realized_gain(self):
+        query = self.lots.aggregate(realized_gain=Sum("realized_gain_account_currency"))
+        return query["realized_gain"] or 0
+
+    def total_cost_basis(self):
+        query = self.lots.filter(sell_transaction=None).aggregate(
+            total_cost_basis=Sum("cost_basis_account_currency")
+        )
+        return query["total_cost_basis"] or 0
+
+    def latest_value_account_currency(self):
+        latest_price = self.asset.pricehistory_set.order_by("-date").first().value
+        to_currency = self.account.currency
+        from_currency = self.asset.currency
+        if to_currency == from_currency:
+            latest_exchange_rate = 1
+        else:
+            latest_exchange_rate = (
+                CurrencyExchangeRate.objects.filter(
+                    from_currency=from_currency, to_currency=to_currency
+                )
+                .order_by("-date")
+                .first()
+                .value
+            )
+
+        return self.quantity * latest_price * latest_exchange_rate
+
+    def unrealized_gain(self):
+        return self.latest_value_account_currency() + self.total_cost_basis()
 
     # This seems pretty ugly and will have to be refactored.
     # I might also want to use caching so it's not a performance nightmare.
@@ -469,8 +503,7 @@ class Lot(models.Model):
     )
 
     sell_transaction = models.ForeignKey(
-        Transaction, related_name="sell_lots", on_delete=models.SET_NULL,
-        null=True
+        Transaction, related_name="sell_lots", on_delete=models.SET_NULL, null=True
     )
 
     class Meta:

@@ -227,6 +227,7 @@ class PositionView(generics.RetrieveAPIView):
             .select_related("asset__exchange")
             .prefetch_related("transactions")
             .prefetch_related("events")
+            .prefetch_related("lots")
         )
 
     def get_serializer_context(self):

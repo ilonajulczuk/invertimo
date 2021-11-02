@@ -165,9 +165,9 @@ export function TransactionDetail(props) {
             <div className={classes.transactionDetails}>
                 <p>Executed in account
                     <a href={`#accounts/${account.id}`}> {account.nickname}</a>
-                    {transaction.order_id ? `with order id: #${transaction.order_id}` : ""}
+
+                {transaction.order_id ? ` with order id: #${transaction.order_id}` : ""}
                 </p>
-                {transaction.order_id}
             </div>
 
             <Switch>

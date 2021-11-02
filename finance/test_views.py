@@ -39,17 +39,20 @@ def _add_dummy_account_and_asset(user, isin):
         exchange=exchange,
         tracked=True,
     )
+
     return account, exchange, asset
 
 
-def _add_transaction(account, isin, exchange, executed_at, quantity, price):
+def _add_transaction(
+    account, isin, exchange, executed_at, quantity, price,
+    add_price_history=True):
     transaction_costs = decimal.Decimal(0.5)
     local_value = decimal.Decimal(0.5)
     value_in_account_currency = decimal.Decimal(0.5)
     total_in_account_currency = decimal.Decimal(0.5)
     order_id = "123"
     account_repository = accounts.AccountRepository()
-    account_repository.add_transaction(
+    transaction = account_repository.add_transaction(
         account,
         isin,
         exchange,
@@ -62,6 +65,11 @@ def _add_transaction(account, isin, exchange, executed_at, quantity, price):
         total_in_account_currency,
         order_id,
     )
+    asset = transaction.position.asset
+    if add_price_history:
+        models.PriceHistory.objects.create(asset=asset, value=price, date=transaction.executed_at.date())
+        models.CurrencyExchangeRate.objects.create(from_currency=models.Currency.USD, to_currency=models.Currency.EUR, value=0.84, date="2020-02-03")
+
 
 
 class ViewTestBase:
@@ -137,6 +145,7 @@ class TestPositionsView(ViewTestBase, TestCase):
                 transaction[0],
                 transaction[1],
                 transaction[2],
+                add_price_history=False,
             )
 
     def test_valid_content(self):
@@ -518,7 +527,6 @@ class TestTransactionDetailView(ViewTestBase, TestCase):
                 transaction[1],
                 transaction[2],
             )
-
         self.transaction = models.Transaction.objects.first()
 
     def get_url(self):
