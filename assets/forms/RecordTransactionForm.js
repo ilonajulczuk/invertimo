@@ -100,6 +100,7 @@ function apiTransactionResponseToErrors(apiResponse) {
     let response = { ok: apiResponse.ok };
 
     if (apiResponse.errors) {
+        response.errors = apiResponse.errors;
         response.errors["totalCostAccountCurrency"] = apiResponse.errors["total_in_account_currency"];
         response.errors["assetType"] = apiResponse.errors["asset_type"];
         response.errors["fees"] = apiResponse.errors["transaction_costs"];
@@ -131,17 +132,18 @@ const validationSchema = yup.object({
     price: yup
         .number('Price needs to be a number')
         .required('Price is required')
+        .positive()
         .test('has-2-or-less-places', "Only up to two decimal places are allowed",
             matchNumberUpToTwoDecimalPlaces),
     quantity: yup
         .number()
+        .positive()
         .required('Quantity is required'),
     account: yup
         .object()
         .required('Account needs to be selected'),
     totalCostAccountCurrency: yup
         .number()
-        // .required('Total is required')
         .test('has-2-or-less-places', "Only up to two decimal places are allowed",
             matchNumberUpToTwoDecimalPlaces),
     // This value is only required if currency of the asset and account don't match.
@@ -156,10 +158,10 @@ const validationSchema = yup.object({
         }),
     fees: yup
         .number()
+        .positive()
         .required('Fees are required')
         .test('has-2-or-less-places', "Only up to two decimal places are allowed",
-            matchNumberUpToTwoDecimalPlaces)
-    ,
+            matchNumberUpToTwoDecimalPlaces),
     executedAt: yup
         .date()
         .typeError("Provide a date in YYYY/MM/DD format")
@@ -285,7 +287,7 @@ export function RecordTransactionForm(props) {
                     id="total-cost-account-currency"
                     label={`Total cost in ${formattedAccountCurrency}`}
                     name="totalCostAccountCurrency"
-                    value={formik.values.totalCostAccountCurrency || formik.values.totalValueAccountCurrency + formik.values.fees}
+                    value={formik.values.totalCostAccountCurrency ?? formik.values.totalValueAccountCurrency + formik.values.fees}
                     type="number"
                     onChange={formik.handleChange}
                     error={formik.touched.totalCostAccountCurrency && Boolean(formik.errors.totalCostAccountCurrency)}

@@ -4,6 +4,9 @@ import {
     useParams,
 } from "react-router-dom";
 
+import Icon from '@material-ui/core/Icon';
+import Button from '@material-ui/core/Button';
+import { makeStyles } from '@material-ui/core/styles';
 
 import { filterPointsWithNoChange, filterPoints } from './timeseries_utils.js';
 import { TimeSelector, daysFromDurationObject } from './TimeSelector.js';
@@ -12,23 +15,24 @@ import { EmbeddedDividendList } from './EventList.js';
 import { AreaChartWithCursor, LineChartWithCursor } from './components/charts.js';
 import { toSymbol } from './currencies';
 
+
 import './position_list.css';
 import { APIClientError } from './api_utils.js';
+import { PositionLink } from './components/PositionLink.js';
 
 
-function PositionHeader({ position, positionCurrency, accountCurrency }) {
+function PositionHeader({ position, positionCurrency, accountCurrency, account }) {
     const value = Math.round(100 * position.quantity * position.latest_price) / 100;
     const displayConvertedValue = (
         positionCurrency != accountCurrency
         && position.latest_exchange_rate);
 
+    const valueAccountCurrency = displayConvertedValue ? Math.round(100 * value * position.latest_exchange_rate) / 100 : value;
+    const unrealizedGain = Math.round(100 * (Number(position.cost_basis) + Number(valueAccountCurrency))) / 100;
+
     return (
         <div className="position-card">
-            <div className="position-name">
-                <span className="card-label">{position.asset.isin}</span>
-                <span className="position-symbol">{position.asset.symbol}</span>
-                <span>{position.asset.name}</span>
-            </div>
+            <PositionLink position={position} account={account} />
 
             <div>
                 <span className="card-label">Asset type</span>
@@ -36,7 +40,7 @@ function PositionHeader({ position, positionCurrency, accountCurrency }) {
             </div>
             <div>
                 <span className="card-label">Exchange</span>
-                <span style={{textAlign: "center"}}>{position.asset.exchange.name}</span>
+                <span>{position.asset.exchange.name}</span>
             </div>
             <div>
                 <span className="card-label">Quantity</span>{position.quantity}
@@ -52,8 +56,22 @@ function PositionHeader({ position, positionCurrency, accountCurrency }) {
                         {value} {positionCurrency}
                     </span>
                     <span>
-                        {displayConvertedValue ? Math.round(100 * value * position.latest_exchange_rate) / 100 : ""}
-                        {displayConvertedValue ? " " + accountCurrency : ""}
+                        {displayConvertedValue ? valueAccountCurrency + " " + accountCurrency : ""}
+                    </span>
+
+                </div>
+            </div>
+            <div className="position-values">
+                <div className="column-stack">
+                    <span className="card-label">Unrealized gain</span>
+                    <span>
+                        {unrealizedGain + " " + accountCurrency}
+
+                    </span>
+
+                    <span className="card-label">Realized gain</span>
+                    <span>
+                        {Number(position.realized_gain) + " " + accountCurrency}
                     </span>
                 </div>
             </div>
@@ -69,13 +87,27 @@ PositionHeader.propTypes = {
         latest_exchange_rate: PropTypes.string,
         latest_price: PropTypes.string.isRequired,
         asset: PropTypes.object.isRequired,
+        realized_gain: PropTypes.string.isRequired,
+        cost_basis: PropTypes.string.isRequired,
     }),
+    account: PropTypes.object.isRequired,
     positionCurrency: PropTypes.string.isRequired,
     accountCurrency: PropTypes.string.isRequired,
 };
 
-export function PositionDetail(props) {
 
+const useStyles = makeStyles({
+    header: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginTop: "2em",
+    }
+});
+
+
+export function PositionDetail(props) {
+    const classes = useStyles();
     const [chartTimeSelectorOptionId, setChartTimeSelectorOptionId] = useState(3);
     const [chartTimePeriod, setChartTimePeriod] = useState({ months: 3 });
     const [data, setData] = useState(null);
@@ -134,7 +166,7 @@ export function PositionDetail(props) {
 
     const accountCurrency = toSymbol(account.currency);
     const positionCurrency = toSymbol(basicData.asset.currency);
-    let basicHeader = <PositionHeader position={basicData}
+    let basicHeader = <PositionHeader position={basicData} account={account}
         accountCurrency={accountCurrency}
         positionCurrency={positionCurrency} />;
 
@@ -187,6 +219,7 @@ export function PositionDetail(props) {
             <h2><a href="../#positions/">Positions</a> / {data.asset.symbol}</h2>
             {basicHeader}
             <div className="position-card-expanded-content">
+
                 <div className="position-card-charts-header">
                     <h3>Charts</h3>
                     <TimeSelector activeId={chartTimeSelectorOptionId} onClick={handleChartTimeSelectorChange} />
@@ -213,11 +246,31 @@ export function PositionDetail(props) {
 
                 </div>
                 <div>
-                    <h3>Transactions</h3>
+                    <div className={classes.header}>
+                        <h3>Transactions</h3>
+                        <Button
+                            href="#/transactions/record"
+                            variant="contained"
+                            color="secondary"
+                        >
+                            <Icon>create</Icon>
+                                Record transaction
+                        </Button>
+                    </div>
                     <EmbeddedTransactionList transactions={data.transactions} />
                 </div>
                 <div>
-                    <h3>Dividends</h3>
+                    <div className={classes.header}>
+                        <h3>Dividends</h3>
+                        <Button
+                            href="#/events/record_dividend"
+                            variant="contained"
+                            color="secondary"
+                        >
+                            <Icon>paid</Icon>
+                                Record dividend
+                        </Button>
+                    </div>
                     <EmbeddedDividendList events={data.events} position={basicData} accounts={props.accounts} />
                 </div>
 

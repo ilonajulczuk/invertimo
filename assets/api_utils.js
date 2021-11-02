@@ -88,7 +88,6 @@ async function putData(url = '', data = {}) {
 }
 
 async function deleteData(url = '', data = {}) {
-
     const csrftoken = Cookies.get('csrftoken');
     const response = await fetch(url, {
         method: 'DELETE',
@@ -108,9 +107,12 @@ async function deleteData(url = '', data = {}) {
             ok: true
         };
     } else {
+        if (response.status == 400) {
+            let data = await response.json();
+            return { ok: false, errors: data };
+        }
         return { ok: false, message: "Failed on the server side..." };
     }
-
 }
 
 

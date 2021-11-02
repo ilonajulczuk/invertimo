@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 import pytz
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Sum
 from django.utils.translation import gettext_lazy as _
 
 from finance import utils
@@ -165,6 +166,7 @@ class Asset(models.Model):
     class Meta:
         ordering = ["-id", "symbol"]
 
+
 def multiply_at_matching_dates(
     first_sequence: Sequence[Tuple[datetime.date, decimal.Decimal]],
     second_sequence: Sequence[Tuple[datetime.date, decimal.Decimal]],
@@ -199,8 +201,14 @@ class Position(models.Model):
     quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     last_modified = models.DateTimeField(auto_now=True)
 
+    # Both are n account currency.
+    realized_gain = models.DecimalField(max_digits=12, decimal_places=5, default=0)
+    cost_basis = models.DecimalField(max_digits=12, decimal_places=5, default=0)
+
     def __str__(self):
-        return f"<Position account: {self.account}, " f"asset: {self.asset}>"
+        return (
+            f"<Position ({self.id}) account: {self.account}, " f"asset: {self.asset}>"
+        )
 
     @functools.lru_cache(maxsize=None)
     def quantity_history(
@@ -242,6 +250,27 @@ class Position(models.Model):
             dates_with_quantities.append((date, quantity))
 
         return dates_with_quantities
+
+    def latest_value_account_currency(self):
+        latest_price = self.asset.pricehistory_set.order_by("-date").first().value
+        to_currency = self.account.currency
+        from_currency = self.asset.currency
+        if to_currency == from_currency:
+            latest_exchange_rate = 1
+        else:
+            latest_exchange_rate = (
+                CurrencyExchangeRate.objects.filter(
+                    from_currency=from_currency, to_currency=to_currency
+                )
+                .order_by("-date")
+                .first()
+                .value
+            )
+
+        return self.quantity * latest_price * latest_exchange_rate
+
+    def unrealized_gain(self):
+        return self.latest_value_account_currency() + self.cost_basis
 
     # This seems pretty ugly and will have to be refactored.
     # I might also want to use caching so it's not a performance nightmare.
@@ -442,3 +471,34 @@ class PriceHistory(models.Model):
 
     class Meta:
         ordering = ["-date"]
+
+
+class Lot(models.Model):
+    quantity = models.DecimalField(max_digits=12, decimal_places=5)
+    buy_date = models.DateField()
+    buy_price = models.DecimalField(max_digits=12, decimal_places=5)
+    cost_basis_account_currency = models.DecimalField(max_digits=12, decimal_places=5)
+
+    sell_date = models.DateField(null=True)
+    sell_price = models.DecimalField(max_digits=12, decimal_places=5, null=True)
+    sell_basis_account_currency = models.DecimalField(
+        max_digits=12, decimal_places=5, null=True
+    )
+    realized_gain_account_currency = models.DecimalField(
+        max_digits=12, decimal_places=5, null=True
+    )
+
+    position = models.ForeignKey(
+        Position, related_name="lots", on_delete=models.CASCADE
+    )
+
+    buy_transaction = models.ForeignKey(
+        Transaction, related_name="buy_lots", on_delete=models.CASCADE
+    )
+
+    sell_transaction = models.ForeignKey(
+        Transaction, related_name="sell_lots", on_delete=models.SET_NULL, null=True
+    )
+
+    class Meta:
+        ordering = ["buy_date"]

@@ -61,7 +61,7 @@ export function EventList(props) {
             }
             if (position) {
                 currency = toSymbol(position.asset.currency);
-                positionDisplay = <PositionLink position={position} />;
+                positionDisplay = <PositionLink position={position} account={account} />;
             }
         }
         eventCopy.amount = {
@@ -132,14 +132,11 @@ EventList.propTypes = {
 
 export function EmbeddedDividendList(props) {
     const eventHeadCells = [
-        { id: 'account', label: 'Account' },
         { id: 'amount', label: 'Value' },
         { id: 'withheld_taxes', label: 'Withheld taxes' },
         { id: 'executed_at', label: 'Executed At' },
         { id: 'interaction', label: '' },
     ];
-
-    let accountsById = new Map(props.accounts.map(account => [account.id, account]));
 
     const events = props.events.map(event => {
 
@@ -148,11 +145,6 @@ export function EmbeddedDividendList(props) {
         eventCopy.executed_at = {
             displayValue: date.toLocaleDateString(),
             comparisonKey: date,
-        };
-        let account = accountsById.get(event.account);
-        eventCopy.account = {
-            displayValue: (<a href={`#/accounts/${event.account}`}>{account.nickname}</a>),
-            comparisonKey: event.account,
         };
 
         const currency = toSymbol(props.position.asset.currency);
@@ -188,14 +180,18 @@ export function EmbeddedDividendList(props) {
     });
     return (
         <ErrorBoundary>
-            <TableWithSort rows={events} headCells={eventHeadCells} />
+            <TableWithSort
+             rows={events}
+             headCells={eventHeadCells}
+             defaultOrder="desc"
+             defaultOrderBy="executed_at"
+             />
         </ErrorBoundary>
     );
 }
 
 
 EmbeddedDividendList.propTypes = {
-    accounts: PropTypes.array.isRequired,
     events: PropTypes.array.isRequired,
     position: PropTypes.object.isRequired,
 };

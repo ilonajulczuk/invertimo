@@ -1,11 +1,12 @@
 import datetime
 import decimal
-from typing import Optional
+from typing import Optional, Union
 
 from django.contrib.auth.models import User
 from django.db import transaction
 
-from finance import exchanges, models, prices
+from django.utils.dateparse import parse_datetime
+from finance import exchanges, models, prices, gains
 
 
 class AccountRepository:
@@ -20,12 +21,11 @@ class AccountRepository:
         )
 
     @transaction.atomic
-    def add_transaction(
+    def _add_transaction(
         self,
         account,
-        isin,
-        exchange,
-        executed_at,
+        position,
+        executed_at: datetime.datetime,
         quantity,
         price,
         transaction_costs,
@@ -33,12 +33,8 @@ class AccountRepository:
         value_in_account_currency,
         total_in_account_currency,
         order_id,
+        custom_asset=False,
     ):
-        position = self._get_or_create_position(account, isin, exchange)
-        if not position:
-            raise ValueError(
-                f"Failed to create a position from a transaction record, isin: {isin}, exchange ref: {exchange}"
-            )
         position.quantity_history.cache_clear()
         position.value_history.cache_clear()
 
@@ -58,8 +54,55 @@ class AccountRepository:
             position.save()
             account.balance += total_in_account_currency
             account.save()
+            if custom_asset:
+                models.PriceHistory.objects.create(
+                    asset=position.asset, value=price, date=executed_at.date()
+                )
 
+            gains.update_lots(position, transaction)
         return transaction
+
+    @transaction.atomic
+    def add_transaction(
+        self,
+        account,
+        isin,
+        exchange,
+        executed_at: Union[str, datetime.datetime],
+        quantity,
+        price,
+        transaction_costs,
+        local_value,
+        value_in_account_currency,
+        total_in_account_currency,
+        order_id,
+    ):
+        position = self._get_or_create_position(account, isin, exchange)
+        if not position:
+            raise ValueError(
+                f"Failed to create a position from a transaction record, isin: {isin}, exchange ref: {exchange}"
+            )
+        if isinstance(executed_at, str):
+            executed_at_date = parse_datetime(executed_at)
+            if executed_at_date is None:
+                raise ValueError(f"executed_at in a wrong format: {executed_at}")
+        elif isinstance(executed_at, datetime.datetime):
+            executed_at_date = executed_at
+        else:
+            raise ValueError(f"executed_at in a wrong format (type): {executed_at}")
+
+        return self._add_transaction(
+            account,
+            position,
+            executed_at_date,
+            quantity,
+            price,
+            transaction_costs,
+            local_value,
+            value_in_account_currency,
+            total_in_account_currency,
+            order_id,
+        )
 
     @transaction.atomic
     def add_transaction_known_asset(
@@ -77,27 +120,19 @@ class AccountRepository:
     ) -> models.Transaction:
 
         position = self._get_or_create_position_for_asset(account, asset_id)
-        position.quantity_history.cache_clear()
-        position.value_history.cache_clear()
 
-        transaction, created = models.Transaction.objects.get_or_create(
-            executed_at=executed_at,
-            position=position,
-            quantity=quantity,
-            price=price,
-            transaction_costs=transaction_costs,
-            local_value=local_value,
-            value_in_account_currency=value_in_account_currency,
-            total_in_account_currency=total_in_account_currency,
-            order_id=order_id,
+        return self._add_transaction(
+            account,
+            position,
+            executed_at,
+            quantity,
+            price,
+            transaction_costs,
+            local_value,
+            value_in_account_currency,
+            total_in_account_currency,
+            order_id,
         )
-        if created:
-            position.quantity += quantity
-            position.save()
-            account.balance += total_in_account_currency
-            account.save()
-
-        return transaction
 
     @transaction.atomic
     def add_transaction_custom_asset(
@@ -127,30 +162,20 @@ class AccountRepository:
             added_by=account.user,
         )
         position = self._get_or_create_position_for_asset(account, asset.pk)
-        transaction, created = models.Transaction.objects.get_or_create(
-            executed_at=executed_at,
-            position=position,
-            quantity=quantity,
-            price=price,
-            transaction_costs=transaction_costs,
-            local_value=local_value,
-            value_in_account_currency=value_in_account_currency,
-            total_in_account_currency=total_in_account_currency,
-            order_id=order_id,
+
+        return self._add_transaction(
+            account,
+            position,
+            executed_at,
+            quantity,
+            price,
+            transaction_costs,
+            local_value,
+            value_in_account_currency,
+            total_in_account_currency,
+            order_id,
+            custom_asset=True,
         )
-
-        if created:
-            position.quantity += quantity
-            position.save()
-            account.balance += total_in_account_currency
-            account.save()
-            # For a custom asset the transaction price will be a price history record.
-            models.PriceHistory.objects.create(asset=asset, value=price, date=executed_at.date())
-
-        position.quantity_history.cache_clear()
-        position.value_history.cache_clear()
-
-        return transaction
 
     @transaction.atomic
     def add_event(
@@ -190,10 +215,14 @@ class AccountRepository:
                 if position_currency != account_currency:
                     exchange_rate = prices.get_closest_exchange_rate(
                         date=executed_at.date(),
-                        from_currency=position_currency, to_currency=account_currency)
+                        from_currency=position_currency,
+                        to_currency=account_currency,
+                    )
                     if exchange_rate is None:
-                        raise ValueError(f"Can't convert between currencies: "
-                                         f"{position_currency} and {account_currency}")
+                        raise ValueError(
+                            f"Can't convert between currencies: "
+                            f"{position_currency} and {account_currency}"
+                        )
                     balance_change *= exchange_rate.value
 
             account.balance += balance_change
@@ -215,10 +244,14 @@ class AccountRepository:
             if position_currency != account_currency:
                 exchange_rate = prices.get_closest_exchange_rate(
                     date=event.executed_at.date(),
-                    from_currency=position_currency, to_currency=account_currency)
+                    from_currency=position_currency,
+                    to_currency=account_currency,
+                )
                 if exchange_rate is None:
-                    raise ValueError(f"Can't convert between currencies: "
-                                        f"{position_currency} and {account_currency}")
+                    raise ValueError(
+                        f"Can't convert between currencies: "
+                        f"{position_currency} and {account_currency}"
+                    )
                 balance_change *= exchange_rate.value
 
         account.balance -= balance_change
@@ -260,6 +293,7 @@ class AccountRepository:
         account.balance -= transaction.total_in_account_currency
         account.save()
         transaction.delete()
+        gains.update_lots(position)
         position.quantity_history.cache_clear()
         position.value_history.cache_clear()
 
@@ -296,5 +330,6 @@ class AccountRepository:
         position.save()
         account.save()
         transaction.save()
+        gains.update_lots(position)
         position.quantity_history.cache_clear()
         position.value_history.cache_clear()

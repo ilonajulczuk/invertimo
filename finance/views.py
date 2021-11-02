@@ -4,7 +4,14 @@ from rest_framework import status
 import pytz
 from django.db.models import Count, Sum, Subquery, OuterRef, QuerySet
 from django.shortcuts import get_object_or_404, render
-from rest_framework import exceptions, generics, permissions, viewsets, mixins
+from rest_framework import (
+    exceptions,
+    generics,
+    permissions,
+    viewsets,
+    mixins,
+    serializers,
+)
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from django.contrib.auth.models import User
@@ -13,7 +20,7 @@ from rest_framework.decorators import action
 
 from django.db.models import Q
 
-from finance import accounts, models
+from finance import accounts, models, gains
 from finance.models import (
     CurrencyExchangeRate,
     Position,
@@ -220,6 +227,7 @@ class PositionView(generics.RetrieveAPIView):
             .select_related("asset__exchange")
             .prefetch_related("transactions")
             .prefetch_related("events")
+            .prefetch_related("lots")
         )
 
     def get_serializer_context(self):
@@ -294,7 +302,14 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         arguments.pop("account")
         asset_id = arguments.pop("asset")
         arguments["asset_id"] = asset_id
-        account_repository.add_transaction_known_asset(account, **arguments)
+        try:
+            account_repository.add_transaction_known_asset(account, **arguments)
+        except gains.SoldBeforeBought:
+            raise serializers.ValidationError(
+                {
+                    "quantity": ["Can't sell asset before buying it."],
+                }
+            )
         headers = self.get_success_headers(serializer.data)
         return Response(
             serializer.data, status=status.HTTP_201_CREATED, headers=headers
@@ -313,7 +328,14 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         )
         arguments = serializer.validated_data.copy()
         arguments.pop("account")
-        account_repository.add_transaction_custom_asset(account, **arguments)
+        try:
+            account_repository.add_transaction_custom_asset(account, **arguments)
+        except gains.SoldBeforeBought:
+            raise serializers.ValidationError(
+                {
+                    "quantity": ["Can't sell asset before buying it."],
+                }
+            )
         headers = self.get_success_headers(serializer.data)
         return Response(
             serializer.data, status=status.HTTP_201_CREATED, headers=headers
@@ -321,13 +343,27 @@ class TransactionsViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         account_repository = accounts.AccountRepository()
-        account_repository.delete_transaction(instance)
+        try:
+            account_repository.delete_transaction(instance)
+        except gains.SoldBeforeBought:
+            raise serializers.ValidationError(
+                {
+                    "quantity": ["Can't sell asset before buying it."],
+                }
+            )
 
     def perform_update(self, serializer):
         account_repository = accounts.AccountRepository()
-        account_repository.correct_transaction(
+        try:
+            account_repository.correct_transaction(
             serializer.instance, serializer.validated_data
         )
+        except gains.SoldBeforeBought:
+            raise serializers.ValidationError(
+                {
+                    "quantity": ["Can't sell asset before buying it."],
+                }
+            )
 
 
 class AccountEventViewSet(
@@ -389,4 +425,6 @@ class AssetViewSet(
     def get_queryset(self) -> QuerySet[Asset]:
         assert isinstance(self.request.user, User)
         user = self.request.user
-        return Asset.objects.filter(Q(added_by=None) | Q(added_by=user)).select_related('exchange')
+        return Asset.objects.filter(Q(added_by=None) | Q(added_by=user)).select_related(
+            "exchange"
+        )

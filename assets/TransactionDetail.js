@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
 import {
@@ -52,6 +52,8 @@ export function TransactionDetail(props) {
     let transactionId = match.params.transactionId;
     let history = useHistory();
 
+    let [canDelete, setCanDelete] = useState(true);
+
     let transaction = null;
     for (let t of props.transactions) {
         if (t.id == transactionId) {
@@ -88,7 +90,7 @@ export function TransactionDetail(props) {
     let topInfo = (
         <div className="position-card">
             {transactionTypeDisplay}
-            <PositionLink position={transaction.position} />
+            <PositionLink position={transaction.position} account={account} />
             <div>
                 <span className="card-label">Asset type</span>
                 {transaction.position.asset.asset_type}
@@ -119,9 +121,13 @@ export function TransactionDetail(props) {
         </div>
     );
 
-    const handleDelete = () => {
-        props.handleDeleteTransaction(transaction.id);
-        history.push("/transactions");
+    const handleDelete = async () => {
+        const response = await props.handleDeleteTransaction(transaction.id);
+        if (response.ok) {
+            history.push("/transactions");
+        } else {
+            setCanDelete(false);
+        }
     };
 
     const handleCancel = () => {
@@ -159,9 +165,9 @@ export function TransactionDetail(props) {
             <div className={classes.transactionDetails}>
                 <p>Executed in account
                     <a href={`#accounts/${account.id}`}> {account.nickname}</a>
-                    {transaction.order_id ? `with order id: #${transaction.order_id}` : ""}
+
+                {transaction.order_id ? ` with order id: #${transaction.order_id}` : ""}
                 </p>
-                {transaction.order_id}
             </div>
 
             <Switch>
@@ -198,14 +204,16 @@ export function TransactionDetail(props) {
                         <DialogTitle id="delete-transaction-dialog-title">{"Are you sure you want to delete this transaction?"}</DialogTitle>
                         <DialogContent>
                             <DialogContentText id="delete-transaction-dialog-description">
-                                It will be as if this transaction has never happened. This might cause you to miss historical data.
-                            </DialogContentText>
+                                {canDelete ?
+                                "It will be as if this transaction has never happened. This might cause you to miss historical data."
+                                : "This transaction can't be safely deleted."}
+                                </DialogContentText>
                         </DialogContent>
                         <DialogActions>
                             <Button onClick={handleCancel} variant="outlined" autoFocus>
                                 Cancel
                             </Button>
-                            <Button onClick={handleDelete} color="secondary" variant="contained">
+                            <Button onClick={handleDelete} color="secondary" variant="contained" disabled={!canDelete}>
                                 Delete
                             </Button>
                         </DialogActions>

@@ -25,6 +25,7 @@ export function PositionList(props) {
         { id: 'quantity', label: 'Quantity' },
         { id: 'price', label: 'Price' },
         { id: 'value', label: 'Value' },
+        { id: 'gain', label: 'Gain'},
         { id: 'interaction', label: '' },
     ];
 
@@ -36,6 +37,7 @@ export function PositionList(props) {
         let positionRow = { "id": position.id };
 
         let account = accountsById.get(position.account);
+        const accountCurrency = toSymbol(account.currency);
         const data = position;
         const quantity = data.quantity;
         const price = data.latest_price;
@@ -44,7 +46,7 @@ export function PositionList(props) {
         let displayConvertedValue = (data.asset.currency != account.currency && data.latest_exchange_rate);
 
         positionRow.product = {
-            displayValue: <PositionLink position={data}/>,
+            displayValue: <PositionLink position={data} account={account}/>,
             comparisonKey: data.asset.symbol,
         };
         positionRow.assetType = data.asset.asset_type;
@@ -57,9 +59,9 @@ export function PositionList(props) {
             comparisonKey: Number(price),
         };
 
-        let valueForComparison = value;
+        let valueAccountCurrency = value;
         if (displayConvertedValue) {
-            valueForComparison = Math.round(100 * value * data.latest_exchange_rate);
+            valueAccountCurrency = Math.round(100 * value * data.latest_exchange_rate) / 100;
         }
         positionRow.value = {
             displayValue: (<div className="column-stack">
@@ -68,10 +70,21 @@ export function PositionList(props) {
                 </span>
                 <span>
                     {displayConvertedValue ? Math.round(100 * value * data.latest_exchange_rate) / 100 : ""}
-                    {displayConvertedValue ? "" + toSymbol(account.currency) : ""}
+                    {displayConvertedValue ? "" + accountCurrency : ""}
                 </span>
             </div>),
-            comparisonKey: valueForComparison,
+            comparisonKey: valueAccountCurrency,
+        };
+
+        const unrealizedGain = Math.round(100 * (Number(position.cost_basis) + Number(valueAccountCurrency))) / 100;
+        positionRow.gain = {
+            displayValue: (<div className="column-stack">
+                <span className="card-label">Unrealized gain</span>
+                <span> {unrealizedGain} {accountCurrency}</span>
+                <span className="card-label">Realized gain</span>
+                <span> {Number(position.realized_gain)} {accountCurrency}</span>
+                </div>),
+            comparisonKey: unrealizedGain,
         };
         positionRow.interaction = {
             displayValue: <div className="column-stack">

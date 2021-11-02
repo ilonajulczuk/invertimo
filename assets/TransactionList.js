@@ -1,16 +1,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { ErrorBoundary } from './error_utils.js';
-import { TableWithSort } from './components/TableWithSort.js';
-import { toSymbol } from './currencies.js';
 import Icon from '@material-ui/core/Icon';
-
-import './transaction_list.css';
 import Button from '@material-ui/core/Button';
 
 import { makeStyles } from '@material-ui/core/styles';
+
+import { toSymbol } from './currencies.js';
+import { TableWithSort } from './components/TableWithSort.js';
+import { ErrorBoundary } from './error_utils.js';
 import { PositionLink } from './components/PositionLink.js';
+import './transaction_list.css';
 
 
 export function EmbeddedTransactionList(props) {
@@ -26,7 +26,7 @@ export function EmbeddedTransactionList(props) {
     ];
 
     const transactions = props.transactions.map(transaction => {
-
+        // TODO: display currencies.
         let transactionCopy = { ...transaction };
         let date = new Date(transactionCopy.executed_at);
         transactionCopy.executed_at = {
@@ -43,6 +43,8 @@ export function EmbeddedTransactionList(props) {
                 <div className="trade-type trade-type-sell">Sell</div>
             );
         }
+        transactionCopy.transaction_costs = Number(transactionCopy.transaction_costs);
+        transactionCopy.price = Number(transactionCopy.price);
         transactionCopy.type = {
             displayValue: transactionTypeDisplay,
             comparisonKey: transaction.value_in_account_currency,
@@ -60,7 +62,11 @@ export function EmbeddedTransactionList(props) {
     });
     return (
         <ErrorBoundary>
-            <TableWithSort rows={transactions} headCells={embeddedTransactionHeadCells} />
+            <TableWithSort
+                rows={transactions}
+                headCells={embeddedTransactionHeadCells}
+                defaultOrder="desc"
+                defaultOrderBy="executed_at" />
         </ErrorBoundary>
     );
 }
@@ -109,9 +115,10 @@ export function TransactionList(props) {
             displayValue: date.toLocaleDateString(),
             comparisonKey: date,
         };
+        let account = accountsById.get(transaction.position.account);
 
         let position = transactionCopy.position;
-        let positionField = <PositionLink position={position} />;
+        let positionField = <PositionLink position={position} account={account} />;
         transactionCopy.position = {
             displayValue: positionField,
             comparisonKey: position.asset.symbol,
@@ -128,11 +135,13 @@ export function TransactionList(props) {
                 <div className="trade-type trade-type-sell">SELL</div>
             );
         }
+        transactionCopy.transaction_costs = Number(transactionCopy.transaction_costs);
+        transactionCopy.price = Number(transactionCopy.price);
+
         transactionCopy.type = {
             displayValue: transactionTypeDisplay,
             comparisonKey: transaction.value_in_account_currency,
         };
-        let account = accountsById.get(transaction.position.account);
         const accountCurrencySymbol = toSymbol(account.currency);
         const positionCurrencySymbol = toSymbol(transaction.position.asset.currency);
 

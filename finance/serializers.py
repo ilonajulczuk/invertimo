@@ -7,7 +7,7 @@ from typing import Any
 from django.contrib.auth.models import User
 
 from finance import models
-from finance import exchanges
+from finance import exchanges, gains
 from finance.models import (
     Account,
     AccountEvent,
@@ -85,7 +85,16 @@ class AssetSerializer(serializers.ModelSerializer[Asset]):
 
     class Meta:
         model = Asset
-        fields = ["id", "isin", "symbol", "name", "exchange", "currency", "country", "asset_type"]
+        fields = [
+            "id",
+            "isin",
+            "symbol",
+            "name",
+            "exchange",
+            "currency",
+            "country",
+            "asset_type",
+        ]
 
 
 class PositionSerializer(serializers.ModelSerializer[Position]):
@@ -104,6 +113,8 @@ class PositionSerializer(serializers.ModelSerializer[Position]):
             "latest_price",
             "latest_price_date",
             "latest_exchange_rate",
+            "realized_gain",
+            "cost_basis",
         ]
 
 
@@ -145,20 +156,27 @@ class EmbeddedAccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
 
     class Meta:
         model = AccountEvent
-        fields = ["id", "event_type", "executed_at", "amount", "withheld_taxes", "account"]
+        fields = [
+            "id",
+            "event_type",
+            "executed_at",
+            "amount",
+            "withheld_taxes",
+            "account",
+        ]
 
 
 class TransactionSerializer(serializers.ModelSerializer[Transaction]):
-    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
-    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
+    price = serializers.DecimalField(max_digits=12, decimal_places=5)
     position = EmbeddedPositionSerializer()
-    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
-    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    transaction_costs = serializers.DecimalField(max_digits=12, decimal_places=5)
+    local_value = serializers.DecimalField(max_digits=12, decimal_places=5)
     value_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
     total_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
 
     class Meta:
@@ -179,16 +197,16 @@ class TransactionSerializer(serializers.ModelSerializer[Transaction]):
 
 
 class AddTransactionKnownAssetSerializer(serializers.ModelSerializer[Transaction]):
-    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
-    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
+    price = serializers.DecimalField(max_digits=12, decimal_places=5)
 
-    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
-    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    transaction_costs = serializers.DecimalField(max_digits=12, decimal_places=5)
+    local_value = serializers.DecimalField(max_digits=12, decimal_places=5)
     value_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
     total_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
     account = serializers.IntegerField()
     asset = serializers.IntegerField()
@@ -225,16 +243,16 @@ class AddTransactionKnownAssetSerializer(serializers.ModelSerializer[Transaction
 
 
 class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction]):
-    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
-    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
+    price = serializers.DecimalField(max_digits=12, decimal_places=5)
 
-    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
-    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    transaction_costs = serializers.DecimalField(max_digits=12, decimal_places=5)
+    local_value = serializers.DecimalField(max_digits=12, decimal_places=5)
     value_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
     total_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
     account = serializers.IntegerField()
 
@@ -284,16 +302,16 @@ class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction])
 
 
 class CorrectTransactionSerializer(serializers.ModelSerializer[Transaction]):
-    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
-    price = serializers.DecimalField(max_digits=20, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
+    price = serializers.DecimalField(max_digits=12, decimal_places=5)
 
-    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
-    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    transaction_costs = serializers.DecimalField(max_digits=12, decimal_places=5)
+    local_value = serializers.DecimalField(max_digits=12, decimal_places=5)
     value_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
     total_in_account_currency = serializers.DecimalField(
-        max_digits=20, decimal_places=2
+        max_digits=12, decimal_places=5
     )
 
     class Meta:
@@ -329,6 +347,8 @@ class PositionWithQuantitiesSerializer(serializers.ModelSerializer[Position]):
             "events",
             "values",
             "values_account_currency",
+            "realized_gain",
+            "cost_basis",
         ]
 
     def get_quantities(self, obj):
@@ -471,7 +491,15 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
 
     class Meta:
         model = AccountEvent
-        fields = ["id", "event_type", "executed_at", "amount", "withheld_taxes", "account", "position"]
+        fields = [
+            "id",
+            "event_type",
+            "executed_at",
+            "amount",
+            "withheld_taxes",
+            "account",
+            "position",
+        ]
 
     def get_extra_kwargs(self):
         kwargs = super().get_extra_kwargs()
@@ -516,14 +544,22 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
     def validate(self, data):
         if data["event_type"] == models.EventType.WITHDRAWAL:
             if data["amount"] >= 0:
-                raise serializers.ValidationError({'amount': "For withdrawal the amount needs to be negative"})
+                raise serializers.ValidationError(
+                    {"amount": "For withdrawal the amount needs to be negative"}
+                )
         else:
             if data["amount"] < 0:
-                raise serializers.ValidationError({'amount': "Amount can't be negative unless it's a withdrawal"})
+                raise serializers.ValidationError(
+                    {"amount": "Amount can't be negative unless it's a withdrawal"}
+                )
         if data["event_type"] == models.EventType.DIVIDEND:
             if data["position"] is None:
-                raise serializers.ValidationError({'position': "Position can't be empty for dividend event"})
+                raise serializers.ValidationError(
+                    {"position": "Position can't be empty for dividend event"}
+                )
         else:
             if data["position"] is not None:
-                raise serializers.ValidationError({'position': "Position can't be set for this type of event"})
+                raise serializers.ValidationError(
+                    {"position": "Position can't be set for this type of event"}
+                )
         return data

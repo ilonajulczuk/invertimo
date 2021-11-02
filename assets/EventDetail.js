@@ -82,7 +82,7 @@ export function EventDetail(props) {
     if (event.position) {
         const position = positionsById.get(event.position);
         if (position) {
-            positionDetail = <PositionLink position={position} />;
+            positionDetail = <PositionLink position={position} account={account}/>;
             currency = toSymbol(position.asset.currency);
         }
     }
