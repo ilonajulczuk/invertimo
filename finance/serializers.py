@@ -45,7 +45,7 @@ class RelatedPkField(serializers.IntegerField):
             return value.pk
 
 
-class CurrencyField(serializers.IntegerField):
+class CurrencyField(serializers.CharField):
     def to_representation(self, value):
         return models.currency_string_from_enum(value)
 
@@ -450,9 +450,12 @@ class AccountEditSerializer(serializers.ModelSerializer[Account]):
         if request and hasattr(request, "user"):
             user = request.user
             if Account.objects.filter(user=user, nickname=value).count() > 0:
-                raise serializers.ValidationError(
-                    f"User already has an account with name: '{value}'"
-                )
+                if request.method == "POST":
+                    # It's fine to have the name that already exists for update
+                    # requests, e.g. with PUT method.
+                    raise serializers.ValidationError(
+                        f"User already has an account with name: '{value}'"
+                    )
         return value
 
 
