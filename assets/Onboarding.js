@@ -170,7 +170,11 @@ export function Onboarding(props) {
                     <h3>Record transaction</h3>
                     <p>You currently have {numTransactions} transactions recorded.</p>
                     <p>You will be able to later edit or delete this transaction.</p>
-                    <RecordTransactionForm accounts={props.accounts} hasTransactions={hasTransactions} handleSubmit={props.handleAddTransaction} />
+                    <RecordTransactionForm
+                    accounts={props.accounts}
+                     hasTransactions={hasTransactions}
+                      handleSubmit={props.handleAddTransaction}
+                      defaultAssetOptions={[]} />
                 </div>
             ),
             path: 'add_transaction',
