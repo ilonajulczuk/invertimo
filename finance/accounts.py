@@ -4,10 +4,18 @@ from typing import Optional, Union
 
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models import Count
 
 from django.utils.dateparse import parse_datetime
 from finance import exchanges, models, prices, gains
 
+
+class CantDeleteNonEmptyAccount(ValueError):
+    pass
+
+
+class CantUpdateNonEmptyAccount(ValueError):
+    pass
 
 class AccountRepository:
     def get(self, user: User, id: int) -> models.Account:
@@ -19,6 +27,30 @@ class AccountRepository:
         return models.Account.objects.create(
             user=user, nickname=nickname, description=description, currency=currency
         )
+
+    def delete(self, account):
+        if (account.positions.annotate(
+            transactions_count=Count('transactions')).
+        filter(transactions_count__gt=0).count() > 0):
+            raise CantDeleteNonEmptyAccount()
+        if account.events.count() > 0:
+            raise CantDeleteNonEmptyAccount()
+
+        account.delete()
+
+    def update(self, serializer):
+        account = serializer.instance
+        if serializer.validated_data["currency"] == account.currency:
+            serializer.save()
+            return
+        if (account.positions.annotate(
+            transactions_count=Count('transactions')).
+        filter(transactions_count__gt=0).count() > 0):
+            raise CantUpdateNonEmptyAccount()
+        if account.events.count() > 0:
+            raise CantUpdateNonEmptyAccount()
+
+        serializer.save()
 
     @transaction.atomic
     def _add_transaction(

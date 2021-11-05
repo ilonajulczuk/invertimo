@@ -300,7 +300,7 @@ class TestAccountsView(ViewTestBase, HypothesisTestCase):
         self.assertEqual(models.Account.objects.count(), 2)
 
 
-class TestDetailAccountsView(ViewTestBase, TestCase):
+class TestAccountDetailView(ViewTestBase, TestCase):
     URL = "/api/accounts/%s/"
     VIEW_NAME = "account-detail"
     DETAIL_VIEW = True
@@ -311,13 +311,93 @@ class TestDetailAccountsView(ViewTestBase, TestCase):
         super().setUp()
 
         self.isin = "USA123"
-        self.account, _, _ = _add_dummy_account_and_asset(self.user, isin=self.isin)
+        self.account, self.exchange, _ = _add_dummy_account_and_asset(self.user, isin=self.isin)
 
     def get_url(self):
         return self.URL % self.account.pk
 
     def get_reversed_url(self):
         return reverse(self.VIEW_NAME, args=[self.account.pk])
+
+    def test_deleting_the_account(self):
+        # Delete is only successful if there aren't any associated
+        # transactions or events (because they are deleted).
+        response = self.client.delete(reverse(self.VIEW_NAME, args=[self.account.pk]))
+        self.assertEqual(response.status_code, 204)
+
+
+    def test_deleting_the_nonempty_account(self):
+        for transaction in _FAKE_TRANSACTIONS:
+            _add_transaction(
+                self.account,
+                self.isin,
+                self.exchange,
+                transaction[0],
+                transaction[1],
+                transaction[2],
+            )
+        response = self.client.delete(reverse(self.VIEW_NAME, args=[self.account.pk]))
+        self.assertEqual(response.status_code, 400)
+
+    def test_update(self):
+        for transaction in _FAKE_TRANSACTIONS:
+            _add_transaction(
+                self.account,
+                self.isin,
+                self.exchange,
+                transaction[0],
+                transaction[1],
+                transaction[2],
+            )
+
+
+        # Changing the name or description is fine.
+        new_name = "cooler account name"
+        response = self.client.put(
+            reverse(self.VIEW_NAME, args=[self.account.pk]),
+            {
+                "id": self.account.pk,
+                "nickname": new_name,
+                "description": "wow totally new desc",
+                "currency": "EUR",  # Same as the existing one.
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.nickname, new_name)
+
+        # Changing the currency is only allowed if there are no transactions associated.
+
+        response = self.client.put(
+            reverse(self.VIEW_NAME, args=[self.account.pk]),
+            {
+                "id": self.account.pk,
+                "nickname": new_name,
+                "description": "wow totally new desc",
+                "currency": "USD",  # Different as the existing one.
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+
+        for transaction in models.Transaction.objects.all():
+            transaction.delete()
+
+        response = self.client.put(
+            reverse(self.VIEW_NAME, args=[self.account.pk]),
+            {
+                "id": self.account.pk,
+                "nickname": new_name,
+                "description": "wow totally new desc",
+                "currency": "USD",  # Different as the existing one.
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.currency, models.Currency.USD)
 
 
 class TestTransactionsView(ViewTestBase, TestCase):

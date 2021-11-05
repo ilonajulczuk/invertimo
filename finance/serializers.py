@@ -317,6 +317,7 @@ class CorrectTransactionSerializer(serializers.ModelSerializer[Transaction]):
     class Meta:
         model = Transaction
         fields = [
+            "id",
             "executed_at",
             "quantity",
             "price",

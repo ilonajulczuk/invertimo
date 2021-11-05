@@ -112,6 +112,24 @@ class AccountsViewSet(viewsets.ModelViewSet):
             serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )
 
+    def perform_update(self, serializer):
+        account_repository = accounts.AccountRepository()
+        try:
+            account_repository.update(serializer)
+        except accounts.CantUpdateNonEmptyAccount:
+            raise serializers.ValidationError(
+                "can't update non-empty account"
+            )
+
+    def perform_destroy(self, instance):
+        account_repository = accounts.AccountRepository()
+        try:
+            account_repository.delete(instance)
+        except accounts.CantDeleteNonEmptyAccount:
+            raise serializers.ValidationError(
+                "can't delete non-empty account"
+            )
+
 
 class PositionsView(generics.ListAPIView):
     model = Position
