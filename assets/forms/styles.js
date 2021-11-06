@@ -48,10 +48,6 @@ export const useStyles = makeStyles((theme) => ({
             color: red[600],
         },
     },
-    tradeTypes: {
-        display: "flex",
-        flexDirection: "row",
-    },
     submitButton: {
         marginTop: "2em",
         marginBottom: "2em",

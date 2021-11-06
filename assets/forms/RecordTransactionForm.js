@@ -32,7 +32,6 @@ import { matchNumberUpToTwoDecimalPlaces } from './utils.js';
 
 function formTransactionToAPITransaction(formData) {
     let data = { ...formData };
-    data["account"] = data["account"].id;
     // Asset could be auto filled and unchanged -> asset set to id.
     // Auto filled and changed -> treated as custom asset.
     // Totally custom -> treated as custom asset.
@@ -115,59 +114,6 @@ function apiTransactionResponseToErrors(apiResponse) {
 }
 
 
-const validationSchema = yup.object({
-    symbol: yup
-        .lazy(value => typeof value === 'string' ? yup.string().required() : yup.object().required()),
-    exchange: yup
-        .string()
-        .required('Exchange is required'),
-    currency: yup
-        .string('Enter the currency')
-        .oneOf(currencyValues)
-        .required('Currency is required'),
-    tradeType: yup
-        .string('Bought or sold')
-        .oneOf(["buy", "sell"])
-        .required('Trade type is required'),
-    price: yup
-        .number('Price needs to be a number')
-        .required('Price is required')
-        .positive()
-        .test('has-2-or-less-places', "Only up to two decimal places are allowed",
-            matchNumberUpToTwoDecimalPlaces),
-    quantity: yup
-        .number()
-        .positive()
-        .required('Quantity is required'),
-    account: yup
-        .object()
-        .required('Account needs to be selected'),
-    totalCostAccountCurrency: yup
-        .number()
-        .test('has-2-or-less-places', "Only up to two decimal places are allowed",
-            matchNumberUpToTwoDecimalPlaces),
-    // This value is only required if currency of the asset and account don't match.
-    totalValueAccountCurrency: yup
-        .number().when(['currency', 'account'], {
-            is: (currency, account) => account ? currency !== account.currency : false,
-            then: yup.number().test('has-2-or-less-places', "Only up to two decimal places are allowed",
-                matchNumberUpToTwoDecimalPlaces).required(
-                    'Total value in account currency has to be provided if the' +
-                    ' asset currency is different than the account currency.'),
-            otherwise: yup.number(),
-        }),
-    fees: yup
-        .number()
-        .positive()
-        .required('Fees are required')
-        .test('has-2-or-less-places', "Only up to two decimal places are allowed",
-            matchNumberUpToTwoDecimalPlaces),
-    executedAt: yup
-        .date()
-        .typeError("Provide a date in YYYY/MM/DD format")
-        .required('Date when transaction was executed is required'),
-});
-
 export function RecordTransactionForm(props) {
 
     const classes = useStyles();
@@ -182,12 +128,67 @@ export function RecordTransactionForm(props) {
         snackbarSetOpen(false);
     };
 
+    let accountsById = new Map(props.accounts.map(account => [account.id, account]));
+
+    const validationSchema = yup.object({
+        symbol: yup
+            .lazy(value => typeof value === 'string' ? yup.string().required() : yup.object().required()),
+        exchange: yup
+            .string()
+            .required('Exchange is required'),
+        currency: yup
+            .string('Enter the currency')
+            .oneOf(currencyValues)
+            .required('Currency is required'),
+        tradeType: yup
+            .string('Bought or sold')
+            .oneOf(["buy", "sell"])
+            .required('Trade type is required'),
+        price: yup
+            .number('Price needs to be a number')
+            .required('Price is required')
+            .positive()
+            .test('has-2-or-less-places', "Only up to two decimal places are allowed",
+                matchNumberUpToTwoDecimalPlaces),
+        quantity: yup
+            .number()
+            .positive()
+            .required('Quantity is required'),
+        account: yup
+            .number()
+            .required('Account needs to be selected'),
+        totalCostAccountCurrency: yup
+            .number()
+            .test('has-2-or-less-places', "Only up to two decimal places are allowed",
+                matchNumberUpToTwoDecimalPlaces),
+        // This value is only required if currency of the asset and account don't match.
+        totalValueAccountCurrency: yup
+            .number().when(['currency', 'account'], {
+                is: (currency, accountId) => accountId ? currency !== accountsById.get(accountId).currency : false,
+                then: yup.number().test('has-2-or-less-places', "Only up to two decimal places are allowed",
+                    matchNumberUpToTwoDecimalPlaces).required(
+                        'Total value in account currency has to be provided if the' +
+                        ' asset currency is different than the account currency.'),
+                otherwise: yup.number(),
+            }),
+        fees: yup
+            .number()
+            .positive()
+            .required('Fees are required')
+            .test('has-2-or-less-places', "Only up to two decimal places are allowed",
+                matchNumberUpToTwoDecimalPlaces),
+        executedAt: yup
+            .date()
+            .typeError("Provide a date in YYYY/MM/DD format")
+            .required('Date when transaction was executed is required'),
+    });
+
     const initialValues = {
         currency: "EUR",
         symbol: "",
         tradeType: "buy",
         executedAt: props.executedAtDate || new Date(),
-        account: "",
+        account: props.accounts[0].id,
         exchange: "",
         assetType: "Stock",
         price: "",
@@ -199,7 +200,6 @@ export function RecordTransactionForm(props) {
 
     const onSubmit = async (values, { setErrors, resetForm }) => {
         try {
-
             const cleanValues = formTransactionToAPITransaction(values);
             let result = await props.handleSubmit(cleanValues);
             result = apiTransactionResponseToErrors(result);
@@ -226,7 +226,7 @@ export function RecordTransactionForm(props) {
 
     let accountOptions = props.accounts.map(account => {
         return (
-            <MenuItem key={account.id} value={account}>{account.nickname}</MenuItem>
+            <MenuItem key={account.id} value={account.id}>{account.nickname}</MenuItem>
         );
     });
 
@@ -236,11 +236,13 @@ export function RecordTransactionForm(props) {
     let totalCostBlock = null;
 
     let formattedAccountCurrency = "";
+    let sameCurrency = true;
     if (formik.values.account) {
-        formattedAccountCurrency = toSymbol(formik.values.account.currency);
+        let account = accountsById.get(formik.values.account);
+        sameCurrency = account.currency == formik.values.currency;
+        formattedAccountCurrency = toSymbol(account.currency);
     }
 
-    const sameCurrency = formik.values.account ? formik.values.account.currency == formik.values.currency : false;
     if (!sameCurrency) {
 
         valueBlock = <>
@@ -287,7 +289,7 @@ export function RecordTransactionForm(props) {
                     id="total-cost-account-currency"
                     label={`Total cost in ${formattedAccountCurrency}`}
                     name="totalCostAccountCurrency"
-                    value={formik.values.totalCostAccountCurrency ?? formik.values.totalValueAccountCurrency + formik.values.fees}
+                    value={formik.values.totalCostAccountCurrency || formik.values.totalValueAccountCurrency + formik.values.fees}
                     type="number"
                     onChange={formik.handleChange}
                     error={formik.touched.totalCostAccountCurrency && Boolean(formik.errors.totalCostAccountCurrency)}
@@ -337,7 +339,7 @@ export function RecordTransactionForm(props) {
     }
 
     const selectAssetBlock = <SelectAssetFormFragment formik={formik}
-     defaultAssetOptions={props.defaultAssetOptions} />;
+        defaultAssetOptions={props.defaultAssetOptions} />;
 
     return (
         <form className={classes.form} onSubmit={formik.handleSubmit}>
@@ -348,7 +350,11 @@ export function RecordTransactionForm(props) {
             <div className={classes.inputs}>
 
                 <FormControl className={classes.formControl}>
-                    <RadioGroup aria-label="trade type" name="tradeType" value={formik.values.tradeType} onChange={formik.handleChange} className={classes.tradeTypes}>
+                    <RadioGroup aria-label="trade type"
+                        name="tradeType"
+                        value={formik.values.tradeType}
+                        onChange={formik.handleChange}
+                        row>
                         <FormControlLabel value="buy" control={<Radio className={classes.green} />} label="Bought" />
                         <FormControlLabel value="sell" control={<Radio className={classes.red} />} label="Sold" />
 
