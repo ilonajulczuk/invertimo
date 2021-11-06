@@ -11,7 +11,7 @@ exports[`portfolio tests shows portfolio overview with one account 1`] = `
   <div class=\\"account-stats-list\\">
     <div class=\\"MuiPaper-root MuiCard-root makeStyles-root-1 MuiPaper-outlined MuiPaper-rounded\\">
       <div class=\\"MuiCardContent-root\\">
-        <p class=\\"MuiTypography-root makeStyles-title-2 MuiTypography-body1 MuiTypography-gutterBottom\\">Account <a href=\\"\\">test account</a></p>
+        <h5 class=\\"MuiTypography-root makeStyles-title-2 MuiTypography-h5 MuiTypography-gutterBottom\\">Account <a href=\\"#/accounts\\">test account</a></h5>
         <p class=\\"MuiTypography-root MuiTypography-body1\\">Total Cash: -16584.76 €</p>
         <p class=\\"MuiTypography-root MuiTypography-body1\\">Total Assets: 25874.64 €</p>
         <p class=\\"MuiTypography-root MuiTypography-body1\\">Portfolio Value: 9289.88 €</p>
@@ -32,7 +32,7 @@ exports[`portfolio tests shows portfolio overview with two accounts 1`] = `
   <div class=\\"account-stats-list\\">
     <div class=\\"MuiPaper-root MuiCard-root makeStyles-root-3 MuiPaper-outlined MuiPaper-rounded\\">
       <div class=\\"MuiCardContent-root\\">
-        <p class=\\"MuiTypography-root makeStyles-title-4 MuiTypography-body1 MuiTypography-gutterBottom\\">Account <a href=\\"\\">test account</a></p>
+        <h5 class=\\"MuiTypography-root makeStyles-title-4 MuiTypography-h5 MuiTypography-gutterBottom\\">Account <a href=\\"#/accounts\\">test account</a></h5>
         <p class=\\"MuiTypography-root MuiTypography-body1\\">Total Cash: -16584.76 €</p>
         <p class=\\"MuiTypography-root MuiTypography-body1\\">Total Assets: 25874.64 €</p>
         <p class=\\"MuiTypography-root MuiTypography-body1\\">Portfolio Value: 9289.88 €</p>
@@ -40,7 +40,7 @@ exports[`portfolio tests shows portfolio overview with two accounts 1`] = `
     </div>
     <div class=\\"MuiPaper-root MuiCard-root makeStyles-root-3 MuiPaper-outlined MuiPaper-rounded\\">
       <div class=\\"MuiCardContent-root\\">
-        <p class=\\"MuiTypography-root makeStyles-title-4 MuiTypography-body1 MuiTypography-gutterBottom\\">Account <a href=\\"\\">second account</a></p>
+        <h5 class=\\"MuiTypography-root makeStyles-title-4 MuiTypography-h5 MuiTypography-gutterBottom\\">Account <a href=\\"#/accounts\\">second account</a></h5>
         <p class=\\"MuiTypography-root MuiTypography-body1\\">Total Cash: 161 $</p>
         <p class=\\"MuiTypography-root MuiTypography-body1\\">Total Assets: 5043.56 $</p>
         <p class=\\"MuiTypography-root MuiTypography-body1\\">Portfolio Value: 5204.56 $</p>

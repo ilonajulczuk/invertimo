@@ -110,7 +110,6 @@ function apiTransactionResponseToErrors(apiResponse) {
         response.message = apiResponse.message;
     }
     return response;
-
 }
 
 

@@ -1,10 +1,5 @@
 import React from 'react';
-import './portfolio.css';
-import { PositionList } from './PositionList.js';
-import { Events } from './Events.js';
-import { AccountValue } from './AccountValue.js';
-import { Header } from './Header.js';
-import { APIClient } from './api_utils.js';
+
 import PropTypes from 'prop-types';
 import {
     Switch,
@@ -12,19 +7,26 @@ import {
     NavLink,
     Redirect,
 } from "react-router-dom";
-import { toSymbol } from './currencies.js';
 
 import Icon from '@material-ui/core/Icon';
 import Button from '@material-ui/core/Button';
-
-import { ErrorBoundary } from './error_utils.js';
-import { Onboarding } from './Onboarding.js';
-import { Transactions } from './Transactions';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
+
+import './portfolio.css';
+import { PositionList } from './PositionList.js';
+import { Events } from './Events.js';
+import { AccountValue } from './AccountValue.js';
+import { Header } from './Header.js';
+import { APIClient } from './api_utils.js';
+import { toSymbol } from './currencies.js';
+import { ErrorBoundary } from './error_utils.js';
+import { Onboarding } from './Onboarding.js';
+import { Transactions } from './Transactions.js';
+import { Accounts } from './Accounts.js';
 
 
 const useStyles = makeStyles({
@@ -32,7 +34,7 @@ const useStyles = makeStyles({
         minWidth: 275,
     },
     title: {
-        fontSize: 14,
+        fontSize: 18,
     },
 });
 
@@ -56,8 +58,10 @@ function AccountStats(props) {
     return (
         <Card className={classes.root} variant="outlined">
             <CardContent>
-                <Typography className={classes.title} gutterBottom>
-                    Account <a href="">{account.nickname}</a>
+                <Typography
+                    className={classes.title}
+                    variant="h5" component="h5" gutterBottom>
+                    Account <a href="#/accounts">{account.nickname}</a>
                 </Typography>
                 <Typography variant="body1" component="p">
                     Total Cash: {totalCash} {currencySymbol}
@@ -316,6 +320,9 @@ export default class Portfolio extends React.Component {
                 <li>
                     <NavLink to="/events">Events</NavLink>
                 </li>
+                <li>
+                    <NavLink to="/accounts">Accounts</NavLink>
+                </li>
             </ul>
         </nav>;
 
@@ -424,6 +431,11 @@ export default class Portfolio extends React.Component {
                         <Route path="/events">
                             <ErrorBoundary>
                                 {maybeEvents}
+                            </ErrorBoundary>
+                        </Route>
+                        <Route path="/accounts">
+                            <ErrorBoundary>
+                                <Accounts accounts={this.state.accounts} />
                             </ErrorBoundary>
                         </Route>
                         <Route path="/start/:stepName">

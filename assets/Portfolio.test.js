@@ -260,6 +260,7 @@ jest.mock("./api_utils", () => {
               last_modified: "2021-05-03T14:20:29.732353Z",
               positions_count: 30,
               transactions_count: 135,
+              events_count: 11,
             },
           ];
           return Promise.resolve(accounts);

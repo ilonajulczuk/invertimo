@@ -59,6 +59,7 @@ class AccountsViewSet(viewsets.ModelViewSet):
         queryset = models.Account.objects.filter(user=self.request.user).annotate(
             positions_count=Count("positions", distinct=True),
             transactions_count=Count("positions__transactions", distinct=True),
+            events_count=Count("events", distinct=True),
         )
         return queryset
 

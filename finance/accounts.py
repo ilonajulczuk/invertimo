@@ -17,6 +17,7 @@ class CantDeleteNonEmptyAccount(ValueError):
 class CantUpdateNonEmptyAccount(ValueError):
     pass
 
+
 class AccountRepository:
     def get(self, user: User, id: int) -> models.Account:
         return models.Account.objects.get(user=user, id=id)
@@ -29,9 +30,12 @@ class AccountRepository:
         )
 
     def delete(self, account):
-        if (account.positions.annotate(
-            transactions_count=Count('transactions')).
-        filter(transactions_count__gt=0).count() > 0):
+        if (
+            account.positions.annotate(transactions_count=Count("transactions"))
+            .filter(transactions_count__gt=0)
+            .count()
+            > 0
+        ):
             raise CantDeleteNonEmptyAccount()
         if account.events.count() > 0:
             raise CantDeleteNonEmptyAccount()
@@ -43,9 +47,12 @@ class AccountRepository:
         if serializer.validated_data["currency"] == account.currency:
             serializer.save()
             return
-        if (account.positions.annotate(
-            transactions_count=Count('transactions')).
-        filter(transactions_count__gt=0).count() > 0):
+        if (
+            account.positions.annotate(transactions_count=Count("transactions"))
+            .filter(transactions_count__gt=0)
+            .count()
+            > 0
+        ):
             raise CantUpdateNonEmptyAccount()
         if account.events.count() > 0:
             raise CantUpdateNonEmptyAccount()
