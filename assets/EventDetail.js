@@ -10,17 +10,14 @@ import {
 
 import Icon from '@material-ui/core/Icon';
 import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogActions from '@material-ui/core/DialogActions';
 
 import { makeStyles } from '@material-ui/core/styles';
 
 
 import './event_list.css';
 import { toSymbol } from './currencies.js';
+
+import { DeleteDialog } from './forms/DeleteDialog.js';
 
 import { trimTrailingDecimalZeroes } from './display_utils.js';
 import { PositionLink } from './components/PositionLink.js';
@@ -82,7 +79,7 @@ export function EventDetail(props) {
     if (event.position) {
         const position = positionsById.get(event.position);
         if (position) {
-            positionDetail = <PositionLink position={position} account={account}/>;
+            positionDetail = <PositionLink position={position} account={account} />;
             currency = toSymbol(position.asset.currency);
         }
     }
@@ -92,8 +89,8 @@ export function EventDetail(props) {
             <div><span className="card-label">Amount</span> {trimTrailingDecimalZeroes(event.amount) + currency}</div>
             {(event.event_type) === "DIVIDEND" ? <div>
                 <span className="card-label">Withheld taxes</span> {
-                trimTrailingDecimalZeroes(event.withheld_taxes) + currency}</div>
-            : null}
+                    trimTrailingDecimalZeroes(event.withheld_taxes) + currency}</div>
+                : null}
             {positionDetail}
             <div>
                 <span className="card-label">Executed at</span> {event.executed_at.slice(0, 10)}
@@ -128,27 +125,13 @@ export function EventDetail(props) {
             </div>
             <Switch>
                 <Route path={`${path}/delete`}>
-                    <Dialog
+                    <DeleteDialog handleCancel={handleCancel}
                         open={true}
-                        onClose={handleCancel}
-                        aria-labelledby="delete-event-dialog-title"
-                        aria-describedby="delete-event-dialog-description"
-                    >
-                        <DialogTitle id="delete-event-dialog-title">{"Are you sure you want to delete this event?"}</DialogTitle>
-                        <DialogContent>
-                            <DialogContentText id="delete-event-dialog-description">
-                                It will be as if this event has never happened. This might cause you to miss historical data.
-                            </DialogContentText>
-                        </DialogContent>
-                        <DialogActions>
-                            <Button onClick={handleCancel} variant="outlined" autoFocus>
-                                Cancel
-                            </Button>
-                            <Button onClick={handleDelete} color="secondary" variant="contained">
-                                Delete
-                            </Button>
-                        </DialogActions>
-                    </Dialog>
+                        canDelete={true}
+                        handleDelete={handleDelete} message="It will be as if this event has never happened.
+                        This might cause you to miss historical data."
+                        title="Are you sure you want to delete this event?"
+                    />
 
                 </Route>
             </Switch>

@@ -14,7 +14,6 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogActions from '@material-ui/core/DialogActions';
 
 import { makeStyles } from '@material-ui/core/styles';
 
@@ -23,6 +22,7 @@ import './transaction_list.css';
 import { toSymbol } from './currencies.js';
 import { CorrectTransactionForm } from './forms/CorrectTransactionForm.js';
 import { PositionLink } from './components/PositionLink.js';
+import { DeleteDialog } from './forms/DeleteDialog.js';
 
 
 const useStyles = makeStyles({
@@ -195,29 +195,15 @@ export function TransactionDetail(props) {
 
                 </Route>
                 <Route path={`${path}/delete`}>
-                    <Dialog
+
+                <DeleteDialog handleCancel={handleCancel}
                         open={true}
-                        onClose={handleCancel}
-                        aria-labelledby="delete-transaction-dialog-title"
-                        aria-describedby="delete-transaction-dialog-description"
-                    >
-                        <DialogTitle id="delete-transaction-dialog-title">{"Are you sure you want to delete this transaction?"}</DialogTitle>
-                        <DialogContent>
-                            <DialogContentText id="delete-transaction-dialog-description">
-                                {canDelete ?
-                                "It will be as if this transaction has never happened. This might cause you to miss historical data."
-                                : "This transaction can't be safely deleted."}
-                                </DialogContentText>
-                        </DialogContent>
-                        <DialogActions>
-                            <Button onClick={handleCancel} variant="outlined" autoFocus>
-                                Cancel
-                            </Button>
-                            <Button onClick={handleDelete} color="secondary" variant="contained" disabled={!canDelete}>
-                                Delete
-                            </Button>
-                        </DialogActions>
-                    </Dialog>
+                        canDelete={canDelete}
+                        handleDelete={handleDelete} message= {canDelete ?
+                            "It will be as if this transaction has never happened. This might cause you to miss historical data."
+                            : "This transaction can't be safely deleted."}
+                        title="Are you sure you want to delete this transaction?"
+                    />
 
                 </Route>
             </Switch>

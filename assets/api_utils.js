@@ -190,6 +190,12 @@ export class APIClient {
         let url = this.baseUrl + '/account-events/' + eventId + "/";
         return deleteData(url);
     }
+
+    async deleteAccount(accountId) {
+        let url = this.baseUrl + '/accounts/' + accountId + "/";
+        return deleteData(url);
+    }
+
 }
 
 const baseUrl = "./api";

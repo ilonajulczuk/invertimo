@@ -197,6 +197,7 @@ export default class Portfolio extends React.Component {
         this.handleCorrectTransaction = this.handleCorrectTransaction.bind(this);
         this.handleAddEvent = this.handleAddEvent.bind(this);
         this.handleDeleteEvent = this.handleDeleteEvent.bind(this);
+        this.handleDeleteAccount = this.handleDeleteAccount.bind(this);
     }
 
     async handleAddAccount(accountData) {
@@ -207,7 +208,9 @@ export default class Portfolio extends React.Component {
         };
         let result = await this.apiClient.createAccount(data);
         // Reload all the data, e.g. accounts, positions, etc.
-        this.refreshFromServer();
+        if (result.ok) {
+            this.refreshFromServer();
+        }
         return result;
     }
 
@@ -219,20 +222,26 @@ export default class Portfolio extends React.Component {
             result = await this.apiClient.addTransactionWithCustomAsset(data);
         }
         // Reload all the data, e.g. accounts, positions, etc.
-        this.refreshFromServer();
+        if (result.ok) {
+            this.refreshFromServer();
+        }
         return result;
     }
 
     async handleDeleteTransaction(transactionId) {
         let result = await this.apiClient.deleteTransaction(transactionId);
         // Reload all the data, e.g. accounts, positions, etc.
-        this.refreshFromServer();
+        if (result.ok) {
+            this.refreshFromServer();
+        }
         return result;
     }
 
     async handleCorrectTransaction(transactionId, update) {
         let result = await this.apiClient.correctTransaction(transactionId, update);
-        this.refreshFromServer();
+        if (result.ok) {
+            this.refreshFromServer();
+        }
         return result;
     }
 
@@ -258,12 +267,21 @@ export default class Portfolio extends React.Component {
 
     async handleAddEvent(data) {
         let result = await this.apiClient.addEvent(data);
-        this.refreshFromServer();
+        if (result.ok) {
+            this.refreshFromServer();
+        }
         return result;
     }
 
     async handleDeleteEvent(eventId) {
         let result = await this.apiClient.deleteEvent(eventId);
+        // Reload all the data, e.g. accounts, positions, etc.
+        this.refreshFromServer();
+        return result;
+    }
+
+    async handleDeleteAccount(accountId) {
+        let result = await this.apiClient.deleteAccount(accountId);
         // Reload all the data, e.g. accounts, positions, etc.
         this.refreshFromServer();
         return result;
@@ -276,6 +294,9 @@ export default class Portfolio extends React.Component {
     refreshFromServer() {
         this.apiClient.getAccounts().then(accounts => {
             this.setState({ "accounts": accounts });
+            this.setState({
+                "accountValues": new Map(),
+            });
             accounts.forEach(account => {
                 this.apiClient.getAccountDetail(account.id, 4 * 365).then(account => {
                     let accountValues = this.state.accountValues;
@@ -435,7 +456,10 @@ export default class Portfolio extends React.Component {
                         </Route>
                         <Route path="/accounts">
                             <ErrorBoundary>
-                                <Accounts accounts={this.state.accounts} />
+                                <Accounts
+                                    accounts={this.state.accounts}
+                                    handleAddAccount={this.handleAddAccount}
+                                    handleDeleteAccount={this.handleDeleteAccount} />
                             </ErrorBoundary>
                         </Route>
                         <Route path="/start/:stepName">

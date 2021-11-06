@@ -43,6 +43,9 @@ export function CreateAccountForm(props) {
                 const result = await props.handleSubmit(values);
                 if (result.ok) {
                     resetForm();
+                    if (result.callback) {
+                        result.callback();
+                    }
                 } else {
                     if (result.errors) {
                         setErrors(result.errors);
