@@ -1,0 +1,3 @@
+[submodule "deployment/secrets"]
+	path = deployment/secrets
+	url = git@github.com:ilonajulczuk/invertimoenv.git

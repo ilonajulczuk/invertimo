@@ -11,3 +11,7 @@ To run on localhost (expects postgres running):
 ```shell
 docker run -d --net=host invertimo:v0
 ```
+
+```
+git submodule add git@github.com:ilonajulczuk/invertimoenv.git secrets
+```
