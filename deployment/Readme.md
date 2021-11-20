@@ -9,8 +9,12 @@ docker build -t invertimo:v0 -f deployment/app/Dockerfile .
 To run on localhost (expects postgres running):
 
 ```shell
-docker run -d --net=host invertimo:v0
+docker run  --env-file deployment/secrets/invertimo.dev.env -v "`pwd`:/usr/src/app" --net=host invertimo:v0 /usr/src/venv/bin/python3.8 manage.py runserver
+
 ```
+
+This will mount the local directory and will automatically reload python code.
+TODO(justyna): add an dev_entry point that will also reload the JS code, etc.
 
 ## Secrets (passwords, API keys, etc)
 

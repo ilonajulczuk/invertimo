@@ -11,19 +11,12 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
 from pathlib import Path
-from invertimo.secrets import *
-from invertimo import secrets
 from typing import List
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-one@)zg@c$lf5z3@fy!o#pnhg(85o9bvu-r0w=0380ip6=h!h("
+SECRET_KEY = os.environ.get("SECRET_KEY", None)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -63,8 +56,11 @@ AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
 )
 
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = secrets.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = secrets.SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET
+if "DJANGO_DEBUG_FALSE" in os.environ:
+    DEBUG = False
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", None)
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", None)
 
 # https://python-social-auth.readthedocs.io/en/latest/configuration/settings.html#urls-options
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/"
@@ -98,6 +94,8 @@ WSGI_APPLICATION = "invertimo.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+DB_KEY = os.environ.get("DB_KEY", None)
+print("DB KEY", DB_KEY)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
@@ -188,3 +186,9 @@ LOGGING = {
         },
     },
 }
+
+
+# Other
+
+# https://eodhistoricaldata.com/ API KEY.
+EOD_APIKEY = os.environ.get("EOD_APIKEY", None)

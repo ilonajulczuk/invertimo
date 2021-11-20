@@ -13,9 +13,9 @@ RUN apt-get install -y libpq-dev
 WORKDIR /usr/src/app
 
 COPY requirements.txt ./
-RUN python3.8 -m venv .
+RUN python3.8 -m venv /usr/src/venv
 RUN ls .
-RUN ./bin/pip3.8 install --no-cache-dir -r requirements.txt
+RUN /usr/src/venv/bin/pip3.8 install --no-cache-dir -r requirements.txt
 
 RUN echo "Installing nodejs"
 RUN curl -sL https://deb.nodesource.com/setup_17.x | bash -
