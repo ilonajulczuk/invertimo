@@ -95,15 +95,14 @@ WSGI_APPLICATION = "invertimo.wsgi.application"
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DB_KEY = os.environ.get("DB_KEY", None)
-print("DB KEY", DB_KEY)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "invertimo",
-        "USER": "myuser",
+        "NAME": "postgres",
+        "USER": "postgres",
         "PASSWORD": DB_KEY,
-        "HOST": "localhost",
-        "PORT": "",
+        "HOST": "db",
+        "PORT": "5432",
     }
 }
 

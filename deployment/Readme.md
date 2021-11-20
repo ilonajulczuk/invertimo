@@ -11,6 +11,19 @@ To run on localhost (expects postgres running):
 ```shell
 docker run  --env-file deployment/secrets/invertimo.dev.env -v "`pwd`:/usr/src/app" --net=host invertimo:v0 /usr/src/venv/bin/python3.8 manage.py runserver
 
+
+To run with docker compose:
+
+```
+docker compose up
+```
+
+This needs to be run to initialize db:
+
+```
+docker exec invertimo_web_1 sh -c "/usr/src/venv/bin/python3.8 manage.py migrate"
+
+docker exec invertimo_web_1 sh -c "/usr/src/venv/bin/python3.8 manage.py loaddata finance/fixtures/exchanges.json"
 ```
 
 This will mount the local directory and will automatically reload python code.

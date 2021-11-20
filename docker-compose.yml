@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    env_file:
+      - deployment/secrets/postgres.dev.env
+
+  web:
+    build: .
+    command: /usr/src/venv/bin/python3.8 manage.py runserver 0.0.0.0:8000
+    env_file:
+      - deployment/secrets/invertimo.dev.env
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
