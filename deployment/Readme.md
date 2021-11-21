@@ -51,3 +51,10 @@ git add deployment/secrets
 ```
 
 and commit that :).
+
+To get submodules working after cloning the initial repo:
+
+```
+git submodule init
+git submodule update
+```

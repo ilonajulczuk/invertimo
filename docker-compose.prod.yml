@@ -13,6 +13,7 @@ services:
       - deployment/secrets/invertimo.prod.env
     volumes:
       - .:/usr/src/app
+      - /var/www/invertimo.com/static:/var/www/invertimo.com/static/
     ports:
       - "8000:8000"
 

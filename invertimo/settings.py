@@ -21,7 +21,11 @@ SECRET_KEY = os.environ.get("SECRET_KEY", None)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS: List[str] = []
+ALLOWED_HOSTS: List[str] = ["127.0.0.1", "localhost"]
+SITENAME = os.environ.get("SITENAME", "invertimo.com")
+
+if "SITENAME" in os.environ:
+    ALLOWED_HOSTS.append(os.environ["SITENAME"])
 
 
 # Application definition
@@ -60,7 +64,9 @@ if "DJANGO_DEBUG_FALSE" in os.environ:
     DEBUG = False
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", None)
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", None)
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get(
+    "SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", None
+)
 
 # https://python-social-auth.readthedocs.io/en/latest/configuration/settings.html#urls-options
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/"
@@ -163,7 +169,7 @@ INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
-SITENAME = "invertimo.com"
+
 STATIC_ROOT = f"/var/www/{SITENAME}/static/"
 
 LOGGING = {
