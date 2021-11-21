@@ -72,7 +72,7 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get(
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/"
 LOGIN_URL = "/login/"
 SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {"prompt": "select_account"}
-
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 
 ROOT_URLCONF = "invertimo.urls"
 
@@ -168,6 +168,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 STATIC_ROOT = f"/var/www/{SITENAME}/static/"
