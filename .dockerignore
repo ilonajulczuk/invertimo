@@ -1,7 +1,7 @@
 invertimoenv
 venv2
 node_modules/
-
+data/
 
 # Distribution / packaging
 .Python

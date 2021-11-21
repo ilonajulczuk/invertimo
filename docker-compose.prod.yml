@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres
+    volumes:
+      - ./data/postgres_prod:/var/lib/postgresql/data
+    env_file:
+      - deployment/secrets/postgres.prod.env
+
+  web:
+    env_file:
+      - deployment/secrets/invertimo.prod.env
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      - db

@@ -3,7 +3,7 @@
 Run from the root project directory:
 
 ```shell
-docker build -t invertimo:v0 -f deployment/app/Dockerfile .
+docker build -t invertimo:v0 .
 ```
 
 To run on localhost (expects postgres running):
@@ -15,7 +15,11 @@ docker run  --env-file deployment/secrets/invertimo.dev.env -v "`pwd`:/usr/src/a
 To run with docker compose:
 
 ```
-docker compose up
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
+
+```
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate
 ```
 
 This needs to be run to initialize db:
