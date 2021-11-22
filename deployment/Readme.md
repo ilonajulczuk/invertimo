@@ -9,8 +9,10 @@ docker build -t invertimo:v0 .
 To run on localhost (expects postgres running):
 
 ```shell
-docker run  --env-file deployment/secrets/invertimo.dev.env -v "`pwd`:/usr/src/app" --net=host invertimo:v0 /usr/src/venv/bin/python3.8 manage.py runserver
-
+source venv2/bin/activate
+source deployment/secrets/local.env
+python3.8 manage.py runserver
+```
 
 To run with docker compose:
 

@@ -72,7 +72,10 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get(
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/"
 LOGIN_URL = "/login/"
 SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {"prompt": "select_account"}
-SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+
+# This should only be set to true if running locally without nginx.
+if not "USE_HTTP" in os.environ:
+    SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 
 ROOT_URLCONF = "invertimo.urls"
 
@@ -104,10 +107,10 @@ DB_KEY = os.environ.get("DB_KEY", None)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "postgres",
-        "USER": "postgres",
+        "NAME": os.environ.get("DB_NAME", "invertimo"),
+        "USER": os.environ.get("DB_USER", "myuser"),
         "PASSWORD": DB_KEY,
-        "HOST": "db",
+        "HOST":  os.environ.get("DB_HOST","localhost"),
         "PORT": "5432",
     }
 }

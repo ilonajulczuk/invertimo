@@ -27,5 +27,5 @@ RUN npm install
 COPY . .
 ENV NODE_OPTIONS=--openssl-legacy-provider
 RUN npm run build
-
+RUN npx webpack
 CMD [ "./deployment/app/docker_entrypoint.sh" ]
