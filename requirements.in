@@ -14,3 +14,4 @@ social-auth-app-django==4.0.0
 social-auth-core==4.1.0
 pip-tools==6.4.0
 psycopg2==2.8.6
+django-cors-headers==3.10.0
