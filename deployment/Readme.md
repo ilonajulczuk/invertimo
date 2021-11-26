@@ -30,10 +30,12 @@ This needs to be run to initialize db:
 docker exec invertimo_web_1 sh -c "/usr/src/venv/bin/python3.8 manage.py migrate"
 
 docker exec invertimo_web_1 sh -c "/usr/src/venv/bin/python3.8 manage.py loaddata finance/fixtures/exchanges.json"
+
+docker exec staginginvertimocom_web_1 sh -c "/usr/src/venv/bin/python3.8 manage.py import_transactions --username=justyna --account_id=1 --filename=finance/transactions_example.csv"
+
+docker exec staginginvertimocom_web_1 sh -c "/usr/src/venv/bin/python3.8 manage.py fetch_prices"
 ```
 
-This will mount the local directory and will automatically reload python code.
-TODO(justyna): add an dev_entry point that will also reload the JS code, etc.
 
 ## Secrets (passwords, API keys, etc)
 

@@ -16,7 +16,7 @@ import {
 } from "react-router-dom";
 
 
-export function PositionList(props) {
+export default function PositionList(props) {
 
     const positionHeadCells = [
         { id: 'product', label: 'Product' },

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 
 import PropTypes from 'prop-types';
 import {
@@ -17,17 +17,18 @@ import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 
 import './portfolio.css';
-import { PositionList } from './PositionList.js';
 import { Events } from './Events.js';
 import { AccountValue } from './AccountValue.js';
 import { Header } from './Header.js';
 import { APIClient } from './api_utils.js';
 import { toSymbol } from './currencies.js';
 import { ErrorBoundary } from './error_utils.js';
-import { Onboarding } from './Onboarding.js';
-import { Transactions } from './Transactions.js';
 import { Accounts } from './Accounts.js';
 
+
+const PositionList = React.lazy(() => import('./PositionList'));
+const Onboarding = React.lazy(() => import('./Onboarding'));
+const Transactions = React.lazy(() => import('./Transactions'));
 
 const useStyles = makeStyles({
     root: {
@@ -415,7 +416,7 @@ export default class Portfolio extends React.Component {
         }
         let maybeTransactions = <h2>Loading transactions...</h2>;
         if (this.state.transactions !== null) {
-            maybeTransactions = <Transactions transactions={this.state.transactions}
+            maybeTransactions =<Transactions transactions={this.state.transactions}
                 handleAddTransaction={this.handleAddTransaction}
                 handleDeleteTransaction={this.handleDeleteTransaction}
                 handleCorrectTransaction={this.handleCorrectTransaction}
@@ -437,6 +438,7 @@ export default class Portfolio extends React.Component {
 
                 {navBar}
                 <div className="main-content">
+                <Suspense fallback={<div>Loading...</div>}>
                     <Switch>
                         <Route path="/transactions">
                             <ErrorBoundary>
@@ -445,8 +447,11 @@ export default class Portfolio extends React.Component {
                         </Route>
                         <Route path="/positions">
                             <ErrorBoundary>
-                                <PositionList positions={this.state.positions}
-                                    accounts={this.state.accounts} getPositionDetail={this.getPositionDetail} />
+
+                                    <PositionList positions={this.state.positions}
+                                        accounts={this.state.accounts} getPositionDetail={this.getPositionDetail} />
+
+
                             </ErrorBoundary>
                         </Route>
                         <Route path="/events">
@@ -463,17 +468,19 @@ export default class Portfolio extends React.Component {
                             </ErrorBoundary>
                         </Route>
                         <Route path="/start/:stepName">
-                            <Onboarding accounts={this.state.accounts}
-                                handleAddAccount={this.handleAddAccount}
-                                handleAddTransaction={this.handleAddTransaction}
-                                transactions={this.state.transactions}
-                            />
+                                <Onboarding accounts={this.state.accounts}
+                                    handleAddAccount={this.handleAddAccount}
+                                    handleAddTransaction={this.handleAddTransaction}
+                                    transactions={this.state.transactions}
+                                />
+
                         </Route>
                         <Route path="/">
                             {redirectOrDisplay}
                         </Route>
 
                     </Switch>
+                    </Suspense>
                 </div>
             </div>
         );

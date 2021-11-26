@@ -97,7 +97,7 @@ AddAccountStep.propTypes = {
 };
 
 
-export function Onboarding(props) {
+export default function Onboarding(props) {
     let { stepName } = useParams();
 
     let existingAccounts = props.accounts.map(account => (

@@ -27,5 +27,8 @@ module.exports = {
         use: ['style-loader', 'css-loader'],
       },
     ]
-  }
+  },
+  optimization: {
+    usedExports: true,
+  },
 };

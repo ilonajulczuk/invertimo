@@ -32,7 +32,8 @@ RecordTransaction.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
 };
 
-export function Transactions(props) {
+
+export default function Transactions(props) {
 
     let { path } = useRouteMatch();
 
