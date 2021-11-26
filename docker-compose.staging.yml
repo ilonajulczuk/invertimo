@@ -12,7 +12,6 @@ services:
     env_file:
       - deployment/secrets/invertimo.staging.env
     volumes:
-      - .:/usr/src/app
       - /var/www/staging.invertimo.com/static:/var/www/staging.invertimo.com/static/
     ports:
       - "8000:8000"

@@ -12,10 +12,8 @@ services:
     env_file:
       - deployment/secrets/invertimo.prod.env
     volumes:
-      - .:/usr/src/app
       - /var/www/invertimo.com/static:/var/www/invertimo.com/static/
     ports:
       - "8000:8000"
-
     depends_on:
       - db

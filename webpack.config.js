@@ -1,6 +1,13 @@
 const path = require('path');
 
+const CompressionPlugin = require("compression-webpack-plugin");
+
 module.exports = {
+  plugins: [
+    new CompressionPlugin({
+        algorithm: "gzip",
+    })
+],
   entry: './assets/index.js',  // path to our input file
   output: {
     filename: 'index-bundle.js',  // output bundle file name
@@ -31,4 +38,5 @@ module.exports = {
   optimization: {
     usedExports: true,
   },
+
 };
