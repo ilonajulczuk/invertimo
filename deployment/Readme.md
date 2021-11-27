@@ -5,15 +5,6 @@ Run from the root project directory:
 ```shell
 docker build -t invertimo:v0 .
 ```
-
-To run on localhost (expects postgres running):
-
-```shell
-source venv2/bin/activate
-source deployment/secrets/local.env
-python3.8 manage.py runserver
-```
-
 To run with docker compose:
 
 ```
@@ -33,7 +24,7 @@ docker exec invertimo_web_1 sh -c "/usr/src/venv/bin/python3.8 manage.py loaddat
 
 docker exec staginginvertimocom_web_1 sh -c "/usr/src/venv/bin/python3.8 manage.py import_transactions --username=justyna --account_id=1 --filename=finance/transactions_example.csv"
 
-docker exec staginginvertimocom_web_1 sh -c "/usr/src/venv/bin/python3.8 manage.py fetch_prices"
+docker exec staginginvertimocom_web_1 sh -c p
 ```
 
 

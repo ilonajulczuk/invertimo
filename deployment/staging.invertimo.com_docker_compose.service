@@ -1,0 +1,14 @@
+[Unit]
+Description=Invertimo staging service with docker compose
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=on-failure
+User=att
+WorkingDirectory=/home/att/sites/staging.invertimo.com
+ExecStart=/usr/local/bin/docker-compose -f docker-compose.yml -f docker-compose.staging.yml up --remove-orphans
+ExecStop=/usr/local/bin/docker-compose down
+
+[Install]
+WantedBy=multi-user.target

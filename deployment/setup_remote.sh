@@ -1,10 +1,8 @@
-#!/bin/bash
+scp ./server_setup.sh root@${HOSTNAME?}:~/
+ssh root@${HOSTNAME?} "./server_setup.sh"
 
-sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
-docker-compose --version
-
-sudo apt-get -y install docker.io haveged
-sudo groupadd docker
-sudo usermod -aG docker $USER
-newgrp docker
+scp ${HOSTNAME?}_docker_compose.service root@${HOSTNAME?}:/etc/systemd/system/${HOSTNAME?}_docker_compose.service
+scp ${HOSTNAME?}.nginx.conf root@${HOSTNAME?}:/etc/nginx/sites-enabled/${HOSTNAME?}.nginx.conf
+ssh root@${HOSTNAME?} "systemctl daemon-reload"
+ssh root@${HOSTNAME?} "systemctl enable ${HOSTNAME?}_docker_compose.service"
+ssh root@${HOSTNAME?} "systemctl enable ${HOSTNAME?}_docker_compose.service"
