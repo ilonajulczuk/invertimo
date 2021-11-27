@@ -18,7 +18,7 @@ import CardContent from '@material-ui/core/CardContent';
 
 import './portfolio.css';
 import { Events } from './Events.js';
-import { AccountValue } from './AccountValue.js';
+
 import { Header } from './Header.js';
 import { APIClient } from './api_utils.js';
 import { toSymbol } from './currencies.js';
@@ -29,6 +29,7 @@ import { Accounts } from './Accounts.js';
 const PositionList = React.lazy(() => import('./PositionList'));
 const Onboarding = React.lazy(() => import('./Onboarding'));
 const Transactions = React.lazy(() => import('./Transactions'));
+const AccountValue = React.lazy(() => import('./AccountValue'));
 
 const useStyles = makeStyles({
     root: {
@@ -410,13 +411,15 @@ export default class Portfolio extends React.Component {
                 <div>
                     <ErrorBoundary>
                         <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
-                        {accountValues}
+                        <Suspense fallback={<div>Loading graphs...</div>}>
+                            {accountValues}
+                        </Suspense>
                     </ErrorBoundary>
                 </div>);
         }
         let maybeTransactions = <h2>Loading transactions...</h2>;
         if (this.state.transactions !== null) {
-            maybeTransactions =<Transactions transactions={this.state.transactions}
+            maybeTransactions = <Transactions transactions={this.state.transactions}
                 handleAddTransaction={this.handleAddTransaction}
                 handleDeleteTransaction={this.handleDeleteTransaction}
                 handleCorrectTransaction={this.handleCorrectTransaction}
@@ -438,48 +441,49 @@ export default class Portfolio extends React.Component {
 
                 {navBar}
                 <div className="main-content">
-                <Suspense fallback={<div>Loading...</div>}>
-                    <Switch>
-                        <Route path="/transactions">
-                            <ErrorBoundary>
-                                {maybeTransactions}
-                            </ErrorBoundary>
-                        </Route>
-                        <Route path="/positions">
-                            <ErrorBoundary>
+                    <Suspense fallback={<div><h2>Loading...</h2>
+                        <p>Checking how the market is doing...</p></div>}>
+                        <Switch>
+                            <Route path="/transactions">
+                                <ErrorBoundary>
+                                    {maybeTransactions}
+                                </ErrorBoundary>
+                            </Route>
+                            <Route path="/positions">
+                                <ErrorBoundary>
 
                                     <PositionList positions={this.state.positions}
                                         accounts={this.state.accounts} getPositionDetail={this.getPositionDetail} />
 
 
-                            </ErrorBoundary>
-                        </Route>
-                        <Route path="/events">
-                            <ErrorBoundary>
-                                {maybeEvents}
-                            </ErrorBoundary>
-                        </Route>
-                        <Route path="/accounts">
-                            <ErrorBoundary>
-                                <Accounts
-                                    accounts={this.state.accounts}
-                                    handleAddAccount={this.handleAddAccount}
-                                    handleDeleteAccount={this.handleDeleteAccount} />
-                            </ErrorBoundary>
-                        </Route>
-                        <Route path="/start/:stepName">
+                                </ErrorBoundary>
+                            </Route>
+                            <Route path="/events">
+                                <ErrorBoundary>
+                                    {maybeEvents}
+                                </ErrorBoundary>
+                            </Route>
+                            <Route path="/accounts">
+                                <ErrorBoundary>
+                                    <Accounts
+                                        accounts={this.state.accounts}
+                                        handleAddAccount={this.handleAddAccount}
+                                        handleDeleteAccount={this.handleDeleteAccount} />
+                                </ErrorBoundary>
+                            </Route>
+                            <Route path="/start/:stepName">
                                 <Onboarding accounts={this.state.accounts}
                                     handleAddAccount={this.handleAddAccount}
                                     handleAddTransaction={this.handleAddTransaction}
                                     transactions={this.state.transactions}
                                 />
 
-                        </Route>
-                        <Route path="/">
-                            {redirectOrDisplay}
-                        </Route>
+                            </Route>
+                            <Route path="/">
+                                {redirectOrDisplay}
+                            </Route>
 
-                    </Switch>
+                        </Switch>
                     </Suspense>
                 </div>
             </div>

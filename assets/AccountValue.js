@@ -44,7 +44,7 @@ function trimDataUntilDate(timeSeries, date, reverse) {
 }
 
 
-export function AccountValue(props) {
+export default function AccountValue(props) {
 
     const [chartTimeSelectorOptionId, setChartTimeSelectorOptionId] = useState(2);
     const [chartTimePeriod, setChartTimePeriod] = useState({ months: 1 });
