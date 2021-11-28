@@ -251,6 +251,11 @@ export default class Portfolio extends React.Component {
         if (this.state.positionDetails.has(positionId)) {
             return this.state.positionDetails.get(positionId);
         }
+        return this.fetchAndSetPositionDetail(positionId);
+
+    }
+
+    async fetchAndSetPositionDetail(positionId) {
         try {
             let positionData = await this.apiClient.getPositionDetail(positionId);
             let positionDetails = this.state.positionDetails;
@@ -312,7 +317,11 @@ export default class Portfolio extends React.Component {
         );
         this.apiClient.getPositions().then(
             positions => {
-                this.setState({ "positions": positions });
+                this.setState(
+                    {
+                        "positions": positions,
+                        "positionDetails": new Map(),
+                    });
                 this.apiClient.getTransactions().then(
                     transactions => {
                         this.setState({ "transactions": transactions });
@@ -454,7 +463,6 @@ export default class Portfolio extends React.Component {
 
                                     <PositionList positions={this.state.positions}
                                         accounts={this.state.accounts} getPositionDetail={this.getPositionDetail} />
-
 
                                 </ErrorBoundary>
                             </Route>
