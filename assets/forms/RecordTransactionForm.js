@@ -116,7 +116,6 @@ function apiTransactionResponseToErrors(apiResponse) {
 export function RecordTransactionForm(props) {
 
     const classes = useStyles();
-
     const [snackbarOpen, snackbarSetOpen] = React.useState(false);
 
     const snackbarHandleClose = (event, reason) => {
@@ -128,6 +127,8 @@ export function RecordTransactionForm(props) {
     };
 
     let accountsById = new Map(props.accounts.map(account => [account.id, account]));
+
+    let initialSymbolValue = props.initialAsset ?? "";
 
     const validationSchema = yup.object({
         symbol: yup
@@ -183,13 +184,13 @@ export function RecordTransactionForm(props) {
     });
 
     const initialValues = {
-        currency: "EUR",
-        symbol: "",
+        currency: initialSymbolValue ? initialSymbolValue.currency : "EUR",
+        symbol: initialSymbolValue,
         tradeType: "buy",
         executedAt: props.executedAtDate || new Date(),
         account: props.accounts[0].id,
-        exchange: "",
-        assetType: "Stock",
+        exchange:  initialSymbolValue ? initialSymbolValue.exchange.name : "USA Stocks",
+        assetType: initialSymbolValue ? initialSymbolValue.asset_type : "Stock",
         price: "",
         quantity: "",
         totalCostAccountCurrency: "",
@@ -338,7 +339,9 @@ export function RecordTransactionForm(props) {
     }
 
     const selectAssetBlock = <SelectAssetFormFragment formik={formik}
-        defaultAssetOptions={props.defaultAssetOptions} />;
+        defaultAssetOptions={props.defaultAssetOptions}
+        fixedValue={initialSymbolValue ? true : false} value={initialSymbolValue ? initialSymbolValue : null}
+        />;
 
     return (
         <form className={classes.form} onSubmit={formik.handleSubmit}>
@@ -468,4 +471,5 @@ RecordTransactionForm.propTypes = {
     hasTransactions: PropTypes.bool.isRequired,
     handleSubmit: PropTypes.func.isRequired,
     executedAtDate: PropTypes.instanceOf(Date),
+    initialAsset: PropTypes.object,
 };

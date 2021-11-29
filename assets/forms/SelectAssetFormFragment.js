@@ -32,15 +32,15 @@ export function SelectAssetFormFragment(props) {
   // TODO: move up, so that resetting the form (e.g. after submission)
   // also resets the disabled state.
   const [openFill, toggleOpenFill] = React.useState(false);
-  const [otherFieldsDisabled, toggleDisable] = React.useState(false);
+  const [otherFieldsDisabled, toggleDisable] = React.useState(props.fixedValue);
 
   const [loading, setLoading] = React.useState(true);
   const [options, setOptions] = React.useState(props.defaultAssetOptions);
 
   useEffect(async () => {
-    const assets = await getAssets();
-    setOptions(assets);
-    setLoading(false);
+      const assets = await getAssets();
+      setOptions(assets);
+      setLoading(false);
   }, [props.defaultAssetOptions]);
 
   const handleFill = () => {
@@ -76,9 +76,13 @@ export function SelectAssetFormFragment(props) {
           id="symbol"
           label="Stock symbol"
           name="symbol"
-          value={formik.values.symbol}
+          value={props.fixedValue ? props.value : formik.values.symbol}
           className={classes.symbolInput}
+          disabled={props.fixedValue}
           onChange={(event, newValue) => {
+            if (props.fixedValue) {
+              return;
+            }
             if (typeof newValue !== 'string') {
               if (newValue != null) {
                 if (newValue.newOption) {
@@ -267,5 +271,7 @@ export function SelectAssetFormFragment(props) {
 SelectAssetFormFragment.propTypes = {
   formik: PropTypes.any.isRequired,
   defaultAssetOptions: PropTypes.array.isRequired,
+  fixedValue: PropTypes.bool.isRequired,
+  value: PropTypes.object,
 };
 

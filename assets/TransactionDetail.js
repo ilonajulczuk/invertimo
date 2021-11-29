@@ -17,7 +17,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 
 import { makeStyles } from '@material-ui/core/styles';
 
-
+import './position_list.css';
 import './transaction_list.css';
 import { toSymbol } from './currencies.js';
 import { CorrectTransactionForm } from './forms/CorrectTransactionForm.js';

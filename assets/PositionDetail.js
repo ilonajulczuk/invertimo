@@ -249,7 +249,7 @@ export function PositionDetail(props) {
                     <div className={classes.header}>
                         <h3>Transactions</h3>
                         <Button
-                            href="#/transactions/record"
+                            href={`#/transactions/record?asset=${data.asset.id}`}
                             variant="contained"
                             color="secondary"
                         >
