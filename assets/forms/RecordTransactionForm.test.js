@@ -172,7 +172,7 @@ describe('form for recording transactions', () => {
             userEvent.type(document.getElementById("quantity"), '13');
             userEvent.type(screen.getByLabelText(/price/i), '1300');
 
-            fireEvent.change(document.getElementById("total-cost-account-currency"),
+            fireEvent.change(document.getElementById("totalCostAccountCurrency"),
                 { target: { value: "16901" } });
 
             userEvent.type(screen.getByLabelText(/fees/i), '0.5');
@@ -268,7 +268,7 @@ describe('form for recording transactions', () => {
             userEvent.type(document.getElementById("quantity"), '13');
             userEvent.type(screen.getByLabelText(/price/i), '1300');
 
-            fireEvent.change(document.getElementById("total-cost-account-currency"),
+            fireEvent.change(document.getElementById("totalCostAccountCurrency"),
                 { target: { value: "16899" } });
 
             userEvent.type(screen.getByLabelText(/fees/i), '0.5');
@@ -373,7 +373,7 @@ describe('form for recording transactions', () => {
             userEvent.type(document.getElementById("quantity"), '13');
             userEvent.type(screen.getByLabelText(/price/i), '1300');
 
-            fireEvent.change(document.getElementById("total-cost-account-currency"),
+            fireEvent.change(document.getElementById("totalCostAccountCurrency"),
                 { target: { value: "16899" } });
 
             userEvent.type(screen.getByLabelText(/fees/i), '0.5');
@@ -472,10 +472,10 @@ describe('form for recording transactions', () => {
             fireEvent.click(within(listbox).getByText(/First account/i));
 
             userEvent.type(document.getElementById("quantity"), '13');
-            userEvent.type(document.getElementById("value-account-currency"), '12901');
+            userEvent.type(document.getElementById("totalValueAccountCurrency"), '12901');
             userEvent.type(screen.getByLabelText(/price/i), '1300');
 
-            fireEvent.change(document.getElementById("total-cost-account-currency"),
+            fireEvent.change(document.getElementById("totalCostAccountCurrency"),
                 { target: { value: "12899" } });
 
             userEvent.type(screen.getByLabelText(/fees/i), '2');
@@ -573,10 +573,10 @@ describe('form for recording transactions', () => {
             fireEvent.click(within(listbox).getByText(/First account/i));
 
             userEvent.type(document.getElementById("quantity"), '13');
-            userEvent.type(document.getElementById("value-account-currency"), '12901');
+            userEvent.type(document.getElementById("totalValueAccountCurrency"), '12901');
             userEvent.type(screen.getByLabelText(/price/i), '1300');
 
-            fireEvent.change(document.getElementById("total-cost-account-currency"),
+            fireEvent.change(document.getElementById("totalCostAccountCurrency"),
                 { target: { value: "12903" } });
 
             userEvent.type(screen.getByLabelText(/fees/i), '2');
