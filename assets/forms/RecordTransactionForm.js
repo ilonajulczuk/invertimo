@@ -1,14 +1,8 @@
 import React from 'react';
 
 import Button from '@material-ui/core/Button';
-import FormControl from '@material-ui/core/FormControl';
-
-import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-
 import PropTypes from 'prop-types';
-import { FormikDateField, FormikTextField, FormikSelectField } from './muiformik.js';
+import { FormikDateField, FormikTextField, FormikSelectField, FormikRadioField } from './muiformik.js';
 
 import { Formik, Form } from 'formik';
 import * as yup from 'yup';
@@ -125,6 +119,13 @@ function ValueBlock(props) {
     );
 }
 
+ValueBlock.propTypes = {
+    sameCurrency: PropTypes.bool.isRequired,
+    classes: PropTypes.object.isRequired,
+    formattedAccountCurrency: PropTypes.string.isRequired,
+};
+
+
 function TotalCostBlock(props) {
     let totalCostBlock = null;
 
@@ -174,7 +175,7 @@ function TotalCostBlock(props) {
                 <FormikTextField
                     id="totalCostAccountCurrency"
                     label='Total cost'
-                    value={props.formikProps.values.totalCostAccountCurrency ||  Math.round(100 * props.formikProps.values.price * props.formikProps.values.quantity) / 100 + props.formikProps.values.fees}
+                    value={props.formikProps.values.totalCostAccountCurrency || Math.round(100 * props.formikProps.values.price * props.formikProps.values.quantity) / 100 + props.formikProps.values.fees}
                     name="totalCostAccountCurrency"
                     type="number"
                     className={props.classes.formControl}
@@ -301,6 +302,17 @@ export function RecordTransactionForm(props) {
     let accountOptions = props.accounts.map(account => ({ value: account.id, label: account.nickname }));
     const submitButtonText = props.hasTransactions ? "Record another transaction" : "Record transaction";
     const defaultAssetOptions = props.defaultAssetOptions;
+
+    const tradeTypeOptions = [
+        {
+            value: "buy",
+            label: "Bought"
+        },
+        {
+            value: "sell",
+            label: "Sold",
+        }];
+
     return (
 
         <Formik
@@ -308,27 +320,21 @@ export function RecordTransactionForm(props) {
             validationSchema={validationSchema}
             onSubmit={onSubmit}
         >
-            {({ isSubmitting, ...props }) => (
+            {({ isSubmitting, ...formikProps }) => (
                 <Form className={classes.form}>
                     <h4>Asset details</h4>
-                    <SelectAssetFormFragment formik={props}
+                    <SelectAssetFormFragment formik={formikProps}
                         defaultAssetOptions={defaultAssetOptions}
                         fixedValue={initialSymbolValue ? true : false} value={initialSymbolValue ? initialSymbolValue : null}
                     />
                     <h4>Trade details</h4>
                     <div className={classes.inputs}>
 
-                        <FormControl className={classes.formControl}>
-                            <RadioGroup aria-label="trade type"
-                                name="tradeType"
-                                value={props.values.tradeType}
-                                onChange={props.handleChange}
-                                row>
-                                <FormControlLabel value="buy" control={<Radio className={classes.green} />} label="Bought" />
-                                <FormControlLabel value="sell" control={<Radio className={classes.red} />} label="Sold" />
+                        <FormikRadioField
+                        name="tradeType"
+                        options={tradeTypeOptions}
+                        />
 
-                            </RadioGroup>
-                        </FormControl>
                     </div>
                     <div className={classes.inputs}>
                         <FormikDateField id="executedAt"
@@ -359,7 +365,7 @@ export function RecordTransactionForm(props) {
                         <FormikTextField
                             className={classes.formControl}
                             id="price"
-                            label={sameCurrency ? "Price" : `Price in ${toSymbol(props.values.currency)}`}
+                            label={sameCurrency ? "Price" : `Price in ${toSymbol(formikProps.values.currency)}`}
                             name="price"
                             type="number"
                             InputLabelProps={{
@@ -369,13 +375,13 @@ export function RecordTransactionForm(props) {
                     </div>
 
                     <ValueBlock classes={classes}
-                        formattedAccountCurrency={formattedAccountCurrency(props.values, accountsById)}
-                        sameCurrency={sameCurrency(props.values, accountsById)} />
+                        formattedAccountCurrency={formattedAccountCurrency(formikProps.values, accountsById)}
+                        sameCurrency={sameCurrency(formikProps.values, accountsById)} />
 
                     <TotalCostBlock classes={classes}
-                        formikProps={props}
-                        formattedAccountCurrency={formattedAccountCurrency(props.values, accountsById)}
-                        sameCurrency={sameCurrency(props.values, accountsById)} />
+                        formikProps={formikProps}
+                        formattedAccountCurrency={formattedAccountCurrency(formikProps.values, accountsById)}
+                        sameCurrency={sameCurrency(formikProps.values, accountsById)} />
 
                     <div>
                         <Button

@@ -17,6 +17,10 @@ import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+
 
 export const FormikTextField = ({ name, ...props }) => {
 
@@ -134,6 +138,46 @@ export function FormikSelectField({ options, ...props }) {
 FormikSelectField.propTypes = {
     name: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired,
+    options: PropTypes.arrayOf(
+        PropTypes.shape(
+            {
+                value: PropTypes.any.isRequired,
+                label: PropTypes.string.isRequired
+            })).isRequired,
+};
+
+
+export function FormikRadioField({ name, options, ...props }) {
+    const radioOptions = options.map(
+        option => (
+            <FormControlLabel
+                value={option.value}
+                control={<Radio />}
+                label={option.label}
+                key={option.label} />
+
+        )
+    );
+    return (
+        <Field>
+            {({ form, field }) => {
+                return <FormControl>
+                    <RadioGroup
+                        {...field}
+                        {...props}
+                        name={name}
+                        value={form.values[name]}
+                        row>
+                        {radioOptions}
+                    </RadioGroup>
+                </FormControl>;
+            }}
+        </Field>
+    );
+}
+
+FormikRadioField.propTypes = {
+    name: PropTypes.string.isRequired,
     options: PropTypes.arrayOf(
         PropTypes.shape(
             {

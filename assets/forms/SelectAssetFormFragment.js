@@ -5,11 +5,8 @@ import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete
 
 import { CircularProgress } from '@mui/material';
 
-import FormHelperText from '@material-ui/core/FormHelperText';
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
+import { FormikSelectField } from './muiformik.js';
+
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -37,10 +34,16 @@ export function SelectAssetFormFragment(props) {
   const [loading, setLoading] = React.useState(true);
   const [options, setOptions] = React.useState(props.defaultAssetOptions);
 
-  useEffect(async () => {
-      const assets = await getAssets();
-      setOptions(assets);
-      setLoading(false);
+  useEffect(() => {
+    let mounted = true;
+    getAssets().then(assets => {
+      if (mounted) {
+        setOptions(assets);
+        setLoading(false);
+      }
+    });
+
+    return () => mounted = false;
   }, [props.defaultAssetOptions]);
 
   const handleFill = () => {
@@ -67,6 +70,40 @@ export function SelectAssetFormFragment(props) {
     toggleDisable(false);
     toggleOpenNotTracked(false);
   };
+
+  const assetTypeOptions = [
+    {
+      value: "Stock",
+      label: "Stock",
+    },
+    {
+      value: "Fund",
+      label: "Fund",
+    },
+  ];
+
+  const exchangeOptions = ["USA Stocks", "XETRA Exchange", "London Exchange", "Borsa Italiana", "Other / NA"].map(name => ({
+    value: name, label: name,
+  }));
+
+  const currencyOptions = [
+    {
+      value: "USD",
+      label: "$ USD",
+    },
+    {
+      value: "EUR",
+      label: "€ EUR",
+    },
+    {
+      value: "GBP",
+      label: "£ GBP",
+    },
+    {
+      value: "GBX",
+      label: "GBC",
+    },
+  ];
 
   return (
     <>
@@ -157,7 +194,7 @@ export function SelectAssetFormFragment(props) {
           )}
         />
 
-        <FormControl className={classes.formControl}>
+        {/* <FormControl className={classes.formControl}>
           <InputLabel id="asset-type-label">Asset type</InputLabel>
           <Select
             name="assetType"
@@ -175,11 +212,30 @@ export function SelectAssetFormFragment(props) {
           </Select>
           <FormHelperText>{(formik.touched.assetType && formik.errors.assetType) ||
             `Different types of assets are supported`}</FormHelperText>
-        </FormControl>
+        </FormControl> */}
+
+        <FormikSelectField
+          id="assetType"
+          label="Asset type"
+          name="assetType"
+          options={assetTypeOptions}
+          className={classes.mediumInput}
+          disabled={otherFieldsDisabled}
+        />
       </div>
 
       <div className={classes.inputs}>
-        <FormControl className={classes.formControl}>
+        <FormikSelectField
+          id="exchange"
+          label="Exchange"
+          name="exchange"
+          labelId="exchange-label"
+          options={exchangeOptions}
+          className={classes.mediumInput}
+          disabled={otherFieldsDisabled}
+        />
+
+        {/* <FormControl className={classes.formControl}>
           <InputLabel id="exchange-label"
             error={formik.touched.exchange && Boolean(formik.errors.exchange)}>Exchange</InputLabel>
           <Select
@@ -200,8 +256,19 @@ export function SelectAssetFormFragment(props) {
           </Select>
           <FormHelperText error={(formik.touched.exchange && Boolean(formik.errors.exchange))}>{(formik.touched.exchange && formik.errors.exchange) ||
             `Only selected exchanges are supported for now`}</FormHelperText>
-        </FormControl>
+        </FormControl> */}
 
+        <FormikSelectField
+          name="currency"
+          labelId="currency-select-label"
+          label="currency"
+          id="currency"
+          data-testid="currency"
+          options={currencyOptions}
+          className={classes.mediumInput}
+          disabled={otherFieldsDisabled}
+        />
+        {/*
         <FormControl className={classes.narrowInput}>
           <InputLabel id="currency-select-label">Currency</InputLabel>
           <Select
@@ -221,7 +288,7 @@ export function SelectAssetFormFragment(props) {
             <MenuItem value={"GBX"}>GBX</MenuItem>
           </Select>
           <FormHelperText>{(formik.touched.currency && formik.errors.currency)}</FormHelperText>
-        </FormControl>
+        </FormControl> */}
       </div>
 
       <Dialog
