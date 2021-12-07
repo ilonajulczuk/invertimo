@@ -290,7 +290,8 @@ export default class Portfolio extends React.Component {
     async handleDeleteAccount(accountId) {
         let result = await this.apiClient.deleteAccount(accountId);
         // Reload all the data, e.g. accounts, positions, etc.
-        this.refreshFromServer();
+        this.refreshFromServer({deleteAccount: Number(accountId)});
+
         return result;
     }
 
@@ -298,12 +299,16 @@ export default class Portfolio extends React.Component {
         this.refreshFromServer();
     }
 
-    refreshFromServer() {
+    refreshFromServer({deleteAccount = null} = {}) {
         this.apiClient.getAccounts().then(accounts => {
             this.setState({ "accounts": accounts });
-            this.setState({
-                "accountValues": new Map(),
-            });
+            if (deleteAccount) {
+                let accountValues = this.state.accountValues;
+                accountValues.delete(deleteAccount);
+                this.setState({
+                    "accountValues": accountValues,
+                });
+            }
             accounts.forEach(account => {
                 this.apiClient.getAccountDetail(account.id, 4 * 365).then(account => {
                     let accountValues = this.state.accountValues;

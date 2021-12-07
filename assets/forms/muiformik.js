@@ -97,7 +97,7 @@ function FormControlSelect({ field, form, label, children, formHelperText, class
     const name = field.name;
     return (
         <FormControl
-        className={className}
+            className={className}
         >
             <InputLabel id={`${name}-label`}
                 error={form.touched[name] && Boolean(form.errors[name])}>{label}</InputLabel>
