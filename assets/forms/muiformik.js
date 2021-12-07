@@ -22,7 +22,7 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 
-export const FormikTextField = ({ name, ...props }) => {
+export const FormikTextField = ({ name, formHelperText, ...props }) => {
 
     return (
         <Field
@@ -38,7 +38,7 @@ export const FormikTextField = ({ name, ...props }) => {
                     helperText={
                         form.errors[name] &&
                         form.touched[name] &&
-                        String(form.errors[name])
+                        String(form.errors[name] || formHelperText)
                     }
                     value={form.values[name]}
                     {...props}
@@ -50,6 +50,7 @@ export const FormikTextField = ({ name, ...props }) => {
 
 FormikTextField.propTypes = {
     name: PropTypes.string.isRequired,
+    formHelperText: PropTypes.string,
 };
 
 export function FormikDateField({ name, ...props }) {
@@ -92,10 +93,11 @@ FormikDateField.propTypes = {
 };
 
 
-function FormControlSelect({ field, form, label, children, ...props }) {
+function FormControlSelect({ field, form, label, children, formHelperText, className, ...props }) {
     const name = field.name;
     return (
         <FormControl
+        className={className}
         >
             <InputLabel id={`${name}-label`}
                 error={form.touched[name] && Boolean(form.errors[name])}>{label}</InputLabel>
@@ -106,7 +108,7 @@ function FormControlSelect({ field, form, label, children, ...props }) {
             >
                 {children}
             </Select>
-            <FormHelperText error={(form.touched[name] && Boolean(form.errors[name]))}>{(form.touched[name] && form.errors[name])
+            <FormHelperText error={(form.touched[name] && Boolean(form.errors[name]))}>{(form.touched[name] && form.errors[name]) || formHelperText
             }</FormHelperText>
         </FormControl>
     );
@@ -118,6 +120,8 @@ FormControlSelect.propTypes = {
     children: PropTypes.array.isRequired,
     form: PropTypes.object.isRequired,
     field: PropTypes.object.isRequired,
+    formHelperText: PropTypes.string,
+    className: PropTypes.string,
 };
 
 

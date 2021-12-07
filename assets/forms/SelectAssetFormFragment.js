@@ -101,7 +101,7 @@ export function SelectAssetFormFragment(props) {
     },
     {
       value: "GBX",
-      label: "GBC",
+      label: "GBX",
     },
   ];
 
@@ -194,26 +194,6 @@ export function SelectAssetFormFragment(props) {
           )}
         />
 
-        {/* <FormControl className={classes.formControl}>
-          <InputLabel id="asset-type-label">Asset type</InputLabel>
-          <Select
-            name="assetType"
-            labelId="asset-type-label"
-            id="asset-type"
-            value={formik.values.assetType}
-            onChange={formik.handleChange}
-            error={formik.touched.assetType && Boolean(formik.errors.assetType)}
-            className={classes.formControl}
-            disabled={otherFieldsDisabled}
-          >
-            <MenuItem value={"Stock"}>Stock</MenuItem>
-            <MenuItem value={"Fund"}>Fund</MenuItem>
-            <MenuItem value={"Bond"}>Bond</MenuItem>
-          </Select>
-          <FormHelperText>{(formik.touched.assetType && formik.errors.assetType) ||
-            `Different types of assets are supported`}</FormHelperText>
-        </FormControl> */}
-
         <FormikSelectField
           id="assetType"
           label="Asset type"
@@ -235,29 +215,6 @@ export function SelectAssetFormFragment(props) {
           disabled={otherFieldsDisabled}
         />
 
-        {/* <FormControl className={classes.formControl}>
-          <InputLabel id="exchange-label"
-            error={formik.touched.exchange && Boolean(formik.errors.exchange)}>Exchange</InputLabel>
-          <Select
-            id="exchange"
-            name="exchange"
-            labelId="exchange-label"
-            value={formik.values.exchange}
-            onChange={formik.handleChange}
-            error={formik.touched.exchange && Boolean(formik.errors.exchange)}
-            className={classes.formControl}
-            disabled={otherFieldsDisabled}
-          >
-            <MenuItem value={"USA Stocks"}>USA Stocks</MenuItem>
-            <MenuItem value={"XETRA Exchange"}>XETRA Exchange</MenuItem>
-            <MenuItem value={"London Exchange"}>London Exchange</MenuItem>
-            <MenuItem value={"Borsa Italiana"}>Borsa Italiana</MenuItem>
-            <MenuItem value={"Other / NA"}>Other / NA</MenuItem>
-          </Select>
-          <FormHelperText error={(formik.touched.exchange && Boolean(formik.errors.exchange))}>{(formik.touched.exchange && formik.errors.exchange) ||
-            `Only selected exchanges are supported for now`}</FormHelperText>
-        </FormControl> */}
-
         <FormikSelectField
           name="currency"
           labelId="currency-select-label"
@@ -268,27 +225,6 @@ export function SelectAssetFormFragment(props) {
           className={classes.mediumInput}
           disabled={otherFieldsDisabled}
         />
-        {/*
-        <FormControl className={classes.narrowInput}>
-          <InputLabel id="currency-select-label">Currency</InputLabel>
-          <Select
-            name="currency"
-            labelId="currency-select-label"
-            id="currency"
-            data-testid="currency"
-            value={formik.values.currency}
-            onChange={formik.handleChange}
-            error={formik.touched.currency && Boolean(formik.errors.currency)}
-            className={classes.narrowInput}
-            disabled={otherFieldsDisabled}
-          >
-            <MenuItem value={"USD"}>$ USD</MenuItem>
-            <MenuItem value={"EUR"}>€ EUR</MenuItem>
-            <MenuItem value={"GBP"}>£ GBP</MenuItem>
-            <MenuItem value={"GBX"}>GBX</MenuItem>
-          </Select>
-          <FormHelperText>{(formik.touched.currency && formik.errors.currency)}</FormHelperText>
-        </FormControl> */}
       </div>
 
       <Dialog
