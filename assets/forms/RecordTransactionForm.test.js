@@ -60,7 +60,7 @@ jest.mock("../api_utils", () => {
     // The form will send a request for assets.
     // Let's return it our default asset Options for simplicity.
     return {
-        getAssets: jest.fn(() => assetOptions)
+        getAssets: jest.fn(async () => assetOptions)
     };
 });
 
@@ -172,7 +172,7 @@ describe('form for recording transactions', () => {
             userEvent.type(document.getElementById("quantity"), '13');
             userEvent.type(screen.getByLabelText(/price/i), '1300');
 
-            fireEvent.change(document.getElementById("total-cost-account-currency"),
+            fireEvent.change(document.getElementById("totalCostAccountCurrency"),
                 { target: { value: "16901" } });
 
             userEvent.type(screen.getByLabelText(/fees/i), '0.5');
@@ -199,6 +199,10 @@ describe('form for recording transactions', () => {
 
         expect(submitButton).not.toBeNull();
         await act(async () => {
+            // Since we selected an available asset, the assetType should be disabled.
+            expect(document.getElementById("assetType").getAttribute("aria-disabled")).toBe("true");
+            expect(document.getElementById("currency").getAttribute("aria-disabled")).toBe("true");
+            expect(document.getElementById("exchange").getAttribute("aria-disabled")).toBe("true");
             submitButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
         });
 
@@ -268,7 +272,7 @@ describe('form for recording transactions', () => {
             userEvent.type(document.getElementById("quantity"), '13');
             userEvent.type(screen.getByLabelText(/price/i), '1300');
 
-            fireEvent.change(document.getElementById("total-cost-account-currency"),
+            fireEvent.change(document.getElementById("totalCostAccountCurrency"),
                 { target: { value: "16899" } });
 
             userEvent.type(screen.getByLabelText(/fees/i), '0.5');
@@ -373,7 +377,7 @@ describe('form for recording transactions', () => {
             userEvent.type(document.getElementById("quantity"), '13');
             userEvent.type(screen.getByLabelText(/price/i), '1300');
 
-            fireEvent.change(document.getElementById("total-cost-account-currency"),
+            fireEvent.change(document.getElementById("totalCostAccountCurrency"),
                 { target: { value: "16899" } });
 
             userEvent.type(screen.getByLabelText(/fees/i), '0.5');
@@ -392,7 +396,7 @@ describe('form for recording transactions', () => {
 
             const confirmationDialog = screen.getByRole("dialog");
             const buttons = within(confirmationDialog).getAllByRole("button");
-            // Fill in the fields based on the asset.
+            // Acknowledge the dialog.
             fireEvent.click(buttons[0]);
         });
 
@@ -404,6 +408,11 @@ describe('form for recording transactions', () => {
 
         expect(submitButton).not.toBeNull();
         await act(async () => {
+            // Those fields should not be disabled, because there was no auto-fill of values.
+            expect(document.getElementById("assetType").getAttribute("aria-disabled")).toBe(null);
+            expect(document.getElementById("currency").getAttribute("aria-disabled")).toBe(null);
+            expect(document.getElementById("exchange").getAttribute("aria-disabled")).toBe(null);
+
             submitButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
         });
 
@@ -472,10 +481,10 @@ describe('form for recording transactions', () => {
             fireEvent.click(within(listbox).getByText(/First account/i));
 
             userEvent.type(document.getElementById("quantity"), '13');
-            userEvent.type(document.getElementById("value-account-currency"), '12901');
+            userEvent.type(document.getElementById("totalValueAccountCurrency"), '12901');
             userEvent.type(screen.getByLabelText(/price/i), '1300');
 
-            fireEvent.change(document.getElementById("total-cost-account-currency"),
+            fireEvent.change(document.getElementById("totalCostAccountCurrency"),
                 { target: { value: "12899" } });
 
             userEvent.type(screen.getByLabelText(/fees/i), '2');
@@ -573,10 +582,10 @@ describe('form for recording transactions', () => {
             fireEvent.click(within(listbox).getByText(/First account/i));
 
             userEvent.type(document.getElementById("quantity"), '13');
-            userEvent.type(document.getElementById("value-account-currency"), '12901');
+            userEvent.type(document.getElementById("totalValueAccountCurrency"), '12901');
             userEvent.type(screen.getByLabelText(/price/i), '1300');
 
-            fireEvent.change(document.getElementById("total-cost-account-currency"),
+            fireEvent.change(document.getElementById("totalCostAccountCurrency"),
                 { target: { value: "12903" } });
 
             userEvent.type(screen.getByLabelText(/fees/i), '2');

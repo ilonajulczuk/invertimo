@@ -17,8 +17,12 @@ import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 
-export const FormikTextField = ({ name, ...props }) => {
+
+export const FormikTextField = ({ name, formHelperText, ...props }) => {
 
     return (
         <Field
@@ -34,7 +38,7 @@ export const FormikTextField = ({ name, ...props }) => {
                     helperText={
                         form.errors[name] &&
                         form.touched[name] &&
-                        String(form.errors[name])
+                        String(form.errors[name] || formHelperText)
                     }
                     value={form.values[name]}
                     {...props}
@@ -46,6 +50,7 @@ export const FormikTextField = ({ name, ...props }) => {
 
 FormikTextField.propTypes = {
     name: PropTypes.string.isRequired,
+    formHelperText: PropTypes.string,
 };
 
 export function FormikDateField({ name, ...props }) {
@@ -88,10 +93,11 @@ FormikDateField.propTypes = {
 };
 
 
-function FormControlSelect({ field, form, label, children, ...props }) {
+function FormControlSelect({ field, form, label, children, formHelperText, className, ...props }) {
     const name = field.name;
     return (
         <FormControl
+        className={className}
         >
             <InputLabel id={`${name}-label`}
                 error={form.touched[name] && Boolean(form.errors[name])}>{label}</InputLabel>
@@ -102,7 +108,7 @@ function FormControlSelect({ field, form, label, children, ...props }) {
             >
                 {children}
             </Select>
-            <FormHelperText error={(form.touched[name] && Boolean(form.errors[name]))}>{(form.touched[name] && form.errors[name])
+            <FormHelperText error={(form.touched[name] && Boolean(form.errors[name]))}>{(form.touched[name] && form.errors[name]) || formHelperText
             }</FormHelperText>
         </FormControl>
     );
@@ -114,6 +120,8 @@ FormControlSelect.propTypes = {
     children: PropTypes.array.isRequired,
     form: PropTypes.object.isRequired,
     field: PropTypes.object.isRequired,
+    formHelperText: PropTypes.string,
+    className: PropTypes.string,
 };
 
 
@@ -134,6 +142,46 @@ export function FormikSelectField({ options, ...props }) {
 FormikSelectField.propTypes = {
     name: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired,
+    options: PropTypes.arrayOf(
+        PropTypes.shape(
+            {
+                value: PropTypes.any.isRequired,
+                label: PropTypes.string.isRequired
+            })).isRequired,
+};
+
+
+export function FormikRadioField({ name, options, ...props }) {
+    const radioOptions = options.map(
+        option => (
+            <FormControlLabel
+                value={option.value}
+                control={<Radio />}
+                label={option.label}
+                key={option.label} />
+
+        )
+    );
+    return (
+        <Field>
+            {({ form, field }) => {
+                return <FormControl>
+                    <RadioGroup
+                        {...field}
+                        {...props}
+                        name={name}
+                        value={form.values[name]}
+                        row>
+                        {radioOptions}
+                    </RadioGroup>
+                </FormControl>;
+            }}
+        </Field>
+    );
+}
+
+FormikRadioField.propTypes = {
+    name: PropTypes.string.isRequired,
     options: PropTypes.arrayOf(
         PropTypes.shape(
             {

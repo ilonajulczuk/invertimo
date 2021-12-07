@@ -1,27 +1,11 @@
 import React from 'react';
 
 import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
-import FormHelperText from '@material-ui/core/FormHelperText';
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-
-
-import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import {
-    MuiPickersUtilsProvider,
-    KeyboardDatePicker,
-} from '@material-ui/pickers';
-
 import PropTypes from 'prop-types';
-import { useFormik } from 'formik';
+import { FormikDateField, FormikTextField, FormikSelectField, FormikRadioField } from './muiformik.js';
+
+import { Formik, Form } from 'formik';
 import * as yup from 'yup';
-import 'date-fns';
-import DateFnsUtils from '@date-io/date-fns';
 
 import { useStyles } from './styles.js';
 import { currencyValues, toSymbol } from '../currencies.js';
@@ -112,6 +96,98 @@ function apiTransactionResponseToErrors(apiResponse) {
     return response;
 }
 
+function ValueBlock(props) {
+    if (props.sameCurrency) {
+        return null;
+    }
+    return (
+        <>
+            <h4>Value</h4>
+            <div className={props.classes.inputs}>
+                <FormikTextField
+                    id="totalValueAccountCurrency"
+                    label={`Total value in ${props.formattedAccountCurrency}`}
+                    name="totalValueAccountCurrency"
+                    type="number"
+                    className={props.classes.formControl}
+                    InputLabelProps={{
+                        shrink: true,
+                    }}
+                />
+            </div>
+        </>
+    );
+}
+
+ValueBlock.propTypes = {
+    sameCurrency: PropTypes.bool.isRequired,
+    classes: PropTypes.object.isRequired,
+    formattedAccountCurrency: PropTypes.string.isRequired,
+};
+
+
+function TotalCostBlock(props) {
+    let totalCostBlock = null;
+
+    if (!props.sameCurrency) {
+        totalCostBlock = (<><h4>Total cost</h4>
+            <p>Total cost will be deducted from selected account balance and fees will be associated with assets.</p>
+            <div className={props.classes.inputs}>
+                <FormikTextField
+                    id="fees"
+                    label={`Fees in ${props.formattedAccountCurrency}`}
+                    name="fees"
+                    type="number"
+                    className={props.classes.formControl}
+                    InputLabelProps={{
+                        shrink: true,
+                    }}
+                />
+
+                <FormikTextField
+                    id="totalCostAccountCurrency"
+                    label={`Total cost in ${props.formattedAccountCurrency}`}
+                    name="totalCostAccountCurrency"
+                    type="number"
+                    value={props.formikProps.values.totalCostAccountCurrency || props.formikProps.values.totalValueAccountCurrency + props.formikProps.values.fees}
+
+                    className={props.classes.formControl}
+                    InputLabelProps={{
+                        shrink: true,
+                    }}
+                />
+            </div>
+        </>);
+    } else {
+        totalCostBlock = (<><h4>Total cost</h4>
+            <p>Total cost will be deducted from selected account balance and fees will be associated with assets.</p>
+            <div className={props.classes.inputs}>
+                <FormikTextField
+                    id="fees"
+                    label='Fees'
+                    name="fees"
+                    type="number"
+                    className={props.classes.formControl}
+                    InputLabelProps={{
+                        shrink: true,
+                    }}
+                />
+                <FormikTextField
+                    id="totalCostAccountCurrency"
+                    label='Total cost'
+                    value={props.formikProps.values.totalCostAccountCurrency || Math.round(100 * props.formikProps.values.price * props.formikProps.values.quantity) / 100 + props.formikProps.values.fees}
+                    name="totalCostAccountCurrency"
+                    type="number"
+                    className={props.classes.formControl}
+                    InputLabelProps={{
+                        shrink: true,
+                    }}
+                />
+            </div></>);
+    }
+    return totalCostBlock;
+}
+
 
 export function RecordTransactionForm(props) {
 
@@ -125,7 +201,12 @@ export function RecordTransactionForm(props) {
 
         snackbarSetOpen(false);
     };
-
+    const sameCurrency = (values, accountsById) => {
+        return accountsById.get(values.account).currency == values.currency;
+    };
+    const formattedAccountCurrency = (values, accountsById) => {
+        return values.account ? toSymbol(accountsById.get(values.account).currency) : "";
+    };
     let accountsById = new Map(props.accounts.map(account => [account.id, account]));
 
     let initialSymbolValue = props.initialAsset ?? "";
@@ -189,7 +270,7 @@ export function RecordTransactionForm(props) {
         tradeType: "buy",
         executedAt: props.executedAtDate || new Date(),
         account: props.accounts[0].id,
-        exchange:  initialSymbolValue ? initialSymbolValue.exchange.name : "USA Stocks",
+        exchange: initialSymbolValue ? initialSymbolValue.exchange.name : "USA Stocks",
         assetType: initialSymbolValue ? initialSymbolValue.asset_type : "Stock",
         price: "",
         quantity: "",
@@ -218,246 +299,111 @@ export function RecordTransactionForm(props) {
         }
     };
 
-    const formik = useFormik({
-        initialValues: initialValues,
-        validationSchema: validationSchema,
-        onSubmit: onSubmit,
-    });
-
-    let accountOptions = props.accounts.map(account => {
-        return (
-            <MenuItem key={account.id} value={account.id}>{account.nickname}</MenuItem>
-        );
-    });
-
+    let accountOptions = props.accounts.map(account => ({ value: account.id, label: account.nickname }));
     const submitButtonText = props.hasTransactions ? "Record another transaction" : "Record transaction";
+    const defaultAssetOptions = props.defaultAssetOptions;
 
-    let valueBlock = null;
-    let totalCostBlock = null;
-
-    let formattedAccountCurrency = "";
-    let sameCurrency = true;
-    if (formik.values.account) {
-        let account = accountsById.get(formik.values.account);
-        sameCurrency = account.currency == formik.values.currency;
-        formattedAccountCurrency = toSymbol(account.currency);
-    }
-
-    if (!sameCurrency) {
-
-        valueBlock = <>
-            <h4>Value</h4>
-            <div className={classes.inputs}>
-
-                <TextField
-                    id="value-account-currency"
-                    label={`Total value in ${formattedAccountCurrency}`}
-                    name="totalValueAccountCurrency"
-                    type="number"
-                    value={formik.values.totalValueAccountCurrency}
-                    onChange={formik.handleChange}
-                    error={formik.touched.totalValueAccountCurrency && Boolean(formik.errors.totalValueAccountCurrency)}
-                    helperText={(formik.touched.totalValueAccountCurrency && formik.errors.totalValueAccountCurrency)}
-                    className={classes.formControl}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
-            </div>
-        </>;
-
-        totalCostBlock = (<><h4>Total cost</h4>
-            <p>Total cost will be deducted from selected account balance and fees will be associated with assets.</p>
-            <div className={classes.inputs}>
-
-
-                <TextField
-                    id="fees"
-                    label={`Fees in ${formattedAccountCurrency}`}
-                    name="fees"
-                    type="number"
-                    value={formik.values.fees}
-                    onChange={formik.handleChange}
-                    error={formik.touched.fees && Boolean(formik.errors.fees)}
-                    helperText={(formik.touched.fees && formik.errors.fees)}
-                    className={classes.formControl}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
-                <TextField
-                    id="total-cost-account-currency"
-                    label={`Total cost in ${formattedAccountCurrency}`}
-                    name="totalCostAccountCurrency"
-                    value={formik.values.totalCostAccountCurrency || formik.values.totalValueAccountCurrency + formik.values.fees}
-                    type="number"
-                    onChange={formik.handleChange}
-                    error={formik.touched.totalCostAccountCurrency && Boolean(formik.errors.totalCostAccountCurrency)}
-                    helperText={(formik.touched.totalCostAccountCurrency && formik.errors.totalCostAccountCurrency)}
-                    className={classes.formControl}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
-            </div>
-        </>);
-    } else {
-        totalCostBlock = (<><h4>Total cost</h4>
-            <p>Total cost will be deducted from selected account balance and fees will be associated with assets.</p>
-            <div className={classes.inputs}>
-
-                <TextField
-                    id="fees"
-                    label="Fees"
-                    name="fees"
-                    type="number"
-                    value={formik.values.fees}
-                    onChange={formik.handleChange}
-                    error={formik.touched.fees && Boolean(formik.errors.fees)}
-                    helperText={(formik.touched.fees && formik.errors.fees)}
-                    className={classes.narrowInput}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
-
-                <TextField
-                    id="total-cost-account-currency"
-                    label="Total cost"
-                    name="totalCostAccountCurrency"
-                    value={formik.values.totalCostAccountCurrency || Math.round(100 * formik.values.price * formik.values.quantity) / 100 + formik.values.fees}
-                    type="number"
-                    onChange={formik.handleChange}
-                    error={formik.touched.totalCostAccountCurrency && Boolean(formik.errors.totalCostAccountCurrency)}
-                    helperText={(formik.touched.totalCostAccountCurrency && formik.errors.totalCostAccountCurrency)}
-                    className={classes.formControl}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
-            </div></>);
-    }
-
-    const selectAssetBlock = <SelectAssetFormFragment formik={formik}
-        defaultAssetOptions={props.defaultAssetOptions}
-        fixedValue={initialSymbolValue ? true : false} value={initialSymbolValue ? initialSymbolValue : null}
-        />;
+    const tradeTypeOptions = [
+        {
+            value: "buy",
+            label: "Bought"
+        },
+        {
+            value: "sell",
+            label: "Sold",
+        }];
 
     return (
-        <form className={classes.form} onSubmit={formik.handleSubmit}>
-            <h4>Asset details</h4>
-            {selectAssetBlock}
 
-            <h4>Trade details</h4>
-            <div className={classes.inputs}>
-
-                <FormControl className={classes.formControl}>
-                    <RadioGroup aria-label="trade type"
-                        name="tradeType"
-                        value={formik.values.tradeType}
-                        onChange={formik.handleChange}
-                        row>
-                        <FormControlLabel value="buy" control={<Radio className={classes.green} />} label="Bought" />
-                        <FormControlLabel value="sell" control={<Radio className={classes.red} />} label="Sold" />
-
-                    </RadioGroup>
-                </FormControl>
-            </div>
-            <div className={classes.inputs}>
-                <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                    <KeyboardDatePicker
-                        disableToolbar
-                        variant="inline"
-                        format="yyyy/MM/dd"
-                        margin="normal"
-                        id="executedAt"
-                        name="executedAt"
-                        label="Executed at"
-                        value={formik.values.executedAt}
-                        autoOk={true}
-                        error={Boolean(formik.errors.executedAt)}
-                        onChange={(name, value) => {
-                            formik.setFieldValue('executedAt', value);
-                        }}
-                        helperText={formik.errors.executedAt}
-                        KeyboardButtonProps={{
-                            'aria-label': 'change date',
-                        }}
+        <Formik
+            initialValues={initialValues}
+            validationSchema={validationSchema}
+            onSubmit={onSubmit}
+        >
+            {({ isSubmitting, ...formikProps }) => (
+                <Form className={classes.form}>
+                    <h4>Asset details</h4>
+                    <SelectAssetFormFragment formik={formikProps}
+                        defaultAssetOptions={defaultAssetOptions}
+                        fixedValue={initialSymbolValue ? true : false} value={initialSymbolValue ? initialSymbolValue : null}
                     />
+                    <h4>Trade details</h4>
+                    <div className={classes.inputs}>
 
-                </MuiPickersUtilsProvider>
+                        <FormikRadioField
+                        name="tradeType"
+                        options={tradeTypeOptions}
+                        />
 
-                <FormControl className={classes.formControl}>
-                    <InputLabel id="account-label" error={formik.touched.account && Boolean(formik.errors.account)}>In account</InputLabel>
-                    <Select
-                        name="account"
-                        labelId="account-label"
-                        id="account"
-                        value={formik.values.account}
-                        onChange={formik.handleChange}
-                        error={formik.touched.account && Boolean(formik.errors.account)}
-                        className={classes.formControl}
-                    >
-                        {accountOptions}
-                    </Select>
-                    <FormHelperText error={formik.touched.account && Boolean(formik.errors.account)}>{(formik.touched.account && formik.errors.account) ||
-                        `Trade needs to be associated with one of your accounts`}</FormHelperText>
-                </FormControl>
-            </div>
+                    </div>
+                    <div className={classes.inputs}>
+                        <FormikDateField id="executedAt"
+                            name="executedAt"
+                            label="Executed at" />
 
-            <div className={classes.inputs}>
-                <TextField
-                    id="quantity"
-                    label="Quantity"
-                    name="quantity"
-                    type="number"
-                    value={formik.values.quantity}
-                    onChange={formik.handleChange}
-                    error={formik.touched.quantity && Boolean(formik.errors.quantity)}
-                    helperText={(formik.touched.quantity && formik.errors.quantity)}
-                    className={classes.narrowInput}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
 
-                <TextField
-                    id="price"
-                    label={sameCurrency ? "Price" : `Price in ${toSymbol(formik.values.currency)}`}
-                    name="price"
-                    type="number"
-                    value={formik.values.price}
-                    onChange={formik.handleChange}
-                    error={formik.touched.price && Boolean(formik.errors.price)}
-                    helperText={(formik.touched.price && formik.errors.price)}
-                    className={classes.formControl}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                />
-            </div>
+                        <FormikSelectField
+                            id="account"
+                            label="Account"
+                            name="account"
+                            options={accountOptions}
+                            className={classes.mediumInput}
+                        />
+                    </div>
 
-            {valueBlock}
-            {totalCostBlock}
-            <div>
-                <Button
-                    type="submit"
-                    variant="outlined"
-                    color="secondary"
-                    data-test-id="record-transaction-button"
-                    disabled={formik.isSubmitting}
-                    className={classes.submitButton}
-                >
-                    {submitButtonText}
-                </Button>
-            </div>
+                    <div className={classes.inputs}>
+                        <FormikTextField
+                            className={classes.narrowInput}
+                            id="quantity"
+                            label="Quantity"
+                            name="quantity"
+                            type="number"
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                        <FormikTextField
+                            className={classes.formControl}
+                            id="price"
+                            label={sameCurrency ? "Price" : `Price in ${toSymbol(formikProps.values.currency)}`}
+                            name="price"
+                            type="number"
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                    </div>
 
-            <Snackbar
-                snackbarOpen={snackbarOpen}
-                snackbarHandleClose={snackbarHandleClose}
-                message="Transaction recorded successfully!"
-            />
-        </form>
+                    <ValueBlock classes={classes}
+                        formattedAccountCurrency={formattedAccountCurrency(formikProps.values, accountsById)}
+                        sameCurrency={sameCurrency(formikProps.values, accountsById)} />
+
+                    <TotalCostBlock classes={classes}
+                        formikProps={formikProps}
+                        formattedAccountCurrency={formattedAccountCurrency(formikProps.values, accountsById)}
+                        sameCurrency={sameCurrency(formikProps.values, accountsById)} />
+
+                    <div>
+                        <Button
+                            type="submit"
+                            variant="outlined"
+                            color="secondary"
+                            data-test-id="record-transaction-button"
+                            disabled={isSubmitting}
+                            className={classes.submitButton}
+                        >
+                            {submitButtonText}
+                        </Button>
+                    </div>
+
+                    <Snackbar
+                        snackbarOpen={snackbarOpen}
+                        snackbarHandleClose={snackbarHandleClose}
+                        message="Transaction recorded successfully!"
+                    />
+                </Form>
+            )}
+        </Formik>
     );
 }
 
