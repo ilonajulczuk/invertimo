@@ -1062,3 +1062,34 @@ class TestAssetListView(ViewTestBase, TestCase):
         self.assertTrue(self.custom_asset.id in ids)
         self.assertTrue(self.another_asset.id in ids)
         self.assertFalse(self.custom_asset_of_another_user.id in ids)
+
+
+class TestLotListView(ViewTestBase, TestCase):
+    URL = "/api/lots/"
+    VIEW_NAME = "lot-list"
+    DETAIL_VIEW = False
+    QUERY_PARAMS = "?"
+    UNAUTHENTICATED_CODE = 403
+
+    def setUp(self):
+        super().setUp()
+
+        self.isin = "USA123"
+        self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
+            self.user, isin=self.isin
+        )
+        for transaction in _FAKE_TRANSACTIONS:
+            _add_transaction(
+                self.account,
+                self.isin,
+                self.exchange,
+                transaction[0],
+                transaction[1],
+                transaction[2],
+            )
+
+    def test_lots_listed(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 1)

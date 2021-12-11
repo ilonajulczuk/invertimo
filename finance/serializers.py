@@ -17,6 +17,7 @@ from finance.models import (
     PriceHistory,
     Asset,
     Transaction,
+    Lot,
 )
 
 
@@ -511,6 +512,8 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
         kwargs = super().get_extra_kwargs()
         kwargs["account"] = kwargs.get("account", {})
         kwargs["account"]["queryset"] = self.get_account_queryset()
+        kwargs["position"] = kwargs.get("position", {})
+        kwargs["position"]["queryset"] = self.get_position_queryset()
         return kwargs
 
     def get_account_queryset(self) -> QuerySet[models.Account]:
@@ -569,3 +572,10 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
                     {"position": "Position can't be set for this type of event"}
                 )
         return data
+
+
+class LotSerializer(serializers.ModelSerializer[Lot]):
+
+    class Meta:
+        model = Lot
+        fields = "__all__"
