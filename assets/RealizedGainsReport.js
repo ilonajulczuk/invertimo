@@ -11,12 +11,18 @@ import { ErrorBoundary } from './error_utils.js';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+
+
 
 const useStyles = makeStyles({
     header: {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
+        flexWrap: "wrap",
     },
     pickers: {
         marginBottom: "16px",
@@ -47,10 +53,17 @@ export default function RealizedGainsReport() {
     const [fromDate, setFromDate] = useState(new Date(new Date().getFullYear(), 0));
     const [toDate, setToDate] = useState(new Date());
 
+    const [showAssetHoldAge, setShowAssetHoldAge] = useState(false);
+    const handleSetShowAssetHoldAge = (event) => {
+        setShowAssetHoldAge(event.target.checked);
+      };
+
     const handleDateSelection = (event, newSelection) => {
+        if (newSelection === null) {
+            return;
+        }
         setDateSelection(newSelection);
         if (newSelection in selectionToDates) {
-
             setDates(selectionToDates[newSelection]);
         } else {
 
@@ -73,7 +86,7 @@ export default function RealizedGainsReport() {
     return (<ErrorBoundary>
 
         <div className={classes.header}>
-            <h2>Transactions / realized gains</h2>
+            <h2><a href="#transactions">Transactions</a> / realized gains</h2>
         </div>
         <div className={classes.header}>
 
@@ -133,12 +146,17 @@ export default function RealizedGainsReport() {
                 </LocalizationProvider>
             </div>
         </div>
+        <div className={classes.header}>
+            <FormGroup>
+                <FormControlLabel control={<Checkbox checked={showAssetHoldAge} onChange={handleSetShowAssetHoldAge} />} label="Show how long assets were held" />
+            </FormGroup>
+
+        </div>
         <p>
             Hello gainz!
         </p>
         <p>
             Dates: {dates.from ? dates.from.toLocaleDateString() : "custom"} - {dates.to ? dates.to.toLocaleDateString() : "now"}
-
         </p>
 
     </ErrorBoundary>);
