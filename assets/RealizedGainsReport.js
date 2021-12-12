@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 
-import 'date-fns';
 import isValid from 'date-fns/isValid';
-import DateFnsUtils from '@date-io/date-fns';
-import {
-    MuiPickersUtilsProvider,
-    KeyboardDatePicker,
-} from '@material-ui/pickers';
+import AdapterDateFns from '@mui/lab/AdapterDateFns';
+import LocalizationProvider from '@mui/lab/LocalizationProvider';
+
+import DatePicker from "./components/DatePicker.js";
 
 import { makeStyles } from '@material-ui/core/styles';
 import { ErrorBoundary } from './error_utils.js';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+
 
 const useStyles = makeStyles({
     header: {
@@ -96,20 +95,14 @@ export default function RealizedGainsReport() {
                     Custom dates
                 </ToggleButton>
             </ToggleButtonGroup>
+
             <div className={classes.pickers}>
-                <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                    <KeyboardDatePicker
-                        disableToolbar
-                        variant="inline"
-                        format="yyyy/MM/dd"
-                        margin="normal"
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
                         label="From date"
                         value={fromDate}
-                        autoOk={true}
                         disabled={dateSelection !== "custom"}
-                        error={!isValid(new Date(fromDate))}
-                        onChange={(_, value) => {
-
+                        onChange={(value) => {
                             if (isValid(new Date(value))) {
                                 let newDates = {
                                     from: new Date(value),
@@ -119,41 +112,25 @@ export default function RealizedGainsReport() {
                             }
                             setFromDate(value);
                         }}
-                        KeyboardButtonProps={{
-                            'aria-label': 'change from date',
-                        }}
+                        ariaLabel='change from date'
                     />
-                </MuiPickersUtilsProvider>
-                <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                    <KeyboardDatePicker
-                        disableToolbar
-                        variant="inline"
-                        format="yyyy/MM/dd"
-                        margin="normal"
+                    <DatePicker
                         label="To date"
                         value={toDate}
-                        autoOk={true}
                         disabled={dateSelection !== "custom"}
-                        error={!isValid(new Date(toDate))}
-                        onChange={(_, value) => {
-
-                            console.log(value);
+                        onChange={(value) => {
                             if (isValid(new Date(value))) {
-                                console.log("valid");
                                 let newDates = {
                                     from: dates.from,
                                     to: new Date(value),
                                 };
                                 setDates(newDates);
                             }
-
                             setToDate(value);
                         }}
-                        KeyboardButtonProps={{
-                            'aria-label': 'change to date',
-                        }}
+                        ariaLabel='change to date'
                     />
-                </MuiPickersUtilsProvider>
+                </LocalizationProvider>
             </div>
         </div>
         <p>

@@ -31,6 +31,7 @@ const Onboarding = React.lazy(() => import('./Onboarding'));
 const Transactions = React.lazy(() => import('./Transactions'));
 const AccountValue = React.lazy(() => import('./AccountValue'));
 
+
 const useStyles = makeStyles({
     root: {
         minWidth: 275,
