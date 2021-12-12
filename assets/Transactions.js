@@ -83,7 +83,7 @@ export default function Transactions(props) {
 
             </Route>
             <Route path={`${path}/realized_gains`}>
-                <RealizedGainsReport />
+                <RealizedGainsReport positions={props.positions} accounts={props.accounts}/>
             </Route>
             <Route path={`${path}/:transactionId`}>
                 <TransactionDetail
@@ -100,6 +100,7 @@ export default function Transactions(props) {
 
 Transactions.propTypes = {
     accounts: PropTypes.array.isRequired,
+    positions: PropTypes.array.isRequired,
     transactions: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.number.isRequired,
         quantity: PropTypes.string.isRequired,

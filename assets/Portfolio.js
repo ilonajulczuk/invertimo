@@ -438,6 +438,7 @@ export default class Portfolio extends React.Component {
                 handleAddTransaction={this.handleAddTransaction}
                 handleDeleteTransaction={this.handleDeleteTransaction}
                 handleCorrectTransaction={this.handleCorrectTransaction}
+                positions={this.state.positions}
                 accounts={this.state.accounts} />;
         }
         let maybeEvents = <h2>Loading events...</h2>;

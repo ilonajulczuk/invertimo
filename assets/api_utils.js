@@ -160,6 +160,11 @@ export class APIClient {
         return await postData(this.baseUrl + '/accounts/', accountData);
     }
 
+    async deleteAccount(accountId) {
+        let url = this.baseUrl + '/accounts/' + accountId + "/";
+        return deleteData(url);
+    }
+
     async addTransaction(data) {
         return await postData(this.baseUrl + '/transactions/', data);
     }
@@ -191,10 +196,6 @@ export class APIClient {
         return deleteData(url);
     }
 
-    async deleteAccount(accountId) {
-        let url = this.baseUrl + '/accounts/' + accountId + "/";
-        return deleteData(url);
-    }
 
 }
 
@@ -202,4 +203,9 @@ const baseUrl = "./api";
 
 export function getAssets() {
     return fetchAllResults(baseUrl + "/assets/?limit=50");
+}
+
+export function getLots() {
+    let url = baseUrl + '/lots/?limit=50';
+    return fetchAllResults(url);
 }

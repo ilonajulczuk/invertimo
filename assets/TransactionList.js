@@ -106,7 +106,7 @@ export function TransactionList(props) {
         { id: 'interaction', label: '' },
     ];
 
-    let accountsById = new Map(props.accounts.map(account => [account.id, account]));
+    const accountsById = new Map(props.accounts.map(account => [account.id, account]));
 
     const transactions = props.transactions.map(transaction => {
         let transactionCopy = { ...transaction };
