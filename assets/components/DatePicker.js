@@ -15,24 +15,31 @@ export default function DatePicker(props) {
         inputFormat="yyyy/MM/dd"
         mask="____/__/__"
         margin="normal"
-        renderInput={(props) => <TextField {...props} />}
+        renderInput={(inputProps) => <TextField {...inputProps}
+          error={props.toShowError ?? !isValid(new Date(props.value))}
+          helperText={(props.toShowError ?? !isValid(new Date(props.value)))
+             ? props.currentError ?? props.helperText : undefined}
+          onBlur={props.onBlur}
+        />}
         value={props.value}
         autoOk={true}
         disabled={props.disabled}
-        error={!isValid(new Date(props.value))}
         onChange={props.onChange}
         KeyboardButtonProps={{
             'aria-label': props.ariaLabel ?? "",
         }}
-
         {...props}
     />);
 }
 
 
 DatePicker.propTypes = {
-    value: PropTypes.any.isRequired,
+    value: PropTypes.any,
     disabled: PropTypes.bool.isRequired,
     onChange: PropTypes.func.isRequired,
     ariaLabel: PropTypes.string,
+    toShowError: PropTypes.bool,
+    currentError: PropTypes.string,
+    helperText: PropTypes.string,
+    onBlur: PropTypes.func,
 };

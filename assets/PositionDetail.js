@@ -4,9 +4,9 @@ import {
     useParams,
 } from "react-router-dom";
 
-import Icon from '@material-ui/core/Icon';
-import Button from '@material-ui/core/Button';
-import { makeStyles } from '@material-ui/core/styles';
+import Icon from '@mui/material/Icon';
+import Button from '@mui/material/Button';
+import makeStyles from '@mui/styles/makeStyles';
 
 import { filterPointsWithNoChange, filterPoints } from './timeseries_utils.js';
 import { TimeSelector, daysFromDurationObject } from './TimeSelector.js';

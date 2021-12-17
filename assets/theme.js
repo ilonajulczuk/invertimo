@@ -1,12 +1,12 @@
 import React from 'react';
 
 import PropTypes from 'prop-types';
-import { ThemeProvider, createTheme } from '@material-ui/core/styles';
+import { ThemeProvider, StyledEngineProvider, createTheme, adaptV4Theme } from '@mui/material/styles';
 
 
 export const themeOptions = {
     palette: {
-        type: 'light',
+        mode: 'light',
         primary: {
             light: "hsl(184deg 51% 48%)",
             main: '#1b98a1',
@@ -48,9 +48,11 @@ export const themeOptions = {
 
 export function MyThemeProvider(props) {
     return (
-        <ThemeProvider theme={createTheme(themeOptions)} {...props}>
-            {props.children}
-        </ThemeProvider>
+        <StyledEngineProvider injectFirst>
+            <ThemeProvider theme={createTheme(adaptV4Theme(themeOptions))} {...props}>
+                {props.children}
+            </ThemeProvider>
+        </StyledEngineProvider>
     );
 }
 

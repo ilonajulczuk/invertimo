@@ -2,24 +2,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Field } from 'formik';
-import TextField from '@material-ui/core/TextField';
-import 'date-fns';
-import DateFnsUtils from '@date-io/date-fns';
-import {
-    MuiPickersUtilsProvider,
-    KeyboardDatePicker,
-} from '@material-ui/pickers';
 
+import TextField from '@mui/material/TextField';
+import AdapterDateFns from '@mui/lab/AdapterDateFns';
+import LocalizationProvider from '@mui/lab/LocalizationProvider';
 
-import FormHelperText from '@material-ui/core/FormHelperText';
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
+import FormHelperText from '@mui/material/FormHelperText';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
 
-import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import DatePicker from '../components/DatePicker';
 
 
 export const FormikTextField = ({ name, formHelperText, ...props }) => {
@@ -53,43 +50,51 @@ FormikTextField.propTypes = {
     formHelperText: PropTypes.string,
 };
 
-export function FormikDateField({ name, ...props }) {
+export function FormikDateField({
+    name,
+    maxDate = new Date("2099-12-31"),
+    minDate = new Date("1900-01-01"),
+    ...props }) {
 
     return (
         <Field
             validateOnBlur
             validateOnChange
         >
-            {({ form, field }) => (
+            {({ form, field }) => {
+                const currentError = form.errors[name];
+                const toShowError = Boolean(currentError);
+                return (
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <DatePicker
+                            disabled={false}
+                            clearable
+                            minDate={minDate}
+                            maxDate={maxDate}
+                            {...field}
+                            {...props}
+                            value={form.values[name]}
+                            onBlur={() => form.setFieldTouched(name, true, true)}
+                            error={true || Boolean(form.errors[name])}
+                            toShowError={toShowError}
+                            currentError={currentError}
+                            onChange={(value) => {
+                                form.setFieldValue(name, value, true);
+                            }}
 
-                <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                    <KeyboardDatePicker
-                        disableToolbar
-                        variant="inline"
-                        format="yyyy/MM/dd"
-                        margin="normal"
-                        {...field}
-                        {...props}
-                        value={form.values[name]}
-                        autoOk={true}
-                        error={Boolean(form.errors[name])}
-                        onChange={(_, value) => {
-                            form.setFieldValue(name, value);
-                        }}
-                        helperText={form.errors[name]}
-                        KeyboardButtonProps={{
-                            'aria-label': 'change date',
-                        }}
-                    />
-
-                </MuiPickersUtilsProvider>
-            )}
+                            ariaLabel="change date"
+                        />
+                    </LocalizationProvider>);
+            }
+            }
         </Field>
     );
 }
 
 FormikDateField.propTypes = {
     name: PropTypes.string.isRequired,
+    minDate: PropTypes.instanceOf(Date),
+    maxDate: PropTypes.instanceOf(Date),
 };
 
 

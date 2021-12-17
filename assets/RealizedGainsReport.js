@@ -9,7 +9,7 @@ import { filter, reduce } from 'lodash';
 
 import DatePicker from "./components/DatePicker.js";
 
-import { makeStyles } from '@material-ui/core/styles';
+import makeStyles from '@mui/styles/makeStyles';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
@@ -155,6 +155,7 @@ export default function RealizedGainsReport(props) {
                             setFromDate(value);
                         }}
                         ariaLabel='change from date'
+                        helperText="Provide a date in YYYY/MM/DD format"
                     />
                     <DatePicker
                         label="To date"

@@ -1,9 +1,9 @@
 import React from 'react';
-import Avatar from '@material-ui/core/Avatar';
-import Popover from '@material-ui/core/Popover';
-import { makeStyles } from '@material-ui/core/styles';
-import Icon from '@material-ui/core/Icon';
-import Chip from '@material-ui/core/Chip';
+import Avatar from '@mui/material/Avatar';
+import Popover from '@mui/material/Popover';
+import makeStyles from '@mui/styles/makeStyles';
+import Icon from '@mui/material/Icon';
+import Chip from '@mui/material/Chip';
 import PropTypes from 'prop-types';
 
 
