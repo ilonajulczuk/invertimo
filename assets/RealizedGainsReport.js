@@ -5,6 +5,7 @@ import AdapterDateFns from '@mui/lab/AdapterDateFns';
 import LocalizationProvider from '@mui/lab/LocalizationProvider';
 
 import PropTypes from 'prop-types';
+import { filter, reduce } from 'lodash';
 
 import DatePicker from "./components/DatePicker.js";
 
@@ -58,9 +59,9 @@ export default function RealizedGainsReport(props) {
     const [fromDate, setFromDate] = useState(new Date(new Date().getFullYear(), 0));
     const [toDate, setToDate] = useState(new Date());
 
-    const [showAssetHoldAge, setShowAssetHoldAge] = useState(false);
+    const [showAssetHoldTime, setShowAssetHoldTime] = useState(false);
     const handleSetShowAssetHoldAge = (event) => {
-        setShowAssetHoldAge(event.target.checked);
+        setShowAssetHoldTime(event.target.checked);
     };
 
     const [lots, setLots] = useState(null);
@@ -100,11 +101,17 @@ export default function RealizedGainsReport(props) {
 
         return () => mounted = false;
     },
-        [props.positions]// Specify dependencies.
+        [props.positions]
     );
 
     const lotsDisplay = lots ? <GainsDisplay
-        lots={lots} positions={props.positions} accounts={props.accounts} /> : <div>Loading...</div>;
+        lots={lots}
+        positions={props.positions}
+        accounts={props.accounts}
+        startDate={dates.from}
+        endDate={dates.to}
+        holdTime={showAssetHoldTime}
+    /> : <div>Loading...</div>;
     return (<ErrorBoundary>
 
         <div className={classes.header}>
@@ -170,14 +177,11 @@ export default function RealizedGainsReport(props) {
         </div>
         <div className={classes.header}>
             <FormGroup>
-                <FormControlLabel control={<Checkbox checked={showAssetHoldAge} onChange={handleSetShowAssetHoldAge} />} label="Show how long assets were held" />
+                <FormControlLabel control={<Checkbox checked={showAssetHoldTime} onChange={handleSetShowAssetHoldAge} />} label="Show how long assets were held" />
             </FormGroup>
 
         </div>
         {lotsDisplay}
-        <p>
-            Dates: {dates.from ? dates.from.toLocaleDateString() : "custom"} - {dates.to ? dates.to.toLocaleDateString() : "now"}
-        </p>
 
     </ErrorBoundary>);
 }
@@ -192,8 +196,13 @@ function GainsDisplay(props) {
     // Then render position + total gains
     // And then lots with links to transactions as a table with sort but no pagination.
     // Or should I still have pagination?
-    let lotsByPositionId = new Map(props.lots.map(lot => [lot.position, []]));
-    props.lots.forEach(lot => {
+
+    const lotsFilteredByDates = filter(props.lots, (lot) => {
+        return (new Date(lot.sell_date) < props.endDate || props.endDate === null) && (new Date(lot.sell_date) >= props.startDate);
+    });
+
+    let lotsByPositionId = new Map(lotsFilteredByDates.map(lot => [lot.position, []]));
+    lotsFilteredByDates.forEach(lot => {
         const lots = lotsByPositionId.get(lot.position);
         lots.push(lot);
     });
@@ -203,11 +212,20 @@ function GainsDisplay(props) {
     for (let [positionId, lots] of lotsByPositionId) {
         const position = positionsById.get(positionId);
         const account = accountsById.get(position.account);
+
+        const totalGain = reduce(lots, (sum, lot) => sum + Number(lot.realized_gain_account_currency), 0);
+        const totalGainRounded = Math.round(totalGain * 100) / 100;
         positionsAndLots.push(
             <div key={positionId}>
-                <h3><PositionLink position={position} account={account} /></h3>
+                <div style={{display: "flex", gap: "10px", alignItems: "baseline", marginBottom: "1rem", marginTop: "3rem"}}>
+                    <h3><PositionLink position={position} account={account} style={{fontSize: "14px"}}/></h3>
+                    <div style={{display: "flex", flexDirection: "column"}}>
+                        <span className="card-label">Total gain / loss</span>
+                        {totalGainRounded}
+                    </div>
+                </div>
                 <ul>
-                    <LotList lots={lots} position={position} account={account} />
+                    <LotList lots={lots} position={position} account={account} holdTime={props.holdTime} />
                 </ul>
             </div>
         );
@@ -236,4 +254,7 @@ GainsDisplay.propTypes = {
     })).isRequired,
     accounts: PropTypes.array.isRequired,
     positions: PropTypes.array.isRequired,
+    startDate: PropTypes.instanceOf(Date).isRequired,
+    endDate: PropTypes.instanceOf(Date),
+    holdTime: PropTypes.bool.isRequired,
 };
