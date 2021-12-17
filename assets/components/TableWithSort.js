@@ -121,7 +121,7 @@ const useStyles = makeStyles((theme) => ({
             color: "white",
             fontWeight: "bold",
         },
-        "& .MuiTableSortLabel-active": {
+        "& .Mui-active": {
             color: "white",
             fontWeight: "bold",
         },

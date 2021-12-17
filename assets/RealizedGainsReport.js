@@ -27,11 +27,18 @@ const useStyles = makeStyles({
     header: {
         display: "flex",
         justifyContent: "space-between",
-        alignItems: "center",
+        alignItems: "flex-start",
+        gap: "10px",
         flexWrap: "wrap",
     },
     pickers: {
         marginBottom: "16px",
+        "&>div": {
+            marginRight: "5px",
+        }
+    },
+    toggleButtons: {
+        padding: "15px",
     }
 });
 
@@ -124,16 +131,18 @@ export default function RealizedGainsReport(props) {
                 color="primary"
                 exclusive
                 onChange={handleDateSelection}
-                size="small"
                 aria-label="date selection"
             >
-                <ToggleButton value="this year" aria-label="this year">
+                <ToggleButton value="this year" aria-label="this year"
+                    className={classes.toggleButtons}>
                     This year up to now
                 </ToggleButton>
-                <ToggleButton value="last year" aria-label="last year">
+                <ToggleButton value="last year" aria-label="last year"
+                    className={classes.toggleButtons}>
                     Last year
                 </ToggleButton>
-                <ToggleButton value="custom" aria-label="custom dates">
+                <ToggleButton value="custom" aria-label="custom dates"
+                    className={classes.toggleButtons}>
                     Custom dates
                 </ToggleButton>
             </ToggleButtonGroup>
@@ -218,9 +227,9 @@ function GainsDisplay(props) {
         const totalGainRounded = Math.round(totalGain * 100) / 100;
         positionsAndLots.push(
             <div key={positionId}>
-                <div style={{display: "flex", gap: "10px", alignItems: "baseline", marginBottom: "1rem", marginTop: "3rem"}}>
-                    <h3><PositionLink position={position} account={account} style={{fontSize: "14px"}}/></h3>
-                    <div style={{display: "flex", flexDirection: "column"}}>
+                <div style={{ display: "flex", gap: "10px", alignItems: "baseline", marginBottom: "1rem", marginTop: "3rem" }}>
+                    <h3><PositionLink position={position} account={account} style={{ fontSize: "14px" }} /></h3>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
                         <span className="card-label">Total gain / loss</span>
                         {totalGainRounded}
                     </div>
