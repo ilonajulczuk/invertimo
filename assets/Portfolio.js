@@ -31,6 +31,7 @@ const Onboarding = React.lazy(() => import('./Onboarding'));
 const Transactions = React.lazy(() => import('./Transactions'));
 const AccountValue = React.lazy(() => import('./AccountValue'));
 
+
 const useStyles = makeStyles({
     root: {
         minWidth: 275,
@@ -437,6 +438,7 @@ export default class Portfolio extends React.Component {
                 handleAddTransaction={this.handleAddTransaction}
                 handleDeleteTransaction={this.handleDeleteTransaction}
                 handleCorrectTransaction={this.handleCorrectTransaction}
+                positions={this.state.positions}
                 accounts={this.state.accounts} />;
         }
         let maybeEvents = <h2>Loading events...</h2>;

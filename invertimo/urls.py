@@ -26,6 +26,7 @@ from finance.views import (
     AssetPricesView,
     AccountEventViewSet,
     AssetViewSet,
+    LotViewSet,
 )
 from rest_framework import routers
 
@@ -36,6 +37,7 @@ router.register(r"transactions", TransactionsViewSet, basename="transaction")
 router.register(r"accounts", AccountsViewSet, basename="account")
 router.register(r"account-events", AccountEventViewSet, basename="account-event")
 router.register(r"assets", AssetViewSet, basename="asset")
+router.register(r"lots", LotViewSet, basename="lot")
 
 urlpatterns = [
     path("", views.index_view, name="index"),

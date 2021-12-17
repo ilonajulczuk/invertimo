@@ -106,7 +106,7 @@ export function TransactionList(props) {
         { id: 'interaction', label: '' },
     ];
 
-    let accountsById = new Map(props.accounts.map(account => [account.id, account]));
+    const accountsById = new Map(props.accounts.map(account => [account.id, account]));
 
     const transactions = props.transactions.map(transaction => {
         let transactionCopy = { ...transaction };
@@ -179,14 +179,25 @@ export function TransactionList(props) {
         <ErrorBoundary>
             <div className={classes.header}>
                 <h2>Transactions</h2>
-                <Button
-                    href="#/transactions/record"
-                    variant="contained"
-                    color="secondary"
-                >
-                    <Icon>create</Icon>
+                <div style={{display: "flex", gap: "10px"}}>
+                    <Button
+                        href="#/transactions/realized_gains"
+                        variant="contained"
+                        color="primary"
+                    >
+                        <Icon>description</Icon>
+                    Realized gains report
+                </Button>
+                    <Button
+                        href="#/transactions/record"
+                        variant="contained"
+                        color="secondary"
+                    >
+                        <Icon>create</Icon>
                     Record transaction
                 </Button>
+                </div>
+
             </div>
             <TableWithSort
                 rows={transactions}

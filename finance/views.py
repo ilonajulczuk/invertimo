@@ -28,6 +28,7 @@ from finance.models import (
     Transaction,
     AccountEvent,
     Asset,
+    Lot,
 )
 from finance.serializers import (
     AssetSerializer,
@@ -45,6 +46,7 @@ from finance.serializers import (
     AddTransactionKnownAssetSerializer,
     AddTransactionNewAssetSerializer,
     CorrectTransactionSerializer,
+    LotSerializer,
 )
 
 
@@ -447,3 +449,18 @@ class AssetViewSet(
         return Asset.objects.filter(Q(added_by=None) | Q(added_by=user)).select_related(
             "exchange"
         )
+
+class LotViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+    ):
+    model = Lot
+    serializer_class = LotSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = LimitOffsetPagination
+    basename = "lot"
+
+    def get_queryset(self) -> QuerySet[Asset]:
+        assert isinstance(self.request.user, User)
+        user = self.request.user
+        return Lot.objects.filter(position__account__user=user).exclude(sell_transaction=None)

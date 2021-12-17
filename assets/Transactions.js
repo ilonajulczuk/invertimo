@@ -10,6 +10,8 @@ import { RecordTransactionForm } from './forms/RecordTransactionForm.js';
 import { TransactionList } from './TransactionList';
 import { TransactionDetail } from './TransactionDetail.js';
 import { useQuery } from './routing.js';
+import RealizedGainsReport from './RealizedGainsReport.js';
+
 
 export function RecordTransaction(props) {
 
@@ -40,6 +42,7 @@ export function RecordTransaction(props) {
 
     </div>);
 }
+
 
 RecordTransaction.propTypes = {
     defaultAssetOptions: PropTypes.array.isRequired,
@@ -79,6 +82,9 @@ export default function Transactions(props) {
                 />
 
             </Route>
+            <Route path={`${path}/realized_gains`}>
+                <RealizedGainsReport positions={props.positions} accounts={props.accounts}/>
+            </Route>
             <Route path={`${path}/:transactionId`}>
                 <TransactionDetail
                     transactions={props.transactions}
@@ -94,6 +100,7 @@ export default function Transactions(props) {
 
 Transactions.propTypes = {
     accounts: PropTypes.array.isRequired,
+    positions: PropTypes.array.isRequired,
     transactions: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.number.isRequired,
         quantity: PropTypes.string.isRequired,
