@@ -3,6 +3,7 @@ import { render, unmountComponentAtNode } from "react-dom";
 import { act } from "react-dom/test-utils";
 
 import { TableWithSort } from "./TableWithSort.js";
+import { MyThemeProvider } from '../theme.js';
 
 let container = null;
 
@@ -41,7 +42,7 @@ describe('table with sort', () => {
         ];
         act(() => {
             render(
-                <TableWithSort headCells={headCells} rows={rows} />,
+                <MyThemeProvider><TableWithSort headCells={headCells} rows={rows} /></MyThemeProvider>,
                 container
             );
         });
@@ -69,7 +70,7 @@ describe('table with sort', () => {
         ];
         act(() => {
             render(
-                <TableWithSort headCells={headCells} rows={rows} />,
+                <MyThemeProvider><TableWithSort headCells={headCells} rows={rows} /></MyThemeProvider>,
                 container
             );
         });
@@ -111,7 +112,7 @@ describe('table with sort', () => {
         ];
         act(() => {
             render(
-                <TableWithSort headCells={headCells} rows={rows} />,
+                <MyThemeProvider><TableWithSort headCells={headCells} rows={rows} /></MyThemeProvider>,
                 container
             );
         });
@@ -160,7 +161,7 @@ describe('table with sort', () => {
         ];
         act(() => {
             render(
-                <TableWithSort headCells={headCells} rows={rows} />,
+                <MyThemeProvider><TableWithSort headCells={headCells} rows={rows} /></MyThemeProvider>,
                 container
             );
         });
@@ -198,7 +199,7 @@ describe('table with sort', () => {
 
         act(() => {
             render(
-                <TableWithSort headCells={headCells} rows={rows} />,
+                <MyThemeProvider><TableWithSort headCells={headCells} rows={rows} /></MyThemeProvider>,
                 container
             );
         });

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import Button from '@material-ui/core/Button';
+import Button from '@mui/material/Button';
 
 import PropTypes from 'prop-types';
 
@@ -93,7 +93,7 @@ export function CreateAccountForm(props) {
                         <FormikSelectField
                             name="currency"
                             labelId="currency-select-label"
-                            label="currency"
+                            label="Currency"
                             id="currency"
                             data-testid="currency"
                             options={currencyOptions}
@@ -105,7 +105,7 @@ export function CreateAccountForm(props) {
                     <div>
                         <Button
                             type="submit"
-                            variant="outlined"
+                            variant="contained"
                             color="secondary"
                             disabled={isSubmitting}
                         >

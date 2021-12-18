@@ -9,6 +9,7 @@ import regeneratorRuntime from "regenerator-runtime";
 import Portfolio from "./Portfolio.js";
 import { PortfolioOverview, divideByAccount } from "./Portfolio.js";
 import { MemoryRouter } from "react-router-dom";
+import { MyThemeProvider } from './theme.js';
 
 
 const _ACCOUNT_POSITIONS = [
@@ -420,7 +421,9 @@ describe('portfolio tests', () => {
     expect.hasAssertions();
     await act(async () => {
       render(<MemoryRouter initialEntries={['/positions']}>
-        <Portfolio />
+        <MyThemeProvider>
+          <Portfolio />
+        </MyThemeProvider>
       </MemoryRouter>, container);
     });
     expect(pretty(container.innerHTML)).toContain('The Walt Disney Company');

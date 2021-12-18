@@ -1,10 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import Icon from '@material-ui/core/Icon';
-import Button from '@material-ui/core/Button';
+import Icon from '@mui/material/Icon';
+import Button from '@mui/material/Button';
 
-import { makeStyles } from '@material-ui/core/styles';
+import makeStyles from '@mui/styles/makeStyles';
 
 import { toSymbol } from './currencies.js';
 import { TableWithSort } from './components/TableWithSort.js';

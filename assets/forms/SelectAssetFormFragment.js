@@ -1,18 +1,18 @@
 /* eslint-disable no-use-before-define */
 import React, { useEffect } from 'react';
-import TextField from '@material-ui/core/TextField';
-import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
+import TextField from '@mui/material/TextField';
+import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 
 import { CircularProgress } from '@mui/material';
 
 import { FormikSelectField } from './muiformik.js';
 
-import Dialog from '@material-ui/core/Dialog';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogActions from '@material-ui/core/DialogActions';
-import Button from '@material-ui/core/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
 
 import { useStyles } from './styles.js';
 import { getAssets } from '../api_utils.js';
@@ -153,26 +153,14 @@ export function SelectAssetFormFragment(props) {
             if (typeof option === 'string') {
               return option;
             }
-            if (option.inputValue) {
-              return option.inputValue;
-            }
             if (option.newOption) {
-              return `${option.newOption}`;
+              return option.newOption;
             }
-            return `${option.symbol} - ${option.name} - ${option.isin}`;
+            return `${option.symbol} - ${option.name} - ${option.isin} (#${option.id})`;
           }}
           selectOnFocus
           clearOnBlur
           handleHomeEndKeys
-          renderOption={(option) => {
-            if (option.newOption) {
-              return <div className={classes.symbolOption}>{`${option.newOption}`}</div>;
-            }
-            return (
-              <div className={classes.symbolOption}>
-                <p>{`${option.symbol}`}: {`${option.name} - ${option.isin}`}</p>
-              </div>);
-          }}
           style={{ width: 400, display: "flex" }}
           freeSolo
           renderInput={(params) => (
@@ -218,7 +206,7 @@ export function SelectAssetFormFragment(props) {
         <FormikSelectField
           name="currency"
           labelId="currency-select-label"
-          label="currency"
+          label="Currency"
           id="currency"
           data-testid="currency"
           options={currencyOptions}

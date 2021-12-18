@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Icon from '@material-ui/core/Icon';
+import Icon from '@mui/material/Icon';
 import './select_positions.css';
 
 
