@@ -107,9 +107,10 @@ function FormControlSelect({ field, form, label, children, formHelperText, class
             <InputLabel id={`${name}-label`}
                 error={form.touched[name] && Boolean(form.errors[name])}>{label}</InputLabel>
             <Select
-
                 {...field}
                 {...props}
+                labelId={`${name}-label`}
+                label={label}
             >
                 {children}
             </Select>

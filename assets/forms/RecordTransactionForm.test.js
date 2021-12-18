@@ -1,5 +1,4 @@
 import React from "react";
-import { render, unmountComponentAtNode } from "react-dom";
 import { fireEvent, within, render as testingRender, screen } from '@testing-library/react';
 import { act } from "react-dom/test-utils";
 import userEvent from '@testing-library/user-event';
@@ -9,8 +8,8 @@ import userEvent from '@testing-library/user-event';
 import regeneratorRuntime from "regenerator-runtime";
 
 import { RecordTransactionForm } from "./RecordTransactionForm.js";
+import { MyThemeProvider } from '../theme.js';
 
-let container = null;
 
 
 const assetOptions = [
@@ -66,18 +65,6 @@ jest.mock("../api_utils", () => {
 
 
 describe('form for recording transactions', () => {
-    beforeEach(() => {
-        // setup a DOM element as a render target.
-        container = document.createElement("div");
-        document.body.appendChild(container);
-    });
-
-    afterEach(() => {
-        // Cleanup on exiting.
-        unmountComponentAtNode(container);
-        container.remove();
-        container = null;
-    });
 
     it("form renders correctly", async () => {
         expect.hasAssertions();
@@ -101,17 +88,19 @@ describe('form for recording transactions', () => {
         };
 
         act(() => {
-            render(
-                <RecordTransactionForm accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false} defaultAssetOptions={assetOptions} />,
-                container
+            testingRender(
+                <MyThemeProvider>
+                    <RecordTransactionForm accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false} defaultAssetOptions={assetOptions} />
+                </MyThemeProvider>,
             );
         });
 
-        const submitButton = container.querySelector(
-            '[data-test-id=record-transaction-button]');
 
-        expect(submitButton).not.toBeNull();
         await act(async () => {
+            const submitButton = document.querySelector(
+                '[data-test-id=record-transaction-button]');
+
+            expect(submitButton).not.toBeNull();
             submitButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
         });
 
@@ -120,7 +109,7 @@ describe('form for recording transactions', () => {
         expect(submittedValues).toEqual(null);
 
         // Only shows if there are errors.
-        const quantityHelperText = container.querySelector('#quantity-helper-text');
+        const quantityHelperText = document.querySelector('#quantity-helper-text');
         expect(quantityHelperText.innerHTML).toContain("Quantity is required");
 
         console.log(Array.from(document.querySelectorAll('[aria-invalid="true"]')).map(
@@ -148,11 +137,12 @@ describe('form for recording transactions', () => {
 
         act(() => {
             testingRender(
-                <RecordTransactionForm
-                    accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
-                    executedAtDate={new Date("2021-08-10")}
-                    defaultAssetOptions={assetOptions}
-                />,
+                <MyThemeProvider>
+                    <RecordTransactionForm
+                        accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
+                        executedAtDate={new Date("2021-08-10")}
+                        defaultAssetOptions={assetOptions}
+                    /></MyThemeProvider>,
 
             );
         });
@@ -248,11 +238,11 @@ describe('form for recording transactions', () => {
 
         act(() => {
             testingRender(
-                <RecordTransactionForm
+                <MyThemeProvider><RecordTransactionForm
                     accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
                     executedAtDate={new Date("2021-08-10")}
                     defaultAssetOptions={assetOptions}
-                />,
+                /></MyThemeProvider>,
 
             );
         });
@@ -348,11 +338,14 @@ describe('form for recording transactions', () => {
 
         act(() => {
             testingRender(
-                <RecordTransactionForm
-                    accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
-                    executedAtDate={new Date("2021-08-10")}
-                    defaultAssetOptions={assetOptions}
-                />,
+                <MyThemeProvider>
+                    <RecordTransactionForm
+                        accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
+                        executedAtDate={new Date("2021-08-10")}
+                        defaultAssetOptions={assetOptions}
+                    />
+                </MyThemeProvider>
+                ,
 
             );
         });
@@ -459,11 +452,12 @@ describe('form for recording transactions', () => {
 
         act(() => {
             testingRender(
-                <RecordTransactionForm
-                    accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
-                    executedAtDate={new Date("2021-08-10")}
-                    defaultAssetOptions={assetOptions}
-                />,
+                <MyThemeProvider>
+                    <RecordTransactionForm
+                        accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
+                        executedAtDate={new Date("2021-08-10")}
+                        defaultAssetOptions={assetOptions}
+                    /></MyThemeProvider>,
 
             );
         });
@@ -560,11 +554,11 @@ describe('form for recording transactions', () => {
 
         act(() => {
             testingRender(
-                <RecordTransactionForm
+                <MyThemeProvider><RecordTransactionForm
                     accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
                     executedAtDate={new Date("2021-08-10")}
                     defaultAssetOptions={assetOptions}
-                />,
+                /></MyThemeProvider>,
 
             );
         });

@@ -153,26 +153,14 @@ export function SelectAssetFormFragment(props) {
             if (typeof option === 'string') {
               return option;
             }
-            if (option.inputValue) {
-              return option.inputValue;
-            }
             if (option.newOption) {
-              return `${option.newOption}`;
+              return option.newOption;
             }
-            return `${option.symbol} - ${option.name} - ${option.isin}`;
+            return `${option.symbol} - ${option.name} - ${option.isin} (#${option.id})`;
           }}
           selectOnFocus
           clearOnBlur
           handleHomeEndKeys
-          renderOption={(option) => {
-            if (option.newOption) {
-              return <div className={classes.symbolOption}>{`${option.newOption}`}</div>;
-            }
-            return (
-              <div className={classes.symbolOption}>
-                <p>{`${option.symbol}`}: {`${option.name} - ${option.isin}`}</p>
-              </div>);
-          }}
           style={{ width: 400, display: "flex" }}
           freeSolo
           renderInput={(params) => (

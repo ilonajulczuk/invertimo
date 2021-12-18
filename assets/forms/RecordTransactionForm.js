@@ -213,7 +213,7 @@ export function RecordTransactionForm(props) {
 
     const validationSchema = yup.object({
         symbol: yup
-            .lazy(value => typeof value === 'string' ? yup.string().required() : yup.object().required()),
+            .lazy(value => typeof value === 'string' ? yup.string().required() : yup.object().required('Symbol is required')),
         exchange: yup
             .string()
             .required('Exchange is required'),
@@ -386,7 +386,7 @@ export function RecordTransactionForm(props) {
                     <div>
                         <Button
                             type="submit"
-                            variant="outlined"
+                            variant="contained"
                             color="secondary"
                             data-test-id="record-transaction-button"
                             disabled={isSubmitting}

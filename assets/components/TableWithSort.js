@@ -102,10 +102,9 @@ const useStyles = makeStyles((theme) => ({
     paper: {
         width: '100%',
         marginBottom: theme.spacing(2),
-
         boxShadow: '6px 8px 0px 2px #1b98a147',
-        borderRadius: 0,
-        border: "1px solid #384a5052",
+        borderLeft: "1px solid #384a5052",
+        borderBottom: "1px solid #384a5052",
 
     },
     heading: {

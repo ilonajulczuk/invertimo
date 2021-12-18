@@ -21,11 +21,11 @@ const useStyles = makeStyles((theme) => ({
         },
     },
     button: {
-        marginRight: theme.spacing(1),
+        marginRight: "10px",
     },
     instructions: {
-        marginTop: theme.spacing(2),
-        marginBottom: theme.spacing(2),
+        marginTop: "20px",
+        marginBottom: "20px",
     },
 }));
 
