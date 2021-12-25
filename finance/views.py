@@ -1,9 +1,8 @@
 import datetime
 
 from rest_framework import status
-import pytz
-from django.db.models import Count, Sum, Subquery, OuterRef, QuerySet
-from django.shortcuts import get_object_or_404, render
+from django.db.models import Count, Subquery, OuterRef, QuerySet
+from django.shortcuts import get_object_or_404
 from rest_framework import (
     exceptions,
     generics,
@@ -47,7 +46,10 @@ from finance.serializers import (
     AddTransactionNewAssetSerializer,
     CorrectTransactionSerializer,
     LotSerializer,
+    DegiroUploadSerializer,
 )
+
+from finance.degiro_parser import import_transactions_from_file
 
 
 class AccountsViewSet(viewsets.ModelViewSet):
@@ -464,3 +466,34 @@ class LotViewSet(
         assert isinstance(self.request.user, User)
         user = self.request.user
         return Lot.objects.filter(position__account__user=user).exclude(sell_transaction=None)
+
+
+class DegiroUploadViewSet(
+    viewsets.GenericViewSet,
+    ):
+    serializer_class = DegiroUploadSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request):
+
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        assert isinstance(self.request.user, User)
+        self.request.user
+
+        arguments = serializer.validated_data.copy()
+        print(arguments)
+
+        try:
+            account_repository = accounts.AccountRepository()
+            account = account_repository.get(user=self.request.user, id=serializer.validated_data["account"])
+        except models.Account.DoesNotExist:
+            raise exceptions.PermissionDenied(detail={"account": "Current user doesn't have access to this account or it doesn't exist."})
+        failed_records = import_transactions_from_file(account, arguments["transaction_file"])
+
+        print(failed_records)
+        print(len(failed_records))
+        return Response(status=status.HTTP_201_CREATED,
+        )

@@ -21,11 +21,15 @@ def import_transaction(account, transaction_record):
     local_value = transaction_record["Local value"]
     total_in_account_currency = transaction_record["Total"]
     value_in_account_currency = transaction_record["Value"]
-    transaction_costs = transaction_record["Transaction costs"].astype(str)
+    if "Transaction costs" in transaction_record:
+        transaction_costs = transaction_record["Transaction costs"].astype(str)
+    else:
+        transaction_costs = transaction_record["Transaction and/or third"].astype(str)
     order_id = transaction_record["Order ID"]
     quantity = transaction_record["Quantity"]
     price = transaction_record["Price"]
     local_currency = transaction_record["Local value currency"]
+    # TODO: validate that the account currency is the same as the account.
     exchange_mic = transaction_record["Venue"]
     exchange_ref = transaction_record["Reference"]
     exchange = exchanges.ExchangeRepository().get(exchange_mic, exchange_ref)
@@ -57,6 +61,7 @@ def import_transactions_from_file(account, filename):
     transactions_data["Price currency"] = transactions_data["Unnamed: 8"]
     transactions_data["Local value currency"] = transactions_data["Unnamed: 10"]
     transactions_data["Value currency"] = transactions_data["Unnamed: 12"]
+    transactions_data["Transaction costs currency"] = transactions_data["Unnamed: 15"]
     transactions_data["Transaction costs currency"] = transactions_data["Unnamed: 15"]
     transactions_data["Total currency"] = transactions_data["Unnamed: 17"]
     transactions_data_clean = transactions_data.drop(

@@ -579,3 +579,8 @@ class LotSerializer(serializers.ModelSerializer[Lot]):
     class Meta:
         model = Lot
         fields = "__all__"
+
+
+class DegiroUploadSerializer(serializers.Serializer[Any]):
+    account = serializers.IntegerField()
+    transaction_file = serializers.FileField()
