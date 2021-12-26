@@ -9,6 +9,31 @@ from finance import accounts
 import datetime
 
 
+class CurrencyMismatch(ValueError):
+    pass
+
+
+class InvalidFormat(ValueError):
+    pass
+
+
+REQUIRED_TRANSACTION_COLUMNS = (
+    "Date",
+    "Time",
+    "ISIN",
+    "Local value",
+    "Total",
+    "Value",
+    "Transaction costs",
+    "Order ID",
+    "Quantity",
+    "Price",
+    "Value currency",
+    "Venue",
+    "Reference",
+)
+
+
 def import_transaction(account, transaction_record):
     date = transaction_record["Date"]
     day, month, year = date.split("-")
@@ -28,8 +53,10 @@ def import_transaction(account, transaction_record):
     order_id = transaction_record["Order ID"]
     quantity = transaction_record["Quantity"]
     price = transaction_record["Price"]
-    local_currency = transaction_record["Local value currency"]
-    # TODO: validate that the account currency is the same as the account.
+    account_currency = transaction_record["Value currency"]
+
+    if models.currency_enum_from_string(account_currency) != account.currency:
+        raise CurrencyMismatch("Currency of import didn't match the account")
     exchange_mic = transaction_record["Venue"]
     exchange_ref = transaction_record["Reference"]
     exchange = exchanges.ExchangeRepository().get(exchange_mic, exchange_ref)
@@ -57,24 +84,41 @@ def import_transaction(account, transaction_record):
 
 @transaction.atomic()
 def import_transactions_from_file(account, filename):
-    transactions_data = pd.read_csv(filename)
-    transactions_data["Price currency"] = transactions_data["Unnamed: 8"]
-    transactions_data["Local value currency"] = transactions_data["Unnamed: 10"]
-    transactions_data["Value currency"] = transactions_data["Unnamed: 12"]
-    transactions_data["Transaction costs currency"] = transactions_data["Unnamed: 15"]
-    transactions_data["Transaction costs currency"] = transactions_data["Unnamed: 15"]
-    transactions_data["Total currency"] = transactions_data["Unnamed: 17"]
-    transactions_data_clean = transactions_data.drop(
-        ["Unnamed: 8", "Unnamed: 10", "Unnamed: 12", "Unnamed: 15", "Unnamed: 17"],
-        axis=1,
-    )
+    try:
+        transactions_data = pd.read_csv(filename)
+        transactions_data["Price currency"] = transactions_data["Unnamed: 8"]
+        transactions_data["Local value currency"] = transactions_data["Unnamed: 10"]
+        transactions_data["Value currency"] = transactions_data["Unnamed: 12"]
+        transactions_data["Transaction costs currency"] = transactions_data[
+            "Unnamed: 15"
+        ]
+        transactions_data["Transaction costs currency"] = transactions_data[
+            "Unnamed: 15"
+        ]
+        transactions_data["Total currency"] = transactions_data["Unnamed: 17"]
+
+        if "Transaction and/or third" in transactions_data.columns:
+            transactions_data["Transaction costs"] = transactions_data[
+                "Transaction and/or third"
+            ]
+        transactions_data_clean = transactions_data.drop(
+            ["Unnamed: 8", "Unnamed: 10", "Unnamed: 12", "Unnamed: 15", "Unnamed: 17"],
+            axis=1,
+        )
+        for column in REQUIRED_TRANSACTION_COLUMNS:
+            if column not in transactions_data_clean.columns:
+                raise InvalidFormat(f"Column: '{column}' missing in the csv file")
+
+    except pd.errors.ParserError as e:
+        raise InvalidFormat("Failed to parse csv", e)
     failed_records = []
     for x in range(0, len(transactions_data_clean)):
         try:
             transaction_record = transactions_data_clean.iloc[x]
             import_transaction(account, transaction_record)
+        except CurrencyMismatch as e:
+            raise e
         except Exception as e:
             print("Import exception", e)
             failed_records.append(transaction_record)
-    print("Failed records", len(failed_records))
     return failed_records

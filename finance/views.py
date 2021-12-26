@@ -49,7 +49,7 @@ from finance.serializers import (
     DegiroUploadSerializer,
 )
 
-from finance.degiro_parser import import_transactions_from_file
+from finance.degiro_parser import CurrencyMismatch, InvalidFormat, import_transactions_from_file
 
 
 class AccountsViewSet(viewsets.ModelViewSet):
@@ -477,6 +477,7 @@ class DegiroUploadViewSet(
 
     def get(self, request):
         return Response(status=status.HTTP_200_OK, data={"result": "nothing to show here"})
+
     def create(self, request):
 
         serializer = self.get_serializer(
@@ -487,16 +488,19 @@ class DegiroUploadViewSet(
         self.request.user
 
         arguments = serializer.validated_data.copy()
-        print(arguments)
 
         try:
             account_repository = accounts.AccountRepository()
             account = account_repository.get(user=self.request.user, id=serializer.validated_data["account"])
         except models.Account.DoesNotExist:
             raise exceptions.PermissionDenied(detail={"account": "Current user doesn't have access to this account or it doesn't exist."})
-        failed_records = import_transactions_from_file(account, arguments["transaction_file"])
+        try:
+            failed_records = import_transactions_from_file(account, arguments["transaction_file"])
+        except CurrencyMismatch as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": e.args[0]})
+        except InvalidFormat as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": e.args[0]})
 
-        print(failed_records)
         print(len(failed_records))
         return Response(status=status.HTTP_201_CREATED,
         )

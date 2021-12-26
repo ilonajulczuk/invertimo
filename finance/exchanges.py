@@ -113,7 +113,6 @@ def get_or_create_asset(isin: str, exchange: models.Exchange):
     exchange_code = exchange.identifiers.get(id_type=models.ExchangeIDType.CODE).value
     asset_records = query_asset(isin)
     for record in asset_records:
-
         if record["Exchange"] == exchange_code:
 
             currency = models.currency_enum_from_string(record["Currency"])

@@ -1,4 +1,4 @@
-Date,Time,Product,ISIN,Reference,Venue,Quantity,Price,,Local value,,Value,,Exchange rate,Transaction and/or third,,Total,,Order ID
+Foo,Time,Product,Bar,Reference,Venue,Quantity,Price,,Local value,,Value,,Exchange rate,Transaction and/or third,,Total,,Order ID
 18-11-2021,15:30,PAYPAL HOLDINGS INC.,US70450Y103812,NDQ,XNAS,1,206.2600,USD,-206.26,USD,-181.90,EUR,1.1328,-0.50,EUR,-182.40,EUR,c5f82c79-b966-412a-bdbe-08363e125b4e
 13-08-2021,15:30,Nike,US6541061031,NDQ,XNAS,8,148.9900,USD,-1191.92,USD,-1012.68,EUR,1.1758,-0.53,EUR,-1013.21,EUR,83ddfa4b-1787-4f32-a13c-e30af6b907a6
 12-08-2021,15:30,META PLATFORMS INC,US30303M102712,NDQ,XNAS,5,358.7300,USD,-1793.65,USD,-1528.72,EUR,1.1721,-0.52,EUR,-1529.24,EUR,c13576de-c79f-4a3d-a988-889801300ba0
