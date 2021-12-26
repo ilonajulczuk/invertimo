@@ -39,7 +39,8 @@ router.register(r"accounts", AccountsViewSet, basename="account")
 router.register(r"account-events", AccountEventViewSet, basename="account-event")
 router.register(r"assets", AssetViewSet, basename="asset")
 router.register(r"lots", LotViewSet, basename="lot")
-router.register(r"integrations", DegiroUploadViewSet, basename="tranaction-upload")
+router.register(r"integrations/degiro/transactions", DegiroUploadViewSet, basename="degiro-transaction-upload")
+
 
 urlpatterns = [
     path("", views.index_view, name="index"),

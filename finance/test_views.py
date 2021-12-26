@@ -2,17 +2,19 @@ import datetime
 import decimal
 
 from django.contrib.auth.models import User
-from django.db.models import Sum
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
 from django.utils import timezone
 
 
-from hypothesis.extra.django import TestCase as HypothesisTestCase, TransactionTestCase
+from hypothesis.extra.django import TestCase as HypothesisTestCase
 from django.urls import reverse
 
-from hypothesis import example, given, strategies as st
+from hypothesis import given, strategies as st
 
 from finance import accounts, models, utils
+
+from finance import testing_utils
+
 
 _FAKE_TRANSACTIONS = [
     ("2021-04-27 10:00Z", 3, 12.11),  # Price after the transaction: 3
@@ -72,58 +74,7 @@ def _add_transaction(
 
 
 
-class ViewTestBase:
-    """ViewTestVase is meant to be used as a base class with the django.test.TestCase
-
-    It offers basic tests for views, so that they don't have to be reimplemented each time.
-    It doesn't inherit from TestCase because we don't want those tests to run, we only want them
-    to be run in the child classes.
-    """
-
-    URL = None
-    VIEW_NAME = None
-    DETAIL_VIEW = False
-    QUERY_PARAMS = "?"
-    # Change to None if the view is fine to access while not authenticated.
-    UNAUTHENTICATED_CODE = 302  # Redirect by default.
-
-    def setUp(self):
-        self.user = User.objects.create(username="testuser", email="test@example.com")
-        self.client.force_login(self.user)
-
-    def get_url(self):
-        return self.URL
-
-    def get_reversed_url(self):
-        return reverse(self.VIEW_NAME)
-
-    def test_url_exists(self):
-        response = self.client.get(self.get_url() + self.QUERY_PARAMS)
-        self.assertEqual(response.status_code, 200)
-
-    def test_view_accessible_by_name(self):
-        response = self.client.get(self.get_reversed_url() + self.QUERY_PARAMS)
-        self.assertEqual(response.status_code, 200)
-
-    def test_cant_access_without_logging_in(self):
-        self.client.logout()
-        response = self.client.get(self.get_reversed_url() + self.QUERY_PARAMS)
-        # If UNAUTHENTICATE_CODE is overridden to None, it means that it shouldn't
-        # be disallowed.
-        if self.UNAUTHENTICATED_CODE:
-            self.assertEquals(response.status_code, self.UNAUTHENTICATED_CODE)
-
-    def test_cant_access_objects_of_other_users(self):
-        if self.DETAIL_VIEW:
-            user2 = User.objects.create(
-                username="anotheruser", email="test2@example.com"
-            )
-            self.client.force_login(user2)
-            response = self.client.get(self.get_reversed_url() + self.QUERY_PARAMS)
-            self.assertEquals(response.status_code, 404)
-
-
-class TestPositionsView(ViewTestBase, TestCase):
+class TestPositionsView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/positions/"
     VIEW_NAME = "api-positions"
     DETAIL_VIEW = False
@@ -178,7 +129,7 @@ class TestPositionsView(ViewTestBase, TestCase):
         self.assertContains(response, '"latest_exchange_rate":"1')
 
 
-class TestPositionDetailView(ViewTestBase, TestCase):
+class TestPositionDetailView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/positions/%s/"
     VIEW_NAME = "api-position"
     DETAIL_VIEW = True
@@ -209,7 +160,7 @@ class TestPositionDetailView(ViewTestBase, TestCase):
         return reverse(self.VIEW_NAME, args=[self.position.pk])
 
 
-class TestAccountsView(ViewTestBase, HypothesisTestCase):
+class TestAccountsView(testing_utils.ViewTestBase, HypothesisTestCase):
     URL = "/api/accounts/"
     VIEW_NAME = "account-list"
     DETAIL_VIEW = False
@@ -300,7 +251,7 @@ class TestAccountsView(ViewTestBase, HypothesisTestCase):
         self.assertEqual(models.Account.objects.count(), 2)
 
 
-class TestAccountDetailView(ViewTestBase, TestCase):
+class TestAccountDetailView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/accounts/%s/"
     VIEW_NAME = "account-detail"
     DETAIL_VIEW = True
@@ -400,7 +351,7 @@ class TestAccountDetailView(ViewTestBase, TestCase):
         self.assertEqual(self.account.currency, models.Currency.USD)
 
 
-class TestTransactionsView(ViewTestBase, TestCase):
+class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/transactions/"
     VIEW_NAME = "transaction-list"
     DETAIL_VIEW = False
@@ -584,7 +535,7 @@ class TestTransactionsView(ViewTestBase, TestCase):
         self.assertEqual(response.status_code, 400)
 
 
-class TestTransactionDetailView(ViewTestBase, TestCase):
+class TestTransactionDetailView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/transactions/%s/"
     VIEW_NAME = "transaction-detail"
     DETAIL_VIEW = True
@@ -787,7 +738,7 @@ _FAKE_EVENTS_CASH_TRANSFERS = (
 )
 
 
-class TestAccountEventListView(ViewTestBase, TestCase):
+class TestAccountEventListView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/account-events/"
     VIEW_NAME = "account-event-list"
     DETAIL_VIEW = False
@@ -959,7 +910,7 @@ class TestAccountEventListView(ViewTestBase, TestCase):
         self.assertTrue("amount" in response.json())
 
 
-class TestAccountEventDetailView(ViewTestBase, TestCase):
+class TestAccountEventDetailView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/account-events/%s/"
     VIEW_NAME = "account-event-detail"
     DETAIL_VIEW = True
@@ -999,7 +950,7 @@ class TestAccountEventDetailView(ViewTestBase, TestCase):
 
 
 
-class TestAssetListView(ViewTestBase, TestCase):
+class TestAssetListView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/assets/"
     VIEW_NAME = "asset-list"
     DETAIL_VIEW = False
@@ -1064,7 +1015,7 @@ class TestAssetListView(ViewTestBase, TestCase):
         self.assertFalse(self.custom_asset_of_another_user.id in ids)
 
 
-class TestLotListView(ViewTestBase, TestCase):
+class TestLotListView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/lots/"
     VIEW_NAME = "lot-list"
     DETAIL_VIEW = False

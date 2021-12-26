@@ -474,6 +474,9 @@ class DegiroUploadViewSet(
     serializer_class = DegiroUploadSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+
+    def get(self, request):
+        return Response(status=status.HTTP_200_OK, data={"result": "nothing to show here"})
     def create(self, request):
 
         serializer = self.get_serializer(
