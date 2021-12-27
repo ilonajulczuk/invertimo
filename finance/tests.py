@@ -78,9 +78,10 @@ class TestDegiroParser(TestCase):
         account = models.Account.objects.create(
             user=User.objects.all()[0], nickname="test"
         )
-        failed_records = degiro_parser.import_transactions_from_file(
+        transaction_import = degiro_parser.import_transactions_from_file(
             account, "./finance/transactions_example_short.csv"
         )
+        failed_records = transaction_import.records.filter(successful=False)
         self.assertEqual(len(failed_records), 0)
         self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
         account = models.Account.objects.get(nickname="test")
@@ -366,7 +367,7 @@ class TestPosition(TestCase):
 
         executed_at = "2021-04-27 11:00Z"
 
-        transaction = account_repository.add_transaction(
+        transaction, _ = account_repository.add_transaction(
             self.account,
             self.isin,
             self.exchange,

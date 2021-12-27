@@ -18,6 +18,8 @@ from finance.models import (
     Asset,
     Transaction,
     Lot,
+    TransactionImport,
+    TransactionImportRecord,
 )
 
 
@@ -584,3 +586,26 @@ class LotSerializer(serializers.ModelSerializer[Lot]):
 class DegiroUploadSerializer(serializers.Serializer[Any]):
     account = serializers.IntegerField()
     transaction_file = serializers.FileField()
+
+
+class TransactionImportRecordSerializer(serializers.ModelSerializer[TransactionImportRecord]):
+
+    class Meta:
+        model = TransactionImportRecord
+        fields = "__all__"
+
+
+class TransactionImportSerializer(serializers.ModelSerializer[TransactionImport]):
+
+    records = TransactionImportRecordSerializer(many=True)
+
+    class Meta:
+        model = TransactionImport
+        fields = [
+            "id",
+            "account",
+            "created_at",
+            "status",
+            "integration",
+            "records",
+        ]

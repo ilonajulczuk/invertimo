@@ -54,7 +54,7 @@ def _add_transaction(
     total_in_account_currency = decimal.Decimal(0.5)
     order_id = "123"
     account_repository = accounts.AccountRepository()
-    transaction = account_repository.add_transaction(
+    transaction, _ = account_repository.add_transaction(
         account,
         isin,
         exchange,

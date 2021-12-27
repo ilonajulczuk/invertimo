@@ -502,3 +502,36 @@ class Lot(models.Model):
 
     class Meta:
         ordering = ["buy_date"]
+
+
+class IntegrationType(models.IntegerChoices):
+    DEGIRO = 1, _("DEGIRO")
+
+
+class ImportStatus(models.IntegerChoices):
+    SUCCESS = 1, _("Success")
+    PARTIAL_SUCCESS = 2, _("Partial success")
+    FAILURE = 3, _("Failure")
+
+
+class TransactionImport(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    integration = models.IntegerField(choices=IntegrationType.choices)
+    status = models.IntegerField(choices=ImportStatus.choices)
+
+
+class ImportIssueType(models.IntegerChoices):
+    UNKNOWN_FAILURE = 1, _("UNKNOWN_FAILURE")
+    SOLD_BEFORE_BOUGHT = 2, _("SOLD_BEFORE_BOUGHT")
+    BAD_FORMAT = 3, _("BAD_FORMAT")
+
+
+class TransactionImportRecord(models.Model):
+    transaction_import = models.ForeignKey(TransactionImport, related_name="records", on_delete=models.CASCADE)
+    transaction = models.ForeignKey(Transaction, null=True, related_name="import_records", on_delete=models.SET_NULL)
+    raw_record = models.TextField()
+    created_new = models.BooleanField(default=False)
+    successful = models.BooleanField(default=True)
+    issue_type = models.IntegerField(choices=ImportIssueType.choices, null=True)
+    raw_issue = models.TextField(null=True)
