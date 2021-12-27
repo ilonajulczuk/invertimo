@@ -501,6 +501,6 @@ class DegiroUploadViewSet(
         except InvalidFormat as e:
             return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": e.args[0]})
 
-        print(len(failed_records))
+        print("Failed records", len(failed_records))
         return Response(status=status.HTTP_201_CREATED,
         )

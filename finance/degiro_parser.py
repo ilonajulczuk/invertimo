@@ -1,5 +1,4 @@
 import pandas as pd
-import requests
 from django.conf import settings
 import decimal
 from finance import models
@@ -34,14 +33,11 @@ REQUIRED_TRANSACTION_COLUMNS = (
 )
 
 
-def import_transaction(account, transaction_record):
-    date = transaction_record["Date"]
-    day, month, year = date.split("-")
-    time = transaction_record["Time"]
-    datestr = f"{year}-{month}-{day} {time}Z"
+_DATE_FORMAT = "%Y-%m-%d %H:%M%z"
 
-    date_format = "%Y-%m-%d %H:%M%z"
-    executed_at = datetime.datetime.strptime(datestr, date_format)
+
+def import_transaction(account, transaction_record):
+    executed_at = transaction_record["Datetime"]
     isin = transaction_record["ISIN"]
     local_value = transaction_record["Local value"]
     total_in_account_currency = transaction_record["Total"]
@@ -109,6 +105,21 @@ def import_transactions_from_file(account, filename):
             if column not in transactions_data_clean.columns:
                 raise InvalidFormat(f"Column: '{column}' missing in the csv file")
 
+        def transform_to_datetime(transaction_record):
+            date = transaction_record["Date"]
+            try:
+                day, month, year = date.split("-")
+                time = transaction_record["Time"]
+                return datetime.datetime.strptime(
+                    f"{year}-{month}-{day} {time}Z", _DATE_FORMAT
+                )
+            except:
+                return None
+
+        transactions_data_clean["Datetime"] = transactions_data_clean[
+            ["Date", "Time"]
+        ].apply(transform_to_datetime, axis=1)
+        transactions_data_clean = transactions_data_clean.sort_values(by="Datetime")
     except pd.errors.ParserError as e:
         raise InvalidFormat("Failed to parse csv", e)
     failed_records = []
@@ -120,5 +131,7 @@ def import_transactions_from_file(account, filename):
             raise e
         except Exception as e:
             print("Import exception", e)
-            failed_records.append(transaction_record)
+            failed_records.append({
+                "record": transaction_record,
+                "issue": str(e)})
     return failed_records

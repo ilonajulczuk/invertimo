@@ -29,6 +29,7 @@ asset_response = [
         "previousClose": 147.26,
         "previousCloseDate": "2021-12-23",
     },
+
     {
         "Code": "NKE",
         "Exchange": "F",
@@ -51,7 +52,39 @@ asset_response = [
         "previousClose": 169.8,
         "previousCloseDate": "2021-12-06",
     },
+    # Items below are so that I will have more supported exchanges.
+    {
+        "Code": "NKE",
+        "Exchange": "LSE",
+        "Name": "NIKE Inc",
+        "Type": "Common Stock",
+        "Country": "Germany",
+        "Currency": "EUR",
+        "ISIN": "US6541061031",
+        "previousClose": 147.26,
+        "previousCloseDate": "2021-12-23",
+    },
+    {
+        "Code": "NKE",
+        "Exchange": "MI",
+        "Name": "NIKE Inc",
+        "Type": "Common Stock",
+        "Country": "Germany",
+        "Currency": "EUR",
+        "ISIN": "US6541061031",
+        "previousClose": 147.26,
+        "previousCloseDate": "2021-12-23",
+    },
 ]
+
+
+def _assets_with_isin_side_effect(isin):
+    response = []
+    for entry in asset_response:
+        cp = entry.copy()
+        cp["ISIN"] = isin
+        response.append(cp)
+    return asset_response
 
 
 class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
@@ -77,16 +110,7 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
 
     @patch('finance.exchanges.query_asset')
     def test_can_upload_to_owned_account(self , query_asset_mock):
-
-        def assets_with_isin(isin):
-            response = []
-            for entry in asset_response:
-                cp = entry.copy()
-                cp["ISIN"] = isin
-                response.append(cp)
-            return asset_response
-
-        query_asset_mock.side_effect = assets_with_isin
+        query_asset_mock.side_effect = _assets_with_isin_side_effect
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
 
@@ -122,6 +146,7 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
                 return asset_response
             else:
                 return []
+
         query_asset_mock.side_effect = assets_or_empty
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
@@ -154,12 +179,37 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
     def test_something_not_uploaded_for_random_reason(self):
         pass
 
-    def test_transactions_latest_to_oldest_uploads_correctly(self):
+    @patch('finance.exchanges.query_asset')
+    def test_transactions_latest_to_oldest_uploads_correctly(self, query_asset_mock):
         # This makes sure that the transactions from the file are sorted correctly
         # before being ingested.
-        pass
+        query_asset_mock.side_effect = _assets_with_isin_side_effect
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
 
-    def test_incomplete_transaction_list_prevents_uploading(self):
+        self.assertEqual(models.Transaction.objects.count(), 0)
+        with open("./finance/transactions_many_latest_first.csv", "rb") as fp:
+            response = self.client.post(
+                self.URL, {"account": self.account.id, "transaction_file": fp}
+            )
+
+        self.assertEqual(response.status_code, 201)
+        # There is 185 records in the file, but one is clearly invalid.
+        self.assertEqual(models.Transaction.objects.count(), 184)
+
+    @patch('finance.exchanges.query_asset')
+    def test_incomplete_transaction_list_prevents_uploading(self, query_asset_mock):
         # This is a scenario when you upload the transactions out of
         # order, e.g. later transactions of selling assets you haven't bought.
-        pass
+        query_asset_mock.side_effect = _assets_with_isin_side_effect
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(models.Transaction.objects.count(), 0)
+        with open("./finance/transactions_many_buying_trimmed.csv", "rb") as fp:
+            response = self.client.post(
+                self.URL, {"account": self.account.id, "transaction_file": fp}
+            )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(models.Transaction.objects.count(), 122)

@@ -127,7 +127,7 @@ def get_or_create_asset(isin: str, exchange: models.Exchange):
             print("created asset")
             return asset
     else:
-        print(f"failed to find stock data for isin: {isin}, exchange: {exchange}")
+        print(f"failed to find stock data for isin: {isin}, exchange: {exchange}, exchange_code: {exchange_code}")
 
 
 def query_asset(isin : str):
