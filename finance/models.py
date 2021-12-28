@@ -108,17 +108,6 @@ class AssetType(models.IntegerChoices):
     FUND = 3, _("Fund")
 
 
-def asset_type_enum_from_string(asset_type: str) -> AssetType:
-    try:
-        return AssetType[asset_type.upper()]
-    except KeyError:
-        raise ValueError("Unsupported asset type '%s'" % asset_type)
-
-
-def asset_type_string_from_enum(asset_type: AssetType) -> str:
-    return AssetType(asset_type).label
-
-
 class Asset(models.Model):
     isin = models.CharField(max_length=30)
     symbol = models.CharField(max_length=30)
