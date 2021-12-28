@@ -1,52 +1,57 @@
 import datetime
+from typing import Any, Dict, Type, Union
 
-from rest_framework import status
-import pytz
-from django.db.models import Count, Sum, Subquery, OuterRef, QuerySet
-from django.shortcuts import get_object_or_404, render
+from django.contrib.auth.models import User
+from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
+from django.shortcuts import get_object_or_404
 from rest_framework import (
     exceptions,
     generics,
-    permissions,
-    viewsets,
     mixins,
+    permissions,
     serializers,
+    status,
+    viewsets,
 )
+from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
-from django.contrib.auth.models import User
-from typing import Any, Dict, Union, Type
-from rest_framework.decorators import action
 
-from django.db.models import Q
-
-from finance import accounts, models, gains
+from finance import accounts, gains, models
+from finance.degiro_parser import (
+    CurrencyMismatch,
+    InvalidFormat,
+    import_transactions_from_file,
+)
 from finance.models import (
+    AccountEvent,
+    Asset,
     CurrencyExchangeRate,
+    Lot,
     Position,
     PriceHistory,
     Transaction,
-    AccountEvent,
-    Asset,
-    Lot,
+    TransactionImport,
 )
 from finance.serializers import (
-    AssetSerializer,
-    AccountSerializer,
-    AccountEventSerializer,
     AccountEditSerializer,
+    AccountEventSerializer,
+    AccountSerializer,
     AccountWithValuesSerializer,
-    CurrencyExchangeRateSerializer,
-    CurrencyQuerySerializer,
-    FromToDatesSerializer,
-    PositionSerializer,
-    PositionWithQuantitiesSerializer,
-    AssetPriceHistorySerializer,
-    TransactionSerializer,
     AddTransactionKnownAssetSerializer,
     AddTransactionNewAssetSerializer,
+    AssetPriceHistorySerializer,
+    AssetSerializer,
     CorrectTransactionSerializer,
+    CurrencyExchangeRateSerializer,
+    CurrencyQuerySerializer,
+    DegiroUploadSerializer,
+    FromToDatesSerializer,
     LotSerializer,
+    PositionSerializer,
+    PositionWithQuantitiesSerializer,
+    TransactionImportSerializer,
+    TransactionSerializer,
 )
 
 
@@ -120,18 +125,14 @@ class AccountsViewSet(viewsets.ModelViewSet):
         try:
             account_repository.update(serializer)
         except accounts.CantUpdateNonEmptyAccount:
-            raise serializers.ValidationError(
-                "can't update non-empty account"
-            )
+            raise serializers.ValidationError("can't update non-empty account")
 
     def perform_destroy(self, instance):
         account_repository = accounts.AccountRepository()
         try:
             account_repository.delete(instance)
         except accounts.CantDeleteNonEmptyAccount:
-            raise serializers.ValidationError(
-                "can't delete non-empty account"
-            )
+            raise serializers.ValidationError("can't delete non-empty account")
 
 
 class PositionsView(generics.ListAPIView):
@@ -377,8 +378,8 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         account_repository = accounts.AccountRepository()
         try:
             account_repository.correct_transaction(
-            serializer.instance, serializer.validated_data
-        )
+                serializer.instance, serializer.validated_data
+            )
         except gains.SoldBeforeBought:
             raise serializers.ValidationError(
                 {
@@ -450,17 +451,80 @@ class AssetViewSet(
             "exchange"
         )
 
+
 class LotViewSet(
     mixins.ListModelMixin,
     viewsets.GenericViewSet,
-    ):
+):
     model = Lot
     serializer_class = LotSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = LimitOffsetPagination
     basename = "lot"
 
-    def get_queryset(self) -> QuerySet[Asset]:
+    def get_queryset(self) -> QuerySet[Lot]:
         assert isinstance(self.request.user, User)
         user = self.request.user
-        return Lot.objects.filter(position__account__user=user).exclude(sell_transaction=None)
+        return Lot.objects.filter(position__account__user=user).exclude(
+            sell_transaction=None
+        )
+
+
+class DegiroUploadViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
+    model = TransactionImport
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self) -> QuerySet[models.TransactionImport]:
+        assert isinstance(self.request.user, User)
+        queryset = models.TransactionImport.objects.filter(account__user=self.request.user)
+        return queryset
+
+    def get_serializer_class(
+        self,
+    ) -> Type[Union[DegiroUploadSerializer, TransactionImportSerializer]]:
+        if self.action == "list":
+            return TransactionImportSerializer
+        return DegiroUploadSerializer
+
+    def create(self, request):
+
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        assert isinstance(self.request.user, User)
+        self.request.user
+
+        arguments = serializer.validated_data.copy()
+
+        try:
+            account_repository = accounts.AccountRepository()
+            account = account_repository.get(
+                user=self.request.user, id=serializer.validated_data["account"]
+            )
+        except models.Account.DoesNotExist:
+            raise exceptions.PermissionDenied(
+                detail={
+                    "account": "Current user doesn't have access to this account or it doesn't exist."
+                }
+            )
+        try:
+            transaction_import = import_transactions_from_file(
+                account, arguments["transaction_file"]
+            )
+        except CurrencyMismatch as e:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST, data={"error": e.args[0]}
+            )
+        except InvalidFormat as e:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST, data={"error": e.args[0]}
+            )
+
+        serializer = TransactionImportSerializer(instance=transaction_import)
+        return Response(
+            status=status.HTTP_201_CREATED, data=serializer.data
+        )

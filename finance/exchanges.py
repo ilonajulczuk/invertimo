@@ -113,7 +113,6 @@ def get_or_create_asset(isin: str, exchange: models.Exchange):
     exchange_code = exchange.identifiers.get(id_type=models.ExchangeIDType.CODE).value
     asset_records = query_asset(isin)
     for record in asset_records:
-
         if record["Exchange"] == exchange_code:
 
             currency = models.currency_enum_from_string(record["Currency"])
@@ -128,7 +127,7 @@ def get_or_create_asset(isin: str, exchange: models.Exchange):
             print("created asset")
             return asset
     else:
-        print(f"failed to find stock data for isin: {isin}, exchange: {exchange}")
+        print(f"failed to find stock data for isin: {isin}, exchange: {exchange}, exchange_code: {exchange_code}")
 
 
 def query_asset(isin : str):

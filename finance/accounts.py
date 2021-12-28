@@ -1,6 +1,6 @@
 import datetime
 import decimal
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -73,7 +73,7 @@ class AccountRepository:
         total_in_account_currency,
         order_id,
         custom_asset=False,
-    ):
+    ) -> Tuple[models.Transaction, bool]:
         position.quantity_history.cache_clear()
         position.value_history.cache_clear()
 
@@ -99,7 +99,7 @@ class AccountRepository:
                 )
 
             gains.update_lots(position, transaction)
-        return transaction
+        return transaction, created
 
     @transaction.atomic
     def add_transaction(
@@ -115,7 +115,7 @@ class AccountRepository:
         value_in_account_currency,
         total_in_account_currency,
         order_id,
-    ):
+    ) -> Tuple[models.Transaction, bool]:
         position = self._get_or_create_position(account, isin, exchange)
         if not position:
             raise ValueError(
@@ -160,7 +160,7 @@ class AccountRepository:
 
         position = self._get_or_create_position_for_asset(account, asset_id)
 
-        return self._add_transaction(
+        transaction, _ = self._add_transaction(
             account,
             position,
             executed_at,
@@ -172,6 +172,7 @@ class AccountRepository:
             total_in_account_currency,
             order_id,
         )
+        return transaction
 
     @transaction.atomic
     def add_transaction_custom_asset(
@@ -202,7 +203,7 @@ class AccountRepository:
         )
         position = self._get_or_create_position_for_asset(account, asset.pk)
 
-        return self._add_transaction(
+        transaction, _ = self._add_transaction(
             account,
             position,
             executed_at,
@@ -215,6 +216,7 @@ class AccountRepository:
             order_id,
             custom_asset=True,
         )
+        return transaction
 
     @transaction.atomic
     def add_event(

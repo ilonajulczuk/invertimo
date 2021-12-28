@@ -108,17 +108,6 @@ class AssetType(models.IntegerChoices):
     FUND = 3, _("Fund")
 
 
-def asset_type_enum_from_string(asset_type: str) -> AssetType:
-    try:
-        return AssetType[asset_type.upper()]
-    except KeyError:
-        raise ValueError("Unsupported asset type '%s'" % asset_type)
-
-
-def asset_type_string_from_enum(asset_type: AssetType) -> str:
-    return AssetType(asset_type).label
-
-
 class Asset(models.Model):
     isin = models.CharField(max_length=30)
     symbol = models.CharField(max_length=30)
@@ -502,3 +491,36 @@ class Lot(models.Model):
 
     class Meta:
         ordering = ["buy_date"]
+
+
+class IntegrationType(models.IntegerChoices):
+    DEGIRO = 1, _("DEGIRO")
+
+
+class ImportStatus(models.IntegerChoices):
+    SUCCESS = 1, _("Success")
+    PARTIAL_SUCCESS = 2, _("Partial success")
+    FAILURE = 3, _("Failure")
+
+
+class TransactionImport(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    integration = models.IntegerField(choices=IntegrationType.choices)
+    status = models.IntegerField(choices=ImportStatus.choices)
+
+
+class ImportIssueType(models.IntegerChoices):
+    UNKNOWN_FAILURE = 1, _("UNKNOWN_FAILURE")
+    SOLD_BEFORE_BOUGHT = 2, _("SOLD_BEFORE_BOUGHT")
+    BAD_FORMAT = 3, _("BAD_FORMAT")
+
+
+class TransactionImportRecord(models.Model):
+    transaction_import = models.ForeignKey(TransactionImport, related_name="records", on_delete=models.CASCADE)
+    transaction = models.ForeignKey(Transaction, null=True, related_name="import_records", on_delete=models.SET_NULL)
+    raw_record = models.TextField()
+    created_new = models.BooleanField(default=False)
+    successful = models.BooleanField(default=True)
+    issue_type = models.IntegerField(choices=ImportIssueType.choices, null=True)
+    raw_issue = models.TextField(null=True)

@@ -3,7 +3,7 @@ from rest_framework.request import Request
 
 from django.db.models import QuerySet
 import datetime
-from typing import Any
+from typing import Any, TypeVar
 from django.contrib.auth.models import User
 
 from finance import models
@@ -11,13 +11,21 @@ from finance import exchanges, gains
 from finance.models import (
     Account,
     AccountEvent,
+    AssetType,
+    Currency,
     CurrencyExchangeRate,
+    EventType,
     Exchange,
+    ImportStatus,
     Position,
     PriceHistory,
     Asset,
     Transaction,
     Lot,
+    TransactionImport,
+    TransactionImportRecord,
+    ImportIssueType,
+    IntegrationType,
 )
 
 
@@ -46,37 +54,33 @@ class RelatedPkField(serializers.IntegerField):
             return value.pk
 
 
-class CurrencyField(serializers.CharField):
-    def to_representation(self, value):
-        return models.currency_string_from_enum(value)
+class ChoicesToStringField(serializers.CharField):
+    choices_class = None
+    name = ""
 
-    def to_internal_value(self, value):
+    def to_representation(self, value) -> str:
+        return self.choices_class(value).label
+
+    def to_internal_value(self, value: str):
         try:
-            return models.currency_enum_from_string(value)
-        except ValueError:
-            raise serializers.ValidationError(f"Invalid value to represent currency")
+            return self.choices_class[value.upper()]
+        except KeyError:
+            raise serializers.ValidationError(f"Invalid value to represent {self.name}")
 
 
-class AssetTypeField(serializers.IntegerField):
-    def to_representation(self, value):
-        return models.asset_type_string_from_enum(value)
-
-    def to_internal_value(self, value):
-        try:
-            return models.asset_type_enum_from_string(value)
-        except ValueError:
-            raise serializers.ValidationError(f"Invalid value to represent asset type")
+class CurrencyField(ChoicesToStringField):
+    choices_class = Currency
+    name = "currency"
 
 
-class EventTypeField(serializers.CharField):
-    def to_representation(self, value):
-        return models.event_type_string_from_enum(value)
+class AssetTypeField(ChoicesToStringField):
+    choices_class = AssetType
+    name = "asset type"
 
-    def to_internal_value(self, value):
-        try:
-            return models.event_type_enum_from_string(value)
-        except ValueError:
-            raise serializers.ValidationError(f"Invalid value to represent event type")
+
+class EventTypeField(ChoicesToStringField):
+    choices_class = EventType
+    name = "event type"
 
 
 class AssetSerializer(serializers.ModelSerializer[Asset]):
@@ -579,3 +583,60 @@ class LotSerializer(serializers.ModelSerializer[Lot]):
     class Meta:
         model = Lot
         fields = "__all__"
+
+
+class DegiroUploadSerializer(serializers.Serializer[Any]):
+    account = serializers.IntegerField()
+    transaction_file = serializers.FileField()
+
+
+class ImportStatusField(ChoicesToStringField):
+    choices_class = ImportStatus
+    name = "import status"
+
+
+class ImportIssueTypeField(ChoicesToStringField):
+    choices_class = ImportIssueType
+    name = "import issue type"
+
+
+class IntegrationTypeField(ChoicesToStringField):
+    choices_class = IntegrationType
+    name = "integration type"
+
+
+class TransactionImportRecordSerializer(serializers.ModelSerializer[TransactionImportRecord]):
+
+    issue_type = ImportIssueTypeField(required=False)
+
+    class Meta:
+        model = TransactionImportRecord
+        # Include all fields but the TransactionImport as this will be embedded into that record
+        # and therefore unnecessary.
+        fields = [
+            "id",
+            "transaction",
+            "raw_record",
+            "created_new",
+            "successful",
+            "issue_type",
+            "raw_issue",
+            ]
+
+
+class TransactionImportSerializer(serializers.ModelSerializer[TransactionImport]):
+
+    records = TransactionImportRecordSerializer(many=True)
+    status = ImportStatusField()
+    integration = IntegrationTypeField()
+
+    class Meta:
+        model = TransactionImport
+        fields = [
+            "id",
+            "account",
+            "created_at",
+            "status",
+            "integration",
+            "records",
+        ]
