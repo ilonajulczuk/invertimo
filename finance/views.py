@@ -190,9 +190,6 @@ class CurrencyExchangeRateView(generics.ListAPIView):
     def get_queryset(self):
 
         filter = {}
-        from_currency = self.request.query_params.get("from_currency", None)
-        to_currency = self.request.query_params.get("to_currency", None)
-
         query = CurrencyQuerySerializer(data=self.request.query_params)
 
         if query.is_valid(raise_exception=True):
@@ -489,6 +486,11 @@ class DegiroUploadViewSet(
             return TransactionImportSerializer
         return DegiroUploadSerializer
 
+    def get_serializer_context(self) -> Dict[str, Any]:
+        context: Dict[str, Any] = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
     def create(self, request):
 
         serializer = self.get_serializer(
@@ -524,7 +526,7 @@ class DegiroUploadViewSet(
                 status=status.HTTP_400_BAD_REQUEST, data={"error": e.args[0]}
             )
 
-        serializer = TransactionImportSerializer(instance=transaction_import)
+        serializer = TransactionImportSerializer(instance=transaction_import, context=self.get_serializer_context())
         return Response(
             status=status.HTTP_201_CREATED, data=serializer.data
         )
