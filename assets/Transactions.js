@@ -7,6 +7,8 @@ import {
 } from "react-router-dom";
 
 import { RecordTransactionForm } from './forms/RecordTransactionForm.js';
+
+import ImportTransactionsFromDegiroForm from './forms/ImportTransactionsFromDegiroForm.js';
 import { TransactionList } from './TransactionList';
 import { TransactionDetail } from './TransactionDetail.js';
 import { useQuery } from './routing.js';
@@ -82,6 +84,14 @@ export default function Transactions(props) {
                 />
 
             </Route>
+
+            <Route path={`${path}/imports/degiro`}>
+                <h2>Transactions / import / degiro</h2>
+                <ImportTransactionsFromDegiroForm
+                 accounts={props.accounts}
+                handleSubmit={data => console.log(data)}
+                />
+                </Route>
             <Route path={`${path}/realized_gains`}>
                 <RealizedGainsReport positions={props.positions} accounts={props.accounts}/>
             </Route>

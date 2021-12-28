@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography';
 import PropTypes from 'prop-types';
 
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(() => ({
     root: {
         width: '100%',
         '& .MuiStepper-root': {

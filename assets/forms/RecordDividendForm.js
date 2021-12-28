@@ -130,7 +130,7 @@ export function RecordDividendForm(props) {
                     <div className={classes.bottomButtons}>
                         <Button
                             type="submit"
-                            variant="outlined"
+                            variant="contained"
                             color="secondary"
                             disabled={isSubmitting}
                             className={classes.submitButton}

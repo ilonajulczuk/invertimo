@@ -5,31 +5,26 @@ import PropTypes from 'prop-types';
 import { Formik, Form } from 'formik';
 import * as yup from 'yup';
 
-import { toSymbol } from '../currencies.js';
-import { FormikDateField, FormikTextField, FormikSelectField } from './muiformik.js';
+import { FormikSelectField } from './muiformik.js';
 import { Snackbar } from '../components/Snackbar.js';
 import { useStyles } from './styles.js';
+
+import FormHelperText from '@mui/material/FormHelperText';
+import FormControl from '@mui/material/FormControl';
 
 
 function formUpdateToAPIUpdate(formData) {
     let data = { ...formData };
-    if (data.event_type == "WITHDRAWAL") {
-        data.amount = -data.amount;
-    }
-    // Data needs to be in ISO format and include minutes.
-    // Since we don't really care about the minutes, I cut them
-    // and replace with 00:00 time.
-    data["executed_at"] = new Date(data["executed_at"]).toISOString().slice(0, 10) + "T00:00";
-    data["position"] = "";
     return data;
 }
 
 function apiToErrors(apiResponse) {
     let data = { ...apiResponse };
+    data.ok = true;
     return data;
 }
 
-export function RecordTransferForm(props) {
+export default function ImportTransactionsFromDegiroForm(props) {
 
     const classes = useStyles();
 
@@ -43,35 +38,36 @@ export function RecordTransferForm(props) {
         snackbarSetOpen(false);
     };
 
+    const FILE_SIZE = 160 * 1024;
+    const SUPPORTED_FORMATS = [
+      "text/csv",
+    ];
+
     const validationSchema = yup.object().shape({
-        amount: yup
-            .number().moreThan(0).required(),
         account: yup
             .number()
             .required(),
-        event_type: yup
-            .string()
-            .oneOf(['DEPOSIT', 'WITHDRAWAL']),
-        executed_at: yup
-            .date()
-            .typeError("Provide a date in YYYY/MM/DD format")
-            .required('Date when transaction was executed is required'),
+        file: yup.mixed()
+            .required('File is required')
+            .test(
+                "fileSize",
+                "File too large",
+                value => value && value.size <= FILE_SIZE
+              )
+              .test(
+                "fileFormat",
+                "Unsupported Format, please provide 'text/csv' file",
+                value => value && SUPPORTED_FORMATS.includes(value.type)
+              )
+            ,
     });
 
     const initialValues = {
-        executed_at: new Date(),
         account: props.accounts[0].id,
-        event_type: "DEPOSIT",
-        amount: '',
     };
 
-    const accountsById = new Map(props.accounts.map(account => [account.id, account]));
-
     let accountOptions = props.accounts.map(account => ({ value: account.id, label: account.nickname }));
-    const eventTypeOptions = [
-        { value: "DEPOSIT", label: "Deposit" },
-        { value: "WITHDRAWAL", label: "Withdrawal" },
-    ];
+
     return (
 
         <Formik
@@ -98,7 +94,7 @@ export function RecordTransferForm(props) {
                 }
             }}
         >
-            {({ isSubmitting, values }) => (
+            {({ isSubmitting, values, setFieldValue, errors }) => (
                 <Form autoComplete="off" className={classes.form}>
                     <div className={classes.inputs}>
                         <FormikSelectField
@@ -108,30 +104,37 @@ export function RecordTransferForm(props) {
                             options={accountOptions}
                             className={classes.mediumInput}
                         />
-                        <FormikSelectField
-                            id="event_type"
-                            label="Transfer type"
-                            name="event_type"
-                            options={eventTypeOptions}
-                            className={classes.mediumInput}
-                        />
-                    </div>
-                    <div className={classes.inputs}>
-                        <FormikTextField
-                            className={classes.wideInput}
-                            id="amount"
-                            label={`Amount (${toSymbol(accountsById.get(values["account"]).currency)})`}
-                            name="amount"
-                            type="number"
-                        />
 
-                        <FormikDateField
-                            id="executed_at"
-                            label="Executed At"
-                            name="executed_at"
-                        />
-                    </div>
+                        <FormControl
+                        >
+                            <Button
 
+                                variant="contained"
+                                component="label"
+                            >
+                                Select File
+                                <input
+                                    type="file"
+                                    id="file"
+                                    name="file"
+                                    hidden
+                                    onChange={e => {
+                                        let files = Array.from(e.target.files);
+                                        if (files.length == 1) {
+                                            const uploadedFile = files[0];
+                                            setFieldValue("file", uploadedFile, true);
+                                        }
+                                    }}
+                                />
+                            </Button>
+                            <FormHelperText error={Boolean(errors["file"])}>
+                                {(errors["file"] ? errors["file"] + " - " : "")  + (values["file"] ? values["file"].name : "No file selected yet")}
+                            </FormHelperText>
+                        </FormControl>
+
+
+
+                    </div>
                     <div className={classes.bottomButtons}>
                         <Button
                             type="submit"
@@ -140,13 +143,13 @@ export function RecordTransferForm(props) {
                             disabled={isSubmitting}
                             className={classes.submitButton}
                         >
-                            Record
+                            Import
                         </Button>
                     </div>
                     <Snackbar
                         snackbarOpen={snackbarOpen}
                         snackbarHandleClose={snackbarHandleClose}
-                        message="Transfer recorded successfully!"
+                        message="Would be imported successfully if connected to API ;) !"
                     />
                 </Form>
             )}
@@ -154,7 +157,7 @@ export function RecordTransferForm(props) {
     );
 }
 
-RecordTransferForm.propTypes = {
+ImportTransactionsFromDegiroForm.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
     accounts: PropTypes.arrayOf(PropTypes.shape(
         { nickname: PropTypes.string.isRequired, id: PropTypes.number.isRequired })
