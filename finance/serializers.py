@@ -640,3 +640,15 @@ class TransactionImportSerializer(serializers.ModelSerializer[TransactionImport]
             "integration",
             "records",
         ]
+
+    def get_extra_kwargs(self):
+        kwargs = super().get_extra_kwargs()
+        kwargs["account"] = kwargs.get("account", {})
+        kwargs["account"]["queryset"] = self.get_account_queryset()
+        return kwargs
+
+    def get_account_queryset(self) -> QuerySet[models.Account]:
+        request = self.context.get("request")
+        assert isinstance(request, Request)
+        assert isinstance(request.user, User)
+        return models.Account.objects.filter(user=request.user)
