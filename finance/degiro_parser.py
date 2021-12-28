@@ -171,10 +171,11 @@ def _import_transactions_from_file(account, filename_or_file):
             )
 
     status = models.ImportStatus.SUCCESS
-    if failed_records and not successful_records:
-        status = models.ImportStatus.FAILURE
-    else:
-        status = models.ImportStatus.PARTIAL_SUCCESS
+    if failed_records:
+        if successful_records:
+            status = models.ImportStatus.PARTIAL_SUCCESS
+        else:
+            status = models.ImportStatus.FAILURE
 
     transaction_import = models.TransactionImport.objects.create(
         integration=models.IntegrationType.DEGIRO,

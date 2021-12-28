@@ -134,6 +134,14 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
                 self.URL, {"account": another_account.id, "transaction_file": fp}
             )
         self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertTrue("error" in data)
+
+        response = self.client.get(self.URL)
+        data = response.json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(len(data[0]["records"]), 0)
+        self.assertEqual(data[0]["status"], models.ImportStatus.FAILURE.label)
 
     @patch('finance.exchanges.query_asset')
     def test_some_assets_not_found_by_isin(self, query_asset_mock):
@@ -159,6 +167,10 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
 
         self.assertEqual(response.status_code, 201)
 
+        data = response.json()
+        self.assertEqual(data["status"], models.ImportStatus.PARTIAL_SUCCESS.label)
+        self.assertEqual(len(data["records"]), 6)
+
         # TODO: instead of ignoring these assets, consider adding them as untracked?
         self.assertEqual(models.Transaction.objects.count(), 4)
 
@@ -176,8 +188,11 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
             )
         self.assertEqual(response.status_code, 400)
 
-    def test_something_not_uploaded_for_random_reason(self):
-        pass
+        response = self.client.get(self.URL)
+        data = response.json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(len(data[0]["records"]), 0)
+        self.assertEqual(data[0]["status"], models.ImportStatus.FAILURE.label)
 
     @patch('finance.exchanges.query_asset')
     def test_transactions_latest_to_oldest_uploads_correctly(self, query_asset_mock):
@@ -194,8 +209,10 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
             )
 
         self.assertEqual(response.status_code, 201)
-        # There is 185 records in the file, but one is clearly invalid.
         self.assertEqual(models.Transaction.objects.count(), 184)
+        data = response.json()
+        self.assertEqual(data["status"], models.ImportStatus.SUCCESS.label)
+        self.assertEqual(len(data["records"]), 184)
 
     @patch('finance.exchanges.query_asset')
     def test_incomplete_transaction_list_prevents_uploading(self, query_asset_mock):
