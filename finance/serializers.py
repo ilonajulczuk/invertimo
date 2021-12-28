@@ -99,6 +99,7 @@ class AssetSerializer(serializers.ModelSerializer[Asset]):
             "currency",
             "country",
             "asset_type",
+            "tracked",
         ]
 
 
@@ -588,6 +589,7 @@ class LotSerializer(serializers.ModelSerializer[Lot]):
 class DegiroUploadSerializer(serializers.Serializer[Any]):
     account = serializers.IntegerField()
     transaction_file = serializers.FileField()
+    import_all_assets = serializers.BooleanField(default=True)
 
 
 class ImportStatusField(ChoicesToStringField):

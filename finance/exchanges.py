@@ -105,7 +105,7 @@ class AssetRepository:
         return asset
 
 
-def get_or_create_asset(isin: str, exchange: models.Exchange):
+def get_or_create_asset(isin: str, exchange: models.Exchange, asset_defaults, add_untracked_if_not_found=True):
     repository = AssetRepository(exchange)
     asset = repository.get(isin)
     if asset:
@@ -127,7 +127,34 @@ def get_or_create_asset(isin: str, exchange: models.Exchange):
             print("created asset")
             return asset
     else:
-        print(f"failed to find stock data for isin: {isin}, exchange: {exchange}, exchange_code: {exchange_code}")
+        if len(asset_records):
+            record = asset_records[0]
+            currency = models.currency_enum_from_string(record["Currency"])
+            if add_untracked_if_not_found:
+                asset = repository.add(
+                    isin=isin,
+                    symbol=record["Code"],
+                    currency=currency,
+                    country=record["Country"],
+                    name=record["Name"],
+                    tracked=False,
+                )
+
+                return asset
+            print(f"failed to find stock data for isin: {isin}, exchange: {exchange}, exchange_code: {exchange_code}")
+        else:
+            if add_untracked_if_not_found:
+                currency = models.currency_enum_from_string(asset_defaults["local_currency"])
+                asset = repository.add(
+                    isin=isin,
+                    symbol=isin,
+                    currency=currency,
+                    country="Unknown",
+                    name=asset_defaults["name"],
+                    tracked=False,
+                )
+                return asset
+            print(f"failed to find stock data (there were assets but no exchange match) for isin: {isin}, exchange: {exchange}, exchange_code: {exchange_code}")
 
 
 def query_asset(isin : str):

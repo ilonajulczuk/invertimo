@@ -515,7 +515,7 @@ class DegiroUploadViewSet(
             )
         try:
             transaction_import = import_transactions_from_file(
-                account, arguments["transaction_file"]
+                account, arguments["transaction_file"], import_all_assets=arguments["import_all_assets"]
             )
         except CurrencyMismatch as e:
             return Response(

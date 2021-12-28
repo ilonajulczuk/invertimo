@@ -115,8 +115,12 @@ class AccountRepository:
         value_in_account_currency,
         total_in_account_currency,
         order_id,
+        asset_defaults,
+        import_all_assets,
     ) -> Tuple[models.Transaction, bool]:
-        position = self._get_or_create_position(account, isin, exchange)
+        position = self._get_or_create_position(
+            account, isin, exchange, asset_defaults, import_all_assets
+        )
         if not position:
             raise ValueError(
                 f"Failed to create a position from a transaction record, isin: {isin}, exchange ref: {exchange}"
@@ -301,14 +305,21 @@ class AccountRepository:
         event.delete()
 
     def _get_or_create_position(
-        self, account: models.Account, isin: str, exchange: models.Exchange
+        self,
+        account: models.Account,
+        isin: str,
+        exchange: models.Exchange,
+        asset_defaults,
+        import_all_assets: bool,
     ):
         positions = models.Position.objects.filter(
             account=account, asset__isin=isin, asset__exchange=exchange
         )
         if positions:
             return positions[0]
-        asset = exchanges.get_or_create_asset(isin, exchange)
+        asset = exchanges.get_or_create_asset(
+            isin, exchange, asset_defaults, add_untracked_if_not_found=import_all_assets
+        )
         if asset:
             return models.Position.objects.create(account=account, asset=asset)
         else:

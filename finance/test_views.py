@@ -66,6 +66,8 @@ def _add_transaction(
         value_in_account_currency,
         total_in_account_currency,
         order_id,
+        asset_defaults={"currency": "USD", "name": isin},
+        import_all_assets=True,
     )
     asset = transaction.position.asset
     if add_price_history:

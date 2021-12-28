@@ -61,6 +61,8 @@ def _add_transaction(account, isin, exchange, executed_at, quantity, price):
         value_in_account_currency,
         total_in_account_currency,
         order_id,
+        asset_defaults={"currency": "USD", "name": isin},
+        import_all_assets=True,
     )
 
 
@@ -79,7 +81,7 @@ class TestDegiroParser(TestCase):
             user=User.objects.all()[0], nickname="test"
         )
         transaction_import = degiro_parser.import_transactions_from_file(
-            account, "./finance/transactions_example_short.csv"
+            account, "./finance/transactions_example_short.csv", True
         )
         failed_records = transaction_import.records.filter(successful=False)
         self.assertEqual(len(failed_records), 0)
@@ -98,7 +100,7 @@ class TestDegiroParser(TestCase):
         # Import the same transactions again and make
         # sure that they aren't double recorded.
         degiro_parser.import_transactions_from_file(
-            account, "./finance/transactions_example_short.csv"
+            account, "./finance/transactions_example_short.csv", True
         )
         self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
         self.assertEqual(models.Position.objects.count(), 36)
@@ -357,6 +359,8 @@ class TestPosition(TestCase):
             value_in_account_currency,
             total_in_account_currency,
             order_id,
+            asset_defaults={},
+            import_all_assets=False,
         )
 
         self.assertEqual(models.Lot.objects.count(), 1)
@@ -379,6 +383,8 @@ class TestPosition(TestCase):
             decimal.Decimal('20.54'),
             decimal.Decimal('20.04'),
             order_id,
+            asset_defaults={},
+            import_all_assets=False,
         )
 
         self.assertEqual(models.Lot.objects.count(), 2)

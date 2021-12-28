@@ -30,8 +30,10 @@ REQUIRED_TRANSACTION_COLUMNS = (
     "Quantity",
     "Price",
     "Value currency",
+    "Local value currency",
     "Venue",
     "Reference",
+    "Product",
 )
 
 
@@ -39,21 +41,20 @@ _DATE_FORMAT = "%Y-%m-%d %H:%M%z"
 
 
 def import_transaction(
-    account: models.Account, transaction_record: pd.Series
+    account: models.Account, transaction_record: pd.Series, import_all_assets,
 ) -> Tuple[models.Transaction, bool]:
     executed_at = transaction_record["Datetime"]
     isin = transaction_record["ISIN"]
     local_value = transaction_record["Local value"]
     total_in_account_currency = transaction_record["Total"]
     value_in_account_currency = transaction_record["Value"]
-    if "Transaction costs" in transaction_record:
-        transaction_costs = transaction_record["Transaction costs"].astype(str)
-    else:
-        transaction_costs = transaction_record["Transaction and/or third"].astype(str)
+    transaction_costs = transaction_record["Transaction costs"].astype(str)
     order_id = transaction_record["Order ID"]
     quantity = transaction_record["Quantity"]
     price = transaction_record["Price"]
     account_currency = transaction_record["Value currency"]
+    local_currency = transaction_record["Local value currency"]
+    product = transaction_record["Product"]
 
     if models.currency_enum_from_string(account_currency) != account.currency:
         raise CurrencyMismatch("Currency of import didn't match the account")
@@ -79,12 +80,14 @@ def import_transaction(
         value_in_account_currency=to_decimal(value_in_account_currency),
         total_in_account_currency=to_decimal(total_in_account_currency),
         order_id=order_id,
+        asset_defaults={"local_currency": local_currency, "name": product},
+        import_all_assets=import_all_assets,
     )
 
 
-def import_transactions_from_file(account, filename_or_file):
+def import_transactions_from_file(account, filename_or_file, import_all_assets):
     try:
-        return _import_transactions_from_file(account, filename_or_file)
+        return _import_transactions_from_file(account, filename_or_file, import_all_assets)
     except Exception as e:
         models.TransactionImport.objects.create(
             integration=models.IntegrationType.DEGIRO,
@@ -105,7 +108,7 @@ def _transform_to_datetime(transaction_record):
 
 
 @transaction.atomic()
-def _import_transactions_from_file(account, filename_or_file):
+def _import_transactions_from_file(account, filename_or_file, import_all_assets):
     failed_records = []
     successful_records = []
     try:
@@ -143,7 +146,7 @@ def _import_transactions_from_file(account, filename_or_file):
     for x in range(0, len(transactions_data_clean)):
         try:
             transaction_record = transactions_data_clean.iloc[x]
-            transaction, created = import_transaction(account, transaction_record)
+            transaction, created = import_transaction(account, transaction_record, import_all_assets)
             successful_records.append(
                 {
                     "record": transaction_record,

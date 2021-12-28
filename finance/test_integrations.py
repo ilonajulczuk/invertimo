@@ -162,7 +162,7 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
         self.assertEqual(models.Transaction.objects.count(), 0)
         with open("./finance/transactions_example_latest.csv", "rb") as fp:
             response = self.client.post(
-                self.URL, {"account": self.account.id, "transaction_file": fp}
+                self.URL, {"account": self.account.id, "transaction_file": fp, "import_all_assets": False}
             )
 
         self.assertEqual(response.status_code, 201)
@@ -173,6 +173,36 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
 
         # TODO: instead of ignoring these assets, consider adding them as untracked?
         self.assertEqual(models.Transaction.objects.count(), 4)
+
+    @patch('finance.exchanges.query_asset')
+    def test_some_assets_not_found_by_isin_but_still_imported(self, query_asset_mock):
+        # If asset is not found then the empty value is returned.
+        calls = 0
+        def assets_or_empty(_):
+            nonlocal calls
+            calls +=1
+            if calls < 5:
+                return asset_response
+            else:
+                return []
+
+        query_asset_mock.side_effect = assets_or_empty
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(models.Transaction.objects.count(), 0)
+        with open("./finance/transactions_example_latest.csv", "rb") as fp:
+            response = self.client.post(
+                self.URL, {"account": self.account.id, "transaction_file": fp, "import_all_assets": True}
+            )
+
+        self.assertEqual(response.status_code, 201)
+
+        data = response.json()
+        self.assertEqual(data["status"], models.ImportStatus.SUCCESS.label)
+        self.assertEqual(len(data["records"]), 6)
+
+        self.assertEqual(models.Transaction.objects.count(), 6)
 
     def test_invalid_data_format(self):
         with open("./finance/test_integrations.py", "rb") as fp:
