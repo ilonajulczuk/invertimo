@@ -79,6 +79,42 @@ async function submitData(url = '', data = {}, method = 'POST') {
 
 }
 
+
+async function submitDataNonJSON(url = '', data = {}, method = 'POST') {
+
+    const csrftoken = Cookies.get('csrftoken');
+    const response = await fetch(url, {
+        method: method,
+        mode: 'cors',
+        cache: 'no-cache',
+        credentials: 'same-origin',
+        headers: {
+            'X-CSRFToken': csrftoken,
+        },
+        redirect: 'follow',
+        referrerPolicy: 'no-referrer',
+        body: data,
+    });
+    if (response.ok) {
+        let data = await response.json();
+        return {
+            ok: true, data: data
+        };
+    }
+    if (response.status == 400) {
+        let data = await response.json();
+        // TODO: move this translation to a better place.
+        // Translate between api and the form.
+        if (data.nickname) {
+            data.name = data.nickname;
+        }
+        return { ok: false, errors: data };
+    } else {
+        return { ok: false, message: "Failed on the server side..." };
+    }
+
+}
+
 async function postData(url = '', data = {}) {
     return submitData(url, data, 'POST');
 }
@@ -197,6 +233,17 @@ export class APIClient {
     }
 
 
+    async uploadDegiroTransactions(data) {
+        let url = this.baseUrl + '/integrations/degiro/transactions/';
+
+        const formData = new FormData();
+
+        formData.append('account', data.account);
+        formData.append('import_all_assets', data.import_all_assets);
+        formData.append('transaction_file', data.file);
+
+        return submitDataNonJSON(url, formData, 'POST');
+    }
 }
 
 const baseUrl = "./api";
@@ -209,3 +256,4 @@ export function getLots() {
     let url = baseUrl + '/lots/?limit=50';
     return fetchAllResults(url);
 }
+

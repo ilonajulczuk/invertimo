@@ -27,6 +27,7 @@ const _ACCOUNT_POSITIONS = [
       },
       currency: "USD",
       country: "USA",
+      tracked: true,
     },
     quantity: "35.00",
     latest_price: "176.24",
@@ -47,6 +48,7 @@ const _ACCOUNT_POSITIONS = [
       },
       currency: "USD",
       country: "USA",
+      tracked: true,
     },
     quantity: "29.00",
     latest_price: "166.04",
@@ -67,6 +69,7 @@ const _ACCOUNT_POSITIONS = [
       },
       currency: "EUR",
       country: "Germany",
+      tracked: false,
     },
     quantity: "2775.00",
     latest_price: "6.06",
@@ -90,6 +93,7 @@ const _ACCOUNT_POSITIONS_USD = [
       },
       currency: "USD",
       country: "USA",
+      tracked: true,
     },
     quantity: "16.00",
     latest_price: "176.24",
@@ -110,6 +114,7 @@ const _ACCOUNT_POSITIONS_USD = [
       },
       currency: "USD",
       country: "USA",
+      tracked: true,
     },
     quantity: "18.00",
     latest_price: "123.54",
@@ -137,7 +142,8 @@ const _ACCOUNT_TRANSACTIONS = [
           "name": "USA Stocks"
         },
         "currency": "USD",
-        "country": "USA"
+        "country": "USA",
+        "tracked": true,
       },
       "quantity": "16.00"
     },
@@ -166,7 +172,8 @@ const _ACCOUNT_TRANSACTIONS = [
           "name": "USA Stocks"
         },
         "currency": "USD",
-        "country": "USA"
+        "country": "USA",
+        "tracked": true,
       },
       "quantity": "35.00"
     },
@@ -195,6 +202,7 @@ const _ACCOUNT_TRANSACTIONS = [
           "name": "USA Stocks"
         },
         "currency": "USD",
+        "tracked": true,
         "country": "USA"
       },
       "quantity": "53.00"

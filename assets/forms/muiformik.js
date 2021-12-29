@@ -16,6 +16,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 import DatePicker from '../components/DatePicker';
 
 
@@ -165,7 +166,6 @@ export function FormikRadioField({ name, options, ...props }) {
                 control={<Radio />}
                 label={option.label}
                 key={option.label} />
-
         )
     );
     return (
@@ -194,4 +194,32 @@ FormikRadioField.propTypes = {
                 value: PropTypes.any.isRequired,
                 label: PropTypes.string.isRequired
             })).isRequired,
+};
+
+
+export function FormikCheckboxField({ name, label, formHelperText, ...props }) {
+
+    return (
+        <Field>
+            {({ form, field }) => {
+                return <FormControl>
+                    <FormControlLabel control={
+                        <Checkbox defaultChecked {...field}
+                            {...props}
+                            name={name}
+                            value={form.values[name]} />} label={label} />
+                    <FormHelperText sx={{
+                        marginLeft: 0, marginRight: 0
+                    }} error={(form.touched[name] && Boolean(form.errors[name]))}>{(form.touched[name] && form.errors[name]) || formHelperText
+                        }</FormHelperText>
+                </FormControl>;
+            }}
+        </Field>
+    );
+}
+
+FormikCheckboxField.propTypes = {
+    name: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    formHelperText: PropTypes.string,
 };

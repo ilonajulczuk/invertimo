@@ -1,11 +1,19 @@
 import React from 'react';
 
 import Button from '@mui/material/Button';
+
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import Typography from '@mui/material/Typography';
+import Icon from '@mui/material/Icon';
+// import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
 import PropTypes from 'prop-types';
 import { Formik, Form } from 'formik';
 import * as yup from 'yup';
 
-import { FormikSelectField } from './muiformik.js';
+import { FormikCheckboxField, FormikSelectField } from './muiformik.js';
 import { Snackbar } from '../components/Snackbar.js';
 import { useStyles } from './styles.js';
 
@@ -20,7 +28,9 @@ function formUpdateToAPIUpdate(formData) {
 
 function apiToErrors(apiResponse) {
     let data = { ...apiResponse };
-    data.ok = true;
+    if (apiResponse.errors) {
+        data.errors["file"] = data.errors["transaction_file"];
+    }
     return data;
 }
 
@@ -29,6 +39,9 @@ export default function ImportTransactionsFromDegiroForm(props) {
     const classes = useStyles();
 
     const [snackbarOpen, snackbarSetOpen] = React.useState(false);
+    const [snackbarMessage, snackbarSetMessage] = React.useState("");
+    const [snackbarSeverity, snackbarSetSeverity] = React.useState("success");
+    const [importResult, setImportResult] = React.useState(null);
 
     const snackbarHandleClose = (event, reason) => {
         if (reason === 'clickaway') {
@@ -40,7 +53,7 @@ export default function ImportTransactionsFromDegiroForm(props) {
 
     const FILE_SIZE = 160 * 1024;
     const SUPPORTED_FORMATS = [
-      "text/csv",
+        "text/csv",
     ];
 
     const validationSchema = yup.object().shape({
@@ -53,17 +66,19 @@ export default function ImportTransactionsFromDegiroForm(props) {
                 "fileSize",
                 "File too large",
                 value => value && value.size <= FILE_SIZE
-              )
-              .test(
+            )
+            .test(
                 "fileFormat",
                 "Unsupported Format, please provide 'text/csv' file",
                 value => value && SUPPORTED_FORMATS.includes(value.type)
-              )
-            ,
+            )
+        ,
+        import_all_assets: yup.bool().required(),
     });
 
     const initialValues = {
         account: props.accounts[0].id,
+        import_all_assets: true,
     };
 
     let accountOptions = props.accounts.map(account => ({ value: account.id, label: account.nickname }));
@@ -75,20 +90,35 @@ export default function ImportTransactionsFromDegiroForm(props) {
             validationSchema={validationSchema}
             onSubmit={async (values, actions) => {
                 try {
+                    setImportResult(null);
                     const data = formUpdateToAPIUpdate(values);
                     let result = await props.handleSubmit(data);
                     result = apiToErrors(result);
                     actions.setSubmitting(false);
                     if (result.ok) {
+                        if (result.data.status == "Success") {
+                            snackbarSetSeverity("success");
+                            const numTransactions = result.data.records.length;
+                            snackbarSetMessage(`Successfully uploaded ${numTransactions} transactions!`);
+                        } else {
+                            snackbarSetSeverity("warning");
+                            snackbarSetMessage(`Partial import success, see Import Result for more details.`);
+                        }
                         snackbarSetOpen(true);
                         actions.resetForm();
+                        console.log(result);
                     } else {
                         if (result.errors) {
+                            console.log(result);
                             actions.setErrors(result.errors);
+                            snackbarSetSeverity("error");
+                            snackbarSetMessage(`Import failed! See Import Result for more details.`);
+                            snackbarSetOpen(true);
                         } else if (result.message) {
                             alert(result.message);
                         }
                     }
+                    setImportResult(result);
                 } catch (e) {
                     alert(e);
                 }
@@ -127,13 +157,21 @@ export default function ImportTransactionsFromDegiroForm(props) {
                                     }}
                                 />
                             </Button>
-                            <FormHelperText error={Boolean(errors["file"])}>
-                                {(errors["file"] ? errors["file"] + " - " : "")  + (values["file"] ? values["file"].name : "No file selected yet")}
+                            <FormHelperText sx={{
+                                marginLeft: 0, marginRight: 0
+                            }} error={Boolean(errors["file"])}>
+                                {(errors["file"] ? errors["file"] + " - " : "") + (values["file"] ? values["file"].name : "No file selected yet")}
                             </FormHelperText>
                         </FormControl>
 
-
-
+                    </div>
+                    <div>
+                        <FormikCheckboxField
+                            id="import_all_assets"
+                            name="import_all_assets"
+                            label="Import all transactions"
+                            formHelperText="Even if the asset can't be found in the db"
+                        />
                     </div>
                     <div className={classes.bottomButtons}>
                         <Button
@@ -149,8 +187,28 @@ export default function ImportTransactionsFromDegiroForm(props) {
                     <Snackbar
                         snackbarOpen={snackbarOpen}
                         snackbarHandleClose={snackbarHandleClose}
-                        message="Would be imported successfully if connected to API ;) !"
+                        message={snackbarMessage}
+                        severity={snackbarSeverity}
                     />
+                    {
+
+                        importResult ?
+                    <Accordion>
+                        <AccordionSummary
+                            expandIcon={<Icon>expand_more</Icon>}
+                            aria-controls="import-result-content"
+                            id="import-result-header"
+                        >
+                            <Typography>Import result</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <Typography>
+                                {JSON.stringify(importResult)}
+                                </Typography>
+                        </AccordionDetails>
+                    </Accordion> : null
+                     }
+
                 </Form>
             )}
         </Formik>

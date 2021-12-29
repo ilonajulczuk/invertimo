@@ -85,15 +85,20 @@ export default function Transactions(props) {
 
             </Route>
 
-            <Route path={`${path}/imports/degiro`}>
-                <h2>Transactions / import / degiro</h2>
+            <Route path={`${path}/import/degiro`}>
+                <h2><a href="#/transactions/">Transactions</a> / import / degiro</h2>
+                <p>
+                    Export your <a href="http://degiro.com" target="blank()">Degiro</a> transactions to a .csv file and upload
+                    it easily here.
+                    See how to <a href="/static/degiro_export.png" target="blank()">export it</a>.
+                </p>
                 <ImportTransactionsFromDegiroForm
-                 accounts={props.accounts}
-                handleSubmit={data => console.log(data)}
+                    accounts={props.accounts}
+                    handleSubmit={props.handleUploadDegiroTransactions}
                 />
-                </Route>
+            </Route>
             <Route path={`${path}/realized_gains`}>
-                <RealizedGainsReport positions={props.positions} accounts={props.accounts}/>
+                <RealizedGainsReport positions={props.positions} accounts={props.accounts} />
             </Route>
             <Route path={`${path}/:transactionId`}>
                 <TransactionDetail
@@ -123,4 +128,5 @@ Transactions.propTypes = {
     handleAddTransaction: PropTypes.func.isRequired,
     handleDeleteTransaction: PropTypes.func.isRequired,
     handleCorrectTransaction: PropTypes.func.isRequired,
+    handleUploadDegiroTransactions: PropTypes.func.isRequired,
 };

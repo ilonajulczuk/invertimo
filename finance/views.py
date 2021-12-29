@@ -519,11 +519,11 @@ class DegiroUploadViewSet(
             )
         except CurrencyMismatch as e:
             return Response(
-                status=status.HTTP_400_BAD_REQUEST, data={"error": e.args[0]}
+                status=status.HTTP_400_BAD_REQUEST, data={"account": e.args[0]}
             )
         except InvalidFormat as e:
             return Response(
-                status=status.HTTP_400_BAD_REQUEST, data={"error": e.args[0]}
+                status=status.HTTP_400_BAD_REQUEST, data={"transaction_file": e.args[0]}
             )
 
         serializer = TransactionImportSerializer(instance=transaction_import, context=self.get_serializer_context())

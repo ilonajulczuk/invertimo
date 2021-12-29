@@ -135,7 +135,7 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
             )
         self.assertEqual(response.status_code, 400)
         data = response.json()
-        self.assertTrue("error" in data)
+        self.assertTrue("account" in data)
 
         response = self.client.get(self.URL)
         data = response.json()

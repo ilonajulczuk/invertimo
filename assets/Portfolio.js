@@ -118,14 +118,22 @@ export function PortfolioOverview(props) {
         <div className="portfolio-overview">
             <div className="quick-actions">
                 <span className="card-label">Quick actions</span>
-                <div>
+                <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
                     <Button
                         href="#/transactions/record"
                         variant="contained"
                         color="secondary"
                     >
                         <Icon>create</Icon>
-                    Record transaction
+                        Record transaction
+                    </Button>
+                    <Button
+                        href="#/transactions/import/degiro"
+                        variant="contained"
+                        color="secondary"
+                    >
+                        <Icon>create</Icon>
+                        Batch transaction import from degiro
                     </Button>
                     <Button
                         href="#/events/record_dividend"
@@ -133,7 +141,7 @@ export function PortfolioOverview(props) {
                         color="secondary"
                     >
                         <Icon>paid</Icon>
-                    Record dividend
+                        Record dividend
                     </Button>
                     <Button
                         href="#/events/record_transfer"
@@ -141,7 +149,7 @@ export function PortfolioOverview(props) {
                         color="secondary"
                     >
                         <Icon>sync_alt</Icon>
-                    Record transfer
+                        Record transfer
                     </Button>
                     <Button
                         href="#/accounts"
@@ -201,6 +209,7 @@ export default class Portfolio extends React.Component {
         this.handleAddEvent = this.handleAddEvent.bind(this);
         this.handleDeleteEvent = this.handleDeleteEvent.bind(this);
         this.handleDeleteAccount = this.handleDeleteAccount.bind(this);
+        this.handleUploadDegiroTransactions = this.handleUploadDegiroTransactions.bind(this);
     }
 
     async handleAddAccount(accountData) {
@@ -233,6 +242,15 @@ export default class Portfolio extends React.Component {
 
     async handleDeleteTransaction(transactionId) {
         let result = await this.apiClient.deleteTransaction(transactionId);
+        // Reload all the data, e.g. accounts, positions, etc.
+        if (result.ok) {
+            this.refreshFromServer();
+        }
+        return result;
+    }
+
+    async handleUploadDegiroTransactions(data) {
+        let result = await this.apiClient.uploadDegiroTransactions(data);
         // Reload all the data, e.g. accounts, positions, etc.
         if (result.ok) {
             this.refreshFromServer();
@@ -291,7 +309,7 @@ export default class Portfolio extends React.Component {
     async handleDeleteAccount(accountId) {
         let result = await this.apiClient.deleteAccount(accountId);
         // Reload all the data, e.g. accounts, positions, etc.
-        this.refreshFromServer({deleteAccount: Number(accountId)});
+        this.refreshFromServer({ deleteAccount: Number(accountId) });
 
         return result;
     }
@@ -300,7 +318,7 @@ export default class Portfolio extends React.Component {
         this.refreshFromServer();
     }
 
-    refreshFromServer({deleteAccount = null} = {}) {
+    refreshFromServer({ deleteAccount = null } = {}) {
         this.apiClient.getAccounts().then(accounts => {
             this.setState({ "accounts": accounts });
             if (deleteAccount) {
@@ -438,6 +456,7 @@ export default class Portfolio extends React.Component {
                 handleAddTransaction={this.handleAddTransaction}
                 handleDeleteTransaction={this.handleDeleteTransaction}
                 handleCorrectTransaction={this.handleCorrectTransaction}
+                handleUploadDegiroTransactions={this.handleUploadDegiroTransactions}
                 positions={this.state.positions}
                 accounts={this.state.accounts} />;
         }

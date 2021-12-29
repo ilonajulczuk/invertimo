@@ -56,6 +56,7 @@ describe('transaction detail tests', () => {
                     "name": 'The Walt Disney Company',
                     "id": 123,
                     "isin": "",
+                    "tracked": true,
                     "exchange": {
                         name: "USA Stocks"
                     }

@@ -179,23 +179,31 @@ export function TransactionList(props) {
         <ErrorBoundary>
             <div className={classes.header}>
                 <h2>Transactions</h2>
-                <div style={{display: "flex", gap: "10px"}}>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                     <Button
                         href="#/transactions/realized_gains"
                         variant="contained"
                         color="primary"
                     >
                         <Icon>description</Icon>
-                    Realized gains report
-                </Button>
+                        Realized gains report
+                    </Button>
                     <Button
                         href="#/transactions/record"
                         variant="contained"
                         color="secondary"
                     >
                         <Icon>create</Icon>
-                    Record transaction
-                </Button>
+                        Record transaction
+                    </Button>
+                    <Button
+                        href="#/transactions/import/degiro"
+                        variant="contained"
+                        color="secondary"
+                    >
+                        <Icon>create</Icon>
+                        Batch transaction import from degiro
+                    </Button>
                 </div>
 
             </div>

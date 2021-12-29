@@ -63,6 +63,6 @@ export const useStyles = makeStyles((theme) => ({
     symbolOption: {
         display: "flex",
         flexDirection: "column",
-    }
+    },
 }));
 

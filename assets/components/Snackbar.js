@@ -13,7 +13,9 @@ export function Snackbar({ snackbarOpen, snackbarHandleClose, message, ...props 
             horizontal: 'left',
         }}
         open={snackbarOpen} autoHideDuration={6000} onClose={snackbarHandleClose}>
-        <MuiAlert elevation={6} variant="filled" onClose={snackbarHandleClose} severity="success" {...props}>
+        <MuiAlert elevation={6}
+         variant="filled" onClose={snackbarHandleClose}
+          severity={props.severity ?? "success"} {...props}>
             {message}
         </MuiAlert>
     </MuiSnackbar>;
@@ -23,4 +25,5 @@ Snackbar.propTypes = {
     snackbarOpen: PropTypes.bool.isRequired,
     snackbarHandleClose: PropTypes.func.isRequired,
     message: PropTypes.string.isRequired,
+    severity: PropTypes.string,
 };
