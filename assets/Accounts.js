@@ -11,7 +11,6 @@ import {
 import Icon from '@mui/material/Icon';
 import Button from '@mui/material/Button';
 
-import makeStyles from '@mui/styles/makeStyles';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -21,28 +20,15 @@ import { DeleteDialog } from './forms/DeleteDialog.js';
 import { CreateAccountForm } from './forms/CreateAccountForm.js';
 
 
-const useStyles = makeStyles({
-    root: {
-        minWidth: 275,
-    },
-    header: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
-});
-
-
 function AccountCard(props) {
 
-    const classes = useStyles();
     const account = props.account;
 
     let totalCash = Number(account.balance);
     let currencySymbol = toSymbol(account.currency);
 
     return (
-        <Card className={classes.root} variant="outlined">
+        <Card sx={{minWidth: 275}} variant="outlined">
             <CardContent>
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
                     <div>
@@ -123,24 +109,23 @@ export function Accounts(props) {
         }
         return result;
     };
-    const classes = useStyles();
 
     const accountCards = props.accounts.map(account => <AccountCard key={account.id} account={account} />);
 
     const accountsBase = (
         <>
-            <div className={classes.header}>
+            <div className='header-with-buttons'>
                 <h2>Accounts</h2>
-
-                <Button
-                    href="#/accounts/add"
-                    variant="contained"
-                    color="secondary"
-                >
-                    <Icon>savings</Icon>
+                <div className='header-button-group'>
+                    <Button
+                        href="#/accounts/add"
+                        variant="contained"
+                        color="secondary"
+                    >
+                        <Icon>savings</Icon>
                         Add account
                     </Button>
-
+                </div>
             </div>
 
             <div style={{ display: "flex", direction: "row", flexWrap: "wrap", gap: "10px" }}>

@@ -8,7 +8,7 @@ export const AreaChart = ({ data }) => {
 
     return (<ResponsiveLine
         data={data}
-        margin={{ top: 40, right: 110, bottom: 40, left: 60 }}
+        margin={{ top: 40, right: 40, bottom: 40, left: 60 }}
 
         xScale={{
             type: 'time',

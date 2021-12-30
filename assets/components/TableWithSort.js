@@ -1,4 +1,7 @@
 import React from 'react';
+
+import { useState, useEffect } from 'react';
+
 import PropTypes from 'prop-types';
 import makeStyles from '@mui/styles/makeStyles';
 import Table from '@mui/material/Table';
@@ -99,14 +102,6 @@ const useStyles = makeStyles((theme) => ({
     root: {
         width: '100%',
     },
-    paper: {
-        width: '100%',
-        marginBottom: theme.spacing(2),
-        boxShadow: '6px 8px 0px 2px #1b98a147',
-        borderLeft: "1px solid #384a5052",
-        borderBottom: "1px solid #384a5052",
-
-    },
     heading: {
         color: "white!important",
         backgroundColor: theme.palette.primary.main,
@@ -125,15 +120,6 @@ const useStyles = makeStyles((theme) => ({
             fontWeight: "bold",
         },
     },
-    table: {
-        minWidth: 750,
-    },
-    additionalCellPadding: {
-        paddingTop: "1em",
-        paddingBottom: "1em",
-        paddingLeft: "2em",
-        paddingRight: "2em",
-    },
     visuallyHidden: {
         border: 0,
         clip: 'rect(0 0 0 0)',
@@ -146,6 +132,32 @@ const useStyles = makeStyles((theme) => ({
         width: 1,
     },
 }));
+
+
+
+function getWindowDimensions() {
+  const { innerWidth: width, innerHeight: height } = window;
+  return {
+    width,
+    height
+  };
+}
+
+export default function useWindowDimensions() {
+  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
+
+  useEffect(() => {
+    function handleResize() {
+      setWindowDimensions(getWindowDimensions());
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return windowDimensions;
+}
+
 
 
 export function TableWithSort(props) {
@@ -174,14 +186,25 @@ export function TableWithSort(props) {
         setPage(0);
     };
 
+    const { width } = useWindowDimensions();
+    const smallScreen  = width <= 800;
+
+    const sizeBuffer = smallScreen ? 50 : 300;
     return (
 
         <div className={classes.root}>
-            <Paper className={classes.paper} >
-                <TableContainer>
+            <Paper sx={{
+                width: width - sizeBuffer, maxWidth: "100%",
+                overflowX: "auto",
+                overflow: "hidden",
+                marginBottom: "2em",
+                boxShadow: '6px 8px 0px 2px #1b98a147',
+                borderLeft: "1px solid #384a5052",
+                borderBottom: "1px solid #384a5052",
+                }} >
+                <TableContainer sx={{width: width - sizeBuffer - 2, maxWidth: "100%"}}>
                     <Table
-                        className={classes.table}
-                        size='medium'
+                        sx={{ width: width - sizeBuffer - 2, maxWidth: "100%" }}
                     >
                         <TableHeadWithSort
                             classes={classes}

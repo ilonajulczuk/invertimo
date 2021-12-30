@@ -14,6 +14,9 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 
+
+import useMediaQuery from '@mui/material/useMediaQuery';
+
 import { useStyles } from './styles.js';
 import { getAssets } from '../api_utils.js';
 import PropTypes from 'prop-types';
@@ -34,6 +37,7 @@ export function SelectAssetFormFragment(props) {
   const [loading, setLoading] = React.useState(true);
   const [options, setOptions] = React.useState(props.defaultAssetOptions);
 
+  const smallScreen  = useMediaQuery('(max-width:500px)');
   useEffect(() => {
     let mounted = true;
     getAssets().then(assets => {
@@ -161,7 +165,7 @@ export function SelectAssetFormFragment(props) {
           selectOnFocus
           clearOnBlur
           handleHomeEndKeys
-          style={{ width: 400, display: "flex" }}
+          style={{ width: smallScreen ? "unset" : 400, display: "flex" }}
           freeSolo
           renderInput={(params) => (
             <TextField {...params}

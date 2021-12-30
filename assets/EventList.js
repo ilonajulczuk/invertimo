@@ -92,9 +92,9 @@ export function EventList(props) {
 
     return (
         <ErrorBoundary>
-            <div className={classes.header}>
+            <div className="header-with-buttons">
                 <h2>Events</h2>
-                <div style={{ display: "flex", gap: "5px" }}>
+                <div className='header-button-group'>
                     <Button
                         href="#/events/record_transfer"
                         variant="contained"

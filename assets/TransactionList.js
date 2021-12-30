@@ -4,8 +4,6 @@ import PropTypes from 'prop-types';
 import Icon from '@mui/material/Icon';
 import Button from '@mui/material/Button';
 
-import makeStyles from '@mui/styles/makeStyles';
-
 import { toSymbol } from './currencies.js';
 import { TableWithSort } from './components/TableWithSort.js';
 import { ErrorBoundary } from './error_utils.js';
@@ -83,17 +81,8 @@ EmbeddedTransactionList.propTypes = {
     })).isRequired,
 };
 
-const useStyles = makeStyles({
-    header: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-    }
-});
-
 export function TransactionList(props) {
 
-    const classes = useStyles();
     const transactionHeadCells = [
         { id: 'type', label: 'Type' },
         { id: 'position', label: 'Position' },
@@ -175,11 +164,12 @@ export function TransactionList(props) {
     });
 
 
+
     return (
         <ErrorBoundary>
-            <div className={classes.header}>
+            <div className='header-with-buttons'>
                 <h2>Transactions</h2>
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <div className='header-button-group'>
                     <Button
                         href="#/transactions/realized_gains"
                         variant="contained"

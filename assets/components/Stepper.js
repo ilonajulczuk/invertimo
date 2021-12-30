@@ -7,6 +7,8 @@ import StepLabel from '@mui/material/StepLabel';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
+import useMediaQuery from '@mui/material/useMediaQuery';
+
 import PropTypes from 'prop-types';
 
 
@@ -42,9 +44,10 @@ export function Stepper(props) {
 
     const lastStep = activeStep === steps.length - 1;
 
+    const verticalStepper  = useMediaQuery('(max-width:500px)');
     return (
         <div className={classes.root}>
-            <MuiStepper activeStep={activeStep}>
+            <MuiStepper activeStep={activeStep} orientation={verticalStepper ? "vertical" : "horizontal"}>
                 {steps.map(step => {
                     const stepProps = {};
                     const labelProps = {};

@@ -36,19 +36,92 @@ h1 {
     width: 100%;
 }
 
+.grid-container {
+    grid-template-rows: 1fr 120px;
+    grid-template-areas: 'main''footer';
+}
+
 .main-content {
-    width: 80%;
+    width: 90%;
+    margin-left: 20px;
+    margin-right: auto;
     margin-bottom: 2em;
+}
+
+.main-grid {
+    display: grid;
+    grid-template-rows: 140px 100px 1fr;
+    grid-template-columns: 1fr;
+    grid-template-areas: "header""sidenav""main-content";
+}
+
+@media only screen and (max-width: 450px) {
+    .logo {
+        padding: unset;
+    }
+
+    .main-header {
+        flex-direction: column;
+        justify-content: space-evenly;
+    }
+}
+
+@media only screen and (min-width: 450px) {
+    .main-grid {
+        grid-template-rows: 80px 60px 1fr;
+    }
 }
 
 .sidenav {
     padding: 20px;
-    margin-top: 5em;
-    position: fixed;
     grid-area: sidenav;
     height: 100%;
-    width: 200px;
+
 }
+
+.sidenav>ul {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+
+@media only screen and (min-width: 800px) {
+
+
+    .sidenav {
+        flex-direction: column;
+        padding: 20px;
+        margin-top: 5em;
+        position: fixed;
+        grid-area: sidenav;
+        height: 100%;
+        width: 200px;
+    }
+
+    .sidenav>ul {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .sidenav {
+        display: unset;
+    }
+
+    .main-grid {
+        display: grid;
+        grid-template-rows: 80px 1fr;
+        grid-template-columns: 200px 1fr;
+        grid-template-areas: "header header""sidenav main-content";
+    }
+
+    .main-content {
+        width: 80%;
+        margin-bottom: 2em;
+    }
+
+}
+
 
 .sidenav a {
     color: #404747;
@@ -67,6 +140,7 @@ header {
     padding-right: 20px;
     font-size: 20px;
     display: flex;
+    flex-wrap: wrap;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
@@ -160,6 +234,8 @@ ul.time-selectors {
     padding: 0;
     display: flex;
     flex-direction: row;
+    gap: 0.5em;
+    flex-wrap: wrap;
     margin-bottom: 2em;
     font-size: 14px;
 }
@@ -175,12 +251,7 @@ ul.time-selectors li:hover {
 }
 
 ul.time-selectors li:last-child {
-    padding: 0.5em;
     border-right: none;
-}
-
-ul.time-selectors li:first-child {
-    padding-left: 0;
 }
 
 .active-time-selector {
@@ -201,4 +272,29 @@ ul.time-selectors li:first-child {
 select {
     margin-top: 0.5em;
     max-width: 200px;
+}
+
+.header-with-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1em;
+    flex-direction: row;
+}
+
+.header-button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: end;
+}
+
+@media screen and (max-width: 800px) {
+    .header-with-buttons {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    .header-button-group {
+        justify-content: start;
+    }
 }
