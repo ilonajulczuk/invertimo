@@ -6,7 +6,6 @@ import {
 
 import Icon from '@mui/material/Icon';
 import Button from '@mui/material/Button';
-import makeStyles from '@mui/styles/makeStyles';
 
 import { filterPointsWithNoChange, filterPoints } from './timeseries_utils.js';
 import { TimeSelector, daysFromDurationObject } from './TimeSelector.js';
@@ -96,18 +95,7 @@ PositionHeader.propTypes = {
 };
 
 
-const useStyles = makeStyles({
-    header: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginTop: "2em",
-    }
-});
-
-
 export function PositionDetail(props) {
-    const classes = useStyles();
     const [chartTimeSelectorOptionId, setChartTimeSelectorOptionId] = useState(3);
     const [chartTimePeriod, setChartTimePeriod] = useState({ months: 3 });
     const [data, setData] = useState(null);
@@ -246,7 +234,7 @@ export function PositionDetail(props) {
 
                 </div>
                 <div>
-                    <div className={classes.header}>
+                    <div className="header-with-buttons">
                         <h3>Transactions</h3>
                         <Button
                             href={`#/transactions/record?asset=${data.asset.id}`}
@@ -260,7 +248,7 @@ export function PositionDetail(props) {
                     <EmbeddedTransactionList transactions={data.transactions} />
                 </div>
                 <div>
-                    <div className={classes.header}>
+                    <div className="header-with-buttons">
                         <h3>Dividends</h3>
                         <Button
                             href="#/events/record_dividend"

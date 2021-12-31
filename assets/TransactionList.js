@@ -64,7 +64,8 @@ export function EmbeddedTransactionList(props) {
                 rows={transactions}
                 headCells={embeddedTransactionHeadCells}
                 defaultOrder="desc"
-                defaultOrderBy="executed_at" />
+                defaultOrderBy="executed_at"
+                additionalShrink={60} />
         </ErrorBoundary>
     );
 }

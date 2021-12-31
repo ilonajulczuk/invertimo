@@ -35,7 +35,10 @@ const useStyles = makeStyles({
         marginBottom: "16px",
         "&>div": {
             marginRight: "5px",
-        }
+        },
+        gap: "10px",
+        display: "flex",
+        flexWrap: "wrap",
     },
     toggleButtons: {
         padding: "15px",

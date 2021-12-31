@@ -37,7 +37,6 @@ h1, h2, h3, h4, h5 {
 .grid-container {
     display: grid;
     grid-template-columns: 1fr;
-    /* Side nav is hidden on mobile */
     grid-template-rows: 60px 1fr 120px;
     grid-template-areas: 'header' 'main' 'footer';
     height: 100vh;

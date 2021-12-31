@@ -189,12 +189,14 @@ export function TableWithSort(props) {
     const { width } = useWindowDimensions();
     const smallScreen  = width <= 800;
 
+    const additionalShrink = props.additionalShrink ?? 0;
+
     const sizeBuffer = smallScreen ? 50 : 300;
     return (
 
         <div className={classes.root}>
             <Paper sx={{
-                width: width - sizeBuffer, maxWidth: "100%",
+                width: width - sizeBuffer - additionalShrink, maxWidth: "100%",
                 overflowX: "auto",
                 overflow: "hidden",
                 marginBottom: "2em",
@@ -202,9 +204,9 @@ export function TableWithSort(props) {
                 borderLeft: "1px solid #384a5052",
                 borderBottom: "1px solid #384a5052",
                 }} >
-                <TableContainer sx={{width: width - sizeBuffer - 2, maxWidth: "100%"}}>
+                <TableContainer sx={{width: width - sizeBuffer - 2 - additionalShrink, maxWidth: "100%"}}>
                     <Table
-                        sx={{ width: width - sizeBuffer - 2, maxWidth: "100%" }}
+                        sx={{ width: width - sizeBuffer - 2 - additionalShrink, maxWidth: "100%" }}
                     >
                         <TableHeadWithSort
                             classes={classes}
@@ -270,4 +272,5 @@ TableWithSort.propTypes = {
     })).isRequired,
     defaultOrder: PropTypes.string,
     defaultOrderBy: PropTypes.string,
+    additionalShrink: PropTypes.number,
 };

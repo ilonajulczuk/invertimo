@@ -7,20 +7,19 @@ ul.position-list {
 }
 
 .position-card {
-    padding: 0.5em;
     border-radius: 1px;
     border: 1px solid #384a5052;
     border-left: 5px solid #384a5052;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    padding-left: 40px;
-    padding-right: 40px;
-    align-items: center;
+    padding: 20px;
+    gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    column-gap: 20px;
+
 }
 
 .position-card-expanded-content {
-    padding: 60px;
+    padding: 20px;
     background: #8282820d;
     border: 1px solid #384a5052;
     border-left: 5px solid #1b98a1;
@@ -49,7 +48,6 @@ ul.position-list {
 }
 
 .position-card>div {
-    padding: 20px;
     flex-basis: 200px;
     display: flex;
     flex-direction: column;
@@ -58,7 +56,7 @@ ul.position-list {
 .position-name {
     display: flex;
     flex-direction: column;
-    flex-basis: 250px;
+    flex-basis: 200px;
 }
 
 .position-card .position-name {
@@ -67,10 +65,10 @@ ul.position-list {
     flex-basis: 250px;
 }
 
-/* TODO: add handling for screens smaller than that. */
+
 
 .position-card-chart {
-    flex: 0 0 500px;
+    flex: 1 1 500px;
     margin-bottom: 2em;
     margin-top: 0em;
 }
@@ -117,4 +115,10 @@ div.position-values {
 .column-stack {
     display: flex;
     flex-direction: column;
+}
+
+@media screen and (max-width: 500px) {
+    div.position-values {
+        display: block;
+    }
 }

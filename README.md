@@ -1,5 +1,11 @@
 # invertimo
 
+Keep your investment financial records in one place. Make your gains, income and dividend easy to understand even if you use many different brokers, exchanges and different currencies are involved!
+
+The app is as good as the data you feed it. For now it's integrated with Degiro, biggest EU stock broker.
+
+- [Live version](https://invertimo.com)
+- [Indie Hackers entry](https://www.indiehackers.com/product/invertimo)
 
 ## Setting up the db
 

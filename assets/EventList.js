@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Icon from '@mui/material/Icon';
 import Button from '@mui/material/Button';
-import makeStyles from '@mui/styles/makeStyles';
 
 import './transaction_list.css';
 
@@ -14,18 +13,8 @@ import { PositionLink } from './components/PositionLink.js';
 import { EventTypeDisplay } from './components/EventTypeDisplay.js';
 
 
-const useStyles = makeStyles({
-    header: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
-});
-
-
 export function EventList(props) {
 
-    const classes = useStyles();
     const eventHeadCells = [
         { id: 'event_type', label: 'Type' },
         { id: 'account', label: 'Account' },
@@ -185,6 +174,7 @@ export function EmbeddedDividendList(props) {
              headCells={eventHeadCells}
              defaultOrder="desc"
              defaultOrderBy="executed_at"
+             additionalShrink={60}
              />
         </ErrorBoundary>
     );
