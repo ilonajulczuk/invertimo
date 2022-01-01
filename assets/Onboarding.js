@@ -83,6 +83,7 @@ function AddAccountStep({ hasAccounts, handleAddAccount, existingAccounts }) {
     }
     return <>
         {intro}
+        <h3>Create an account 👇</h3>
         <CreateAccountForm
             handleSubmit={handleAddAccount}
             hasAccounts={hasAccounts} />
@@ -164,12 +165,17 @@ export default function Onboarding(props) {
 
         },
         {
-            label: 'Add a transaction',
+            label: 'Record some transactions',
             content: (
                 <div>
-                    <h3>Record transaction</h3>
+                    <h3>Recording transactions</h3>
                     <p>You currently have {numTransactions} transactions recorded.</p>
-                    <p>You will be able to later edit or delete this transaction.</p>
+                    <h4>Integrations</h4>
+                    <p>If you use Degiro, follow <a href="#/transactions/import/degiro">these steps</a>. We are working on adding more integrations!</p>
+                    <h4>Manual recording</h4>
+                    <p>You can always record some transactions with
+                    a form below.</p>
+                    <h3 style={{marginTop: "2em", marginBottom: "0em"}}>Record a transaction 👇</h3>
                     <RecordTransactionForm
                     accounts={props.accounts}
                      hasTransactions={hasTransactions}

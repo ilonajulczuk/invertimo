@@ -105,7 +105,7 @@ export function TransactionDetail(props) {
             </div>
             <div>
                 <span className="card-label">Price</span>
-                {transaction.price} {positionCurrencySymbol}
+                {Number(transaction.price)} {positionCurrencySymbol}
             </div>
             <div className="column-stack">
                 <span className="card-label">Value</span>
@@ -113,7 +113,7 @@ export function TransactionDetail(props) {
                 <span>{Number(transaction.local_value) + positionCurrencySymbol}</span>
             </div>
             <div>
-                <span className="card-label">Fees</span> {transaction.transaction_costs}
+                <span className="card-label">Fees</span> {Number(transaction.transaction_costs)}
             </div>
             <div>
                 <span className="card-label">Executed at</span> {transaction.executed_at.slice(0, 10)}

@@ -608,13 +608,10 @@ class IntegrationTypeField(ChoicesToStringField):
 
 
 class TransactionImportRecordSerializer(serializers.ModelSerializer[TransactionImportRecord]):
-
     issue_type = ImportIssueTypeField(required=False)
 
     class Meta:
         model = TransactionImportRecord
-        # Include all fields but the TransactionImport as this will be embedded into that record
-        # and therefore unnecessary.
         fields = [
             "id",
             "transaction",
@@ -623,6 +620,7 @@ class TransactionImportRecordSerializer(serializers.ModelSerializer[TransactionI
             "successful",
             "issue_type",
             "raw_issue",
+            "transaction_import",
             ]
 
 
