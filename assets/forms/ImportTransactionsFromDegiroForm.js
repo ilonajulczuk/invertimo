@@ -2,12 +2,6 @@ import React from 'react';
 
 import Button from '@mui/material/Button';
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import Typography from '@mui/material/Typography';
-import Icon from '@mui/material/Icon';
-
 import PropTypes from 'prop-types';
 import { Formik, Form } from 'formik';
 import * as yup from 'yup';
@@ -15,7 +9,7 @@ import * as yup from 'yup';
 import { FormikCheckboxField, FormikSelectField } from './muiformik.js';
 import { Snackbar } from '../components/Snackbar.js';
 import { useStyles } from './styles.js';
-
+import { TransactionImportResult  } from '../TransactionImportResult.js';
 import FormHelperText from '@mui/material/FormHelperText';
 import FormControl from '@mui/material/FormControl';
 
@@ -111,7 +105,7 @@ export default function ImportTransactionsFromDegiroForm(props) {
                             console.log(result);
                             actions.setErrors(result.errors);
                             snackbarSetSeverity("error");
-                            snackbarSetMessage(`Import failed! See Import Result for more details.`);
+                            snackbarSetMessage(`Import failed!`);
                             snackbarSetOpen(true);
                         } else if (result.message) {
                             alert(result.message);
@@ -191,22 +185,10 @@ export default function ImportTransactionsFromDegiroForm(props) {
                     />
                     {
 
-                        importResult ?
-                    <Accordion>
-                        <AccordionSummary
-                            expandIcon={<Icon>expand_more</Icon>}
-                            aria-controls="import-result-content"
-                            id="import-result-header"
-                        >
-                            <Typography>Import result</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <Typography>
-                                {JSON.stringify(importResult)}
-                                </Typography>
-                        </AccordionDetails>
-                    </Accordion> : null
-                     }
+                        (importResult && importResult.ok) ?
+                            <TransactionImportResult importResult={importResult.data} />
+                            : null
+                    }
 
                 </Form>
             )}

@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 
 import { RecordTransactionForm } from './forms/RecordTransactionForm.js';
-
+import { TransactionImportDetail } from './TransactionImportDetail.js';
 import ImportTransactionsFromDegiroForm from './forms/ImportTransactionsFromDegiroForm.js';
 import { TransactionList } from './TransactionList';
 import { TransactionDetail } from './TransactionDetail.js';
@@ -96,6 +96,9 @@ export default function Transactions(props) {
                     accounts={props.accounts}
                     handleSubmit={props.handleUploadDegiroTransactions}
                 />
+            </Route>
+            <Route path={`${path}/imports/:importId`}>
+                <TransactionImportDetail transactions={props.transactions}/>
             </Route>
             <Route path={`${path}/realized_gains`}>
                 <RealizedGainsReport positions={props.positions} accounts={props.accounts} />

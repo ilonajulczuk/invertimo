@@ -27,6 +27,7 @@ from finance.models import (
     AccountEvent,
     Asset,
     CurrencyExchangeRate,
+    IntegrationType,
     Lot,
     Position,
     PriceHistory,
@@ -470,6 +471,7 @@ class LotViewSet(
 
 class DegiroUploadViewSet(
     mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
     viewsets.GenericViewSet,
 ):
     model = TransactionImport
@@ -477,13 +479,13 @@ class DegiroUploadViewSet(
 
     def get_queryset(self) -> QuerySet[models.TransactionImport]:
         assert isinstance(self.request.user, User)
-        queryset = models.TransactionImport.objects.filter(account__user=self.request.user)
+        queryset = models.TransactionImport.objects.filter(account__user=self.request.user, integration=IntegrationType.DEGIRO)
         return queryset
 
     def get_serializer_class(
         self,
     ) -> Type[Union[DegiroUploadSerializer, TransactionImportSerializer]]:
-        if self.action == "list":
+        if self.action in ("list", "retrieve"):
             return TransactionImportSerializer
         return DegiroUploadSerializer
 
@@ -531,3 +533,19 @@ class DegiroUploadViewSet(
         return Response(
             status=status.HTTP_201_CREATED, data=serializer.data
         )
+
+
+class TransactionImportViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+
+    model = TransactionImport
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = TransactionImportSerializer
+
+    def get_queryset(self) -> QuerySet[models.TransactionImport]:
+        assert isinstance(self.request.user, User)
+        queryset = models.TransactionImport.objects.filter(account__user=self.request.user, integration=IntegrationType.DEGIRO)
+        return queryset

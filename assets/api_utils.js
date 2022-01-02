@@ -6,11 +6,15 @@ import Cookies from 'js-cookie';
 
 
 export class APIClientError extends Error { }
+export class NotFoundError extends Error { }
 
 // TODO: add cache control to get requests.
 export async function fetchDetailResult(url) {
     let response = await fetch(url, { cache: 'no-cache', });
     if (!response.ok) {
+        if (response.status == 404) {
+            throw new NotFoundError("Not found :(");
+        }
         if (!response.ok) {
             throw new APIClientError(
                 "failed at fetching data, non successful response");
@@ -255,5 +259,11 @@ export function getAssets() {
 export function getLots() {
     let url = baseUrl + '/lots/?limit=50';
     return fetchAllResults(url);
+}
+
+
+export function getTransactionImportResult(importId) {
+    let url = baseUrl + '/transaction-imports/' + importId + "/";
+    return fetchDetailResult(url);
 }
 

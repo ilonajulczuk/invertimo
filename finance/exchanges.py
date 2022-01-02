@@ -92,7 +92,7 @@ class AssetRepository:
     def add(
         self, isin: str, symbol: str, currency: models.Currency, country: str, name: str, tracked: bool
     ):
-        asset = models.Asset(
+        asset, _ = models.Asset.objects.get_or_create(
             exchange=self.exchange,
             isin=isin,
             symbol=symbol,
@@ -101,7 +101,6 @@ class AssetRepository:
             name=name,
             tracked=tracked,
         )
-        asset.save()
         return asset
 
 

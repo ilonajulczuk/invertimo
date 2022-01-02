@@ -29,7 +29,6 @@ asset_response = [
         "previousClose": 147.26,
         "previousCloseDate": "2021-12-23",
     },
-
     {
         "Code": "NKE",
         "Exchange": "F",
@@ -108,8 +107,8 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
     def test_cannot_upload_to_wrong_account(self):
         pass
 
-    @patch('finance.exchanges.query_asset')
-    def test_can_upload_to_owned_account(self , query_asset_mock):
+    @patch("finance.exchanges.query_asset")
+    def test_can_upload_to_owned_account(self, query_asset_mock):
         query_asset_mock.side_effect = _assets_with_isin_side_effect
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
@@ -122,6 +121,13 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(models.Transaction.objects.count(), 6)
+
+        response = self.client.get("/api/transaction-imports/")
+        self.assertEqual(response.status_code, 200)
+
+        transaction_import_id = models.TransactionImport.objects.first().id
+        response = self.client.get(f"/api/transaction-imports/{transaction_import_id}/")
+        self.assertEqual(response.status_code, 200)
 
     def test_can_upload_to_owned_account_currency_mismatch(self):
         another_account = models.Account.objects.create(
@@ -143,13 +149,14 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
         self.assertEqual(len(data[0]["records"]), 0)
         self.assertEqual(data[0]["status"], models.ImportStatus.FAILURE.label)
 
-    @patch('finance.exchanges.query_asset')
+    @patch("finance.exchanges.query_asset")
     def test_some_assets_not_found_by_isin(self, query_asset_mock):
         # If asset is not found then the empty value is returned.
         calls = 0
+
         def assets_or_empty(_):
             nonlocal calls
-            calls +=1
+            calls += 1
             if calls < 5:
                 return asset_response
             else:
@@ -162,7 +169,12 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
         self.assertEqual(models.Transaction.objects.count(), 0)
         with open("./finance/transactions_example_latest.csv", "rb") as fp:
             response = self.client.post(
-                self.URL, {"account": self.account.id, "transaction_file": fp, "import_all_assets": False}
+                self.URL,
+                {
+                    "account": self.account.id,
+                    "transaction_file": fp,
+                    "import_all_assets": False,
+                },
             )
 
         self.assertEqual(response.status_code, 201)
@@ -174,13 +186,14 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
         # TODO: instead of ignoring these assets, consider adding them as untracked?
         self.assertEqual(models.Transaction.objects.count(), 4)
 
-    @patch('finance.exchanges.query_asset')
+    @patch("finance.exchanges.query_asset")
     def test_some_assets_not_found_by_isin_but_still_imported(self, query_asset_mock):
         # If asset is not found then the empty value is returned.
         calls = 0
+
         def assets_or_empty(_):
             nonlocal calls
-            calls +=1
+            calls += 1
             if calls < 5:
                 return asset_response
             else:
@@ -193,7 +206,12 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
         self.assertEqual(models.Transaction.objects.count(), 0)
         with open("./finance/transactions_example_latest.csv", "rb") as fp:
             response = self.client.post(
-                self.URL, {"account": self.account.id, "transaction_file": fp, "import_all_assets": True}
+                self.URL,
+                {
+                    "account": self.account.id,
+                    "transaction_file": fp,
+                    "import_all_assets": True,
+                },
             )
 
         self.assertEqual(response.status_code, 201)
@@ -224,7 +242,7 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
         self.assertEqual(len(data[0]["records"]), 0)
         self.assertEqual(data[0]["status"], models.ImportStatus.FAILURE.label)
 
-    @patch('finance.exchanges.query_asset')
+    @patch("finance.exchanges.query_asset")
     def test_transactions_latest_to_oldest_uploads_correctly(self, query_asset_mock):
         # This makes sure that the transactions from the file are sorted correctly
         # before being ingested.
@@ -244,7 +262,7 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
         self.assertEqual(data["status"], models.ImportStatus.SUCCESS.label)
         self.assertEqual(len(data["records"]), 184)
 
-    @patch('finance.exchanges.query_asset')
+    @patch("finance.exchanges.query_asset")
     def test_incomplete_transaction_list_prevents_uploading(self, query_asset_mock):
         # This is a scenario when you upload the transactions out of
         # order, e.g. later transactions of selling assets you haven't bought.

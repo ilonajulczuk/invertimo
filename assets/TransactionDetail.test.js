@@ -61,7 +61,21 @@ describe('transaction detail tests', () => {
                         name: "USA Stocks"
                     }
                 },
-            }
+            },
+            import_records: [
+                {
+                    "id": 342,
+                    "transaction": 555,
+                    "raw_record": ",56\nDate,02-12-2020\nTime,09:04\nProduct,JPMORGAN G\nISIN,GB00B18JK166\nReference,LSE\nVenue,XLON\nQuantity,152\nPrice,296.0\nLocal value,-44992.0\nValue,-498.41\nExchange rate,90.1803\nTransaction and/or third,-4.25\nTotal,-502.66\nOrder ID,c4a5d067-214c-4a2b-96db-6e3838e8c5ee\nPrice currency,GBX\nLocal value currency,GBX\nValue currency,EUR\nTransaction costs currency,EUR\nTotal currency,EUR\nTransaction costs,-4.25\nDatetime,2020-12-02 09:04:00+00:00\n",
+                    "created_new": false,
+                    "successful": true,
+                    "issue_type": null,
+                    "raw_issue": null,
+                    "transaction_import": 10,
+                    "created_at": "2021-12-28T16:59:30.701718Z",
+                    "integration": "DEGIRO"
+                },
+            ]
         }
     ];
 

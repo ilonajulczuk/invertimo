@@ -7,6 +7,9 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
+import Card from '@mui/material/Card';
+
+import CardContent from '@mui/material/CardContent';
 
 import format from 'date-fns/format';
 
@@ -20,7 +23,7 @@ export function TransactionImportRecord(props) {
             aria-controls="import-result-content"
             id="import-result-header"
         >
-            <Typography>Transaction imported from {props.record.integration} at {createdAt} {maybeDuplicate}</Typography>
+            <Typography>Transaction <a href={`#/transactions/imports/${props.record.transaction_import}`}> imported </a> from {props.record.integration} at {createdAt} {maybeDuplicate}</Typography>
         </AccordionSummary>
         <AccordionDetails>
             <h4>Raw data</h4>
@@ -37,5 +40,47 @@ TransactionImportRecord.propTypes = {
         raw_record: PropTypes.string.isRequired,
         integration: PropTypes.string.isRequired,
         created_new: PropTypes.bool.isRequired,
+        transaction_import: PropTypes.number.isRequired,
+    }).isRequired,
+};
+
+
+export function TransactionImportRecordReferencingTransaction(props) {
+    const maybeDuplicate = props.record.successful ? (props.record.created_new ? "(new)" : "(duplicate)") : "";
+
+    const maybeTransaction = props.record.transaction ? <a href={`#/transactions/${props.record.transaction}`} >
+        transaction</a> : null;
+    const maybeIssue = props.record.issue_type ? "Issue type: " + props.record.issue_type : null;
+    return <div>
+        <Card variant="outlined" sx={{ marginTop: "1em", marginBottom: "1em" }}>
+
+            <CardContent>
+                <h4>
+                    {maybeTransaction} {maybeDuplicate}
+                    {maybeIssue}
+
+                </h4>
+                {props.record.raw_issue ?
+                    <Typography sx={{marginBottom: "1em"}}>
+                        {props.record.raw_issue}
+                    </Typography> : null}
+                <Typography>
+                    {props.record.raw_record}
+                </Typography>
+
+
+            </CardContent>
+        </Card>
+    </div>;
+}
+
+TransactionImportRecordReferencingTransaction.propTypes = {
+    record: PropTypes.shape({
+        raw_record: PropTypes.string.isRequired,
+        created_new: PropTypes.bool.isRequired,
+        transaction: PropTypes.number,
+        issue_type: PropTypes.string,
+        raw_issue: PropTypes.string,
+        successful: PropTypes.bool.isRequired,
     }).isRequired,
 };
