@@ -12,6 +12,7 @@ import format from 'date-fns/format';
 import { filter } from 'lodash';
 import { TransactionImportRecordReferencingTransaction } from './TransactionImportRecord';
 
+
 export function TransactionImportResult(props) {
     const status = props.importResult.status;
     const integration = props.importResult.integration;
@@ -25,7 +26,7 @@ export function TransactionImportResult(props) {
 
     const successfulRawRecords = filter(props.importResult.records, "successful");
     const successfulRawRecordsDuplicates = filter(successfulRawRecords, o => !o.created_new);
-    console.log(successfulRawRecordsDuplicates.length);
+
     const failedRawRecords = filter(props.importResult.records,
         record => !record.successful
     );
@@ -44,7 +45,7 @@ export function TransactionImportResult(props) {
                 "& .MuiAlert-message": {
                     display: "flex", width: "100%"
                 }
-            }} variant="filled">
+            }}>
                 <AccordionSummary
                     expandIcon={<Icon>expand_more</Icon>}
                     aria-controls="import-result-content"

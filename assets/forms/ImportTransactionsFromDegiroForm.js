@@ -99,7 +99,6 @@ export default function ImportTransactionsFromDegiroForm(props) {
                         }
                         snackbarSetOpen(true);
                         actions.resetForm();
-                        console.log(result);
                     } else {
                         if (result.errors) {
                             console.log(result);
