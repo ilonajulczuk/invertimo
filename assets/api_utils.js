@@ -168,7 +168,7 @@ export class APIClient {
     }
 
     async getTransactions() {
-        let url = this.baseUrl + '/transactions/?limit=50';
+        let url = this.baseUrl + '/transactions/?limit=100';
         return fetchAllResults(url);
     }
 

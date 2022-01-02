@@ -21,6 +21,7 @@ import './position_list.css';
 import './transaction_list.css';
 import { toSymbol } from './currencies.js';
 import { CorrectTransactionForm } from './forms/CorrectTransactionForm.js';
+import { TransactionImportRecord } from './TransactionImportRecord.js';
 import { PositionLink } from './components/PositionLink.js';
 import { DeleteDialog } from './forms/DeleteDialog.js';
 
@@ -32,7 +33,7 @@ const useStyles = makeStyles({
         alignItems: "center",
     },
     transactionDetails: {
-        padding: "10px",
+        padding: "20px",
         background: "#8282820d",
         border: "1px solid #384a5052",
         borderLeft: "5px solid #1b98a1",
@@ -42,7 +43,6 @@ const useStyles = makeStyles({
         flexDirection: "column",
     },
 });
-
 
 export function TransactionDetail(props) {
     const classes = useStyles();
@@ -121,6 +121,9 @@ export function TransactionDetail(props) {
         </div>
     );
 
+    const importRecords = transaction.import_records.map(
+        record => <TransactionImportRecord record={record} key={record.id} />);
+
     const handleDelete = async () => {
         const response = await props.handleDeleteTransaction(transaction.id);
         if (response.ok) {
@@ -166,8 +169,10 @@ export function TransactionDetail(props) {
                 <p>Executed in account
                     <a href={`#accounts/${account.id}`}> {account.nickname}</a>
 
-                {transaction.order_id ? ` with order id: #${transaction.order_id}` : ""}
+                    {transaction.order_id ? ` with order id: #${transaction.order_id}` : ""}
                 </p>
+                {transaction.import_records.length ? <h3>Import records</h3> : ""}
+                {importRecords}
             </div>
 
             <Switch>
@@ -196,10 +201,10 @@ export function TransactionDetail(props) {
                 </Route>
                 <Route path={`${path}/delete`}>
 
-                <DeleteDialog handleCancel={handleCancel}
+                    <DeleteDialog handleCancel={handleCancel}
                         open={true}
                         canDelete={canDelete}
-                        handleDelete={handleDelete} message= {canDelete ?
+                        handleDelete={handleDelete} message={canDelete ?
                             "It will be as if this transaction has never happened. This might cause you to miss historical data."
                             : "This transaction can't be safely deleted."}
                         title="Are you sure you want to delete this transaction?"

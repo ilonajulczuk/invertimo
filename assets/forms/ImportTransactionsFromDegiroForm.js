@@ -7,7 +7,6 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
 import Icon from '@mui/material/Icon';
-// import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import PropTypes from 'prop-types';
 import { Formik, Form } from 'formik';

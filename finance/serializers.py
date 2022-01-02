@@ -103,6 +103,95 @@ class AssetSerializer(serializers.ModelSerializer[Asset]):
         ]
 
 
+class ImportStatusField(ChoicesToStringField):
+    choices_class = ImportStatus
+    name = "import status"
+
+
+class ImportIssueTypeField(ChoicesToStringField):
+    choices_class = ImportIssueType
+    name = "import issue type"
+
+
+class IntegrationTypeField(ChoicesToStringField):
+    choices_class = IntegrationType
+    name = "integration type"
+
+
+class TransactionImportRecordSerializer(serializers.ModelSerializer[TransactionImportRecord]):
+    issue_type = ImportIssueTypeField(required=False)
+
+    class Meta:
+        model = TransactionImportRecord
+        fields = [
+            "id",
+            "transaction",
+            "raw_record",
+            "created_new",
+            "successful",
+            "issue_type",
+            "raw_issue",
+            ]
+
+class EmbeddedTransactionImportRecordSerializer(serializers.ModelSerializer[TransactionImportRecord]):
+    issue_type = ImportIssueTypeField(required=False)
+
+    integration = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TransactionImportRecord
+        fields = [
+            "id",
+            "transaction",
+            "raw_record",
+            "created_new",
+            "successful",
+            "issue_type",
+            "raw_issue",
+            "transaction_import",
+            "created_at",
+            "integration",
+            ]
+
+    def get_integration(self, obj):
+        value = obj.transaction_import.integration
+        return IntegrationType(value).label
+
+    def get_created_at(self, obj):
+        return obj.transaction_import.created_at
+
+
+class TransactionImportSerializer(serializers.ModelSerializer[TransactionImport]):
+
+    records = TransactionImportRecordSerializer(many=True)
+    status = ImportStatusField()
+    integration = IntegrationTypeField()
+
+    class Meta:
+        model = TransactionImport
+        fields = [
+            "id",
+            "account",
+            "created_at",
+            "status",
+            "integration",
+            "records",
+        ]
+
+    def get_extra_kwargs(self):
+        kwargs = super().get_extra_kwargs()
+        kwargs["account"] = kwargs.get("account", {})
+        kwargs["account"]["queryset"] = self.get_account_queryset()
+        return kwargs
+
+    def get_account_queryset(self) -> QuerySet[models.Account]:
+        request = self.context.get("request")
+        assert isinstance(request, Request)
+        assert isinstance(request.user, User)
+        return models.Account.objects.filter(user=request.user)
+
+
 class PositionSerializer(serializers.ModelSerializer[Position]):
     asset = AssetSerializer()
     latest_price = serializers.DecimalField(max_digits=20, decimal_places=2)
@@ -184,6 +273,7 @@ class TransactionSerializer(serializers.ModelSerializer[Transaction]):
     total_in_account_currency = serializers.DecimalField(
         max_digits=12, decimal_places=5
     )
+    import_records = EmbeddedTransactionImportRecordSerializer(many=True)
 
     class Meta:
         model = Transaction
@@ -199,6 +289,7 @@ class TransactionSerializer(serializers.ModelSerializer[Transaction]):
             "value_in_account_currency",
             "total_in_account_currency",
             "order_id",
+            "import_records",
         ]
 
 
@@ -592,63 +683,3 @@ class DegiroUploadSerializer(serializers.Serializer[Any]):
     import_all_assets = serializers.BooleanField(default=True)
 
 
-class ImportStatusField(ChoicesToStringField):
-    choices_class = ImportStatus
-    name = "import status"
-
-
-class ImportIssueTypeField(ChoicesToStringField):
-    choices_class = ImportIssueType
-    name = "import issue type"
-
-
-class IntegrationTypeField(ChoicesToStringField):
-    choices_class = IntegrationType
-    name = "integration type"
-
-
-class TransactionImportRecordSerializer(serializers.ModelSerializer[TransactionImportRecord]):
-    issue_type = ImportIssueTypeField(required=False)
-
-    class Meta:
-        model = TransactionImportRecord
-        fields = [
-            "id",
-            "transaction",
-            "raw_record",
-            "created_new",
-            "successful",
-            "issue_type",
-            "raw_issue",
-            "transaction_import",
-            ]
-
-
-class TransactionImportSerializer(serializers.ModelSerializer[TransactionImport]):
-
-    records = TransactionImportRecordSerializer(many=True)
-    status = ImportStatusField()
-    integration = IntegrationTypeField()
-
-    class Meta:
-        model = TransactionImport
-        fields = [
-            "id",
-            "account",
-            "created_at",
-            "status",
-            "integration",
-            "records",
-        ]
-
-    def get_extra_kwargs(self):
-        kwargs = super().get_extra_kwargs()
-        kwargs["account"] = kwargs.get("account", {})
-        kwargs["account"]["queryset"] = self.get_account_queryset()
-        return kwargs
-
-    def get_account_queryset(self) -> QuerySet[models.Account]:
-        request = self.context.get("request")
-        assert isinstance(request, Request)
-        assert isinstance(request.user, User)
-        return models.Account.objects.filter(user=request.user)

@@ -281,6 +281,7 @@ class TransactionsViewSet(viewsets.ModelViewSet):
             .select_related("position")
             .select_related("position__asset")
             .select_related("position__asset__exchange")
+            .prefetch_related("import_records__transaction_import")
         )
 
     def get_serializer_class(
