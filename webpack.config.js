@@ -1,16 +1,23 @@
 const path = require('path');
 
 const CompressionPlugin = require("compression-webpack-plugin");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
 
 module.exports = {
   plugins: [
     new CompressionPlugin({
-        algorithm: "gzip",
+      algorithm: "gzip",
+    }),
+    new HtmlWebpackPlugin({
+      title: 'Invertimo',
+      filename: '../templates/base_internal.webpack.html',
+      template: 'templates/base_internal.tmpl.html',
     })
-],
+  ],
   entry: './assets/index.js',  // path to our input file
   output: {
-    filename: 'index-bundle.js',  // output bundle file name
+    filename: '[contenthash].index-bundle.js',  // output bundle file name
     path: path.resolve(__dirname, './static'),  // path to our Django static directory
   },
   devtool: 'eval-source-map',

@@ -1,10 +1,8 @@
-{% extends 'base_internal.html' %}
+{% extends 'base_internal.webpack.html' %}
 {% load static %}
 {% block content %}
 <div id="root"></div>
 
 {{ user.email|json_script:'userEmail' }}
-
-<script src="{% static 'index-bundle.js' %}"></script>
 
 {% endblock %}

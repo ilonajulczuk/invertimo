@@ -135,3 +135,4 @@ node_modules/
 static/index-bundle.js
 static/index-bundle.js.LICENSE.txt
 static/*bundle.js*
+templates/base_interna.webpack*
