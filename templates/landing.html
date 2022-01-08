@@ -3,76 +3,66 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'landing.css' %}?version=1">
 <div class="hero">
-    <h1>Tracking your investments</h1>
-    <h1><span class="red-highlight">should be a piece of cake</span></h1>
+    <h1>Keep all your investment related records in one place</h1>
+    <h1><span class="red-highlight">Make your future taxes easy</span></h1>
+    <p>Track your portfolio across different accounts, with assets in different currencies easily.</p>
     <p>
-        Even if you have assets in different currencies than your local one and own stocks, bonds,
-        investment trusts or cryptos.
-    </p>
-    <p>
-        Invertimo will help you correctly track you gains, dividends,
-        interests and overall performance of your investments across multiple different brokerages and exchanges
-        in one place.
-    <p>
-        <a class="button" href="/signup/">Get started for free</a>
 </div>
-
+<ul class="features">
+    <li class="feature-card">
+        <h2>Keep track of your transactions</h2>
+        <p>You can import your transactions and info about other events (e.g. dividend payouts)
+            to invertimo using either manual or automated import.</p>
+        <p>
+            Invertimo supports batch upload from <a href="https://degiro.com">Degiro</a>, biggest European brokerage.
+            More integrations are planned in the near future.
+        </p>
+        <a class="button" href="/signup/">Get started for free</a>
+    </li>
+    <li class="picture-card">
+        <img src="{% static 'transactions.png' %}" />
+    </li>
+</ul>
 <ul class="features">
 
     <li class="feature-card">
-        <h2>Easily compute your investment gains</h2>
-        <p>Calculating gains seems simple at first, unless you have assets that trade in different
-            currencies than your local one, stocks split or you use more than one brokerage to trade a given asset.</p>
-        <p>You need to track the exchange rates at the times of the transactions, stock units and the order of
-            acquiring assets across investment accounts.
-            This gets complicated real fast.
-        </p>
+        <h2>See your realized gains for any period easily</h2>
+        <p>It's easy to lose track of all your transactions and get confused with currency exchange rates.</p>
         <p>On top of that in some countries such as Ireland, funds are taxed differently than stocks and
             you have to deal with deemed disposal and pay taxes from unrealized gains.</p>
-        <p>Invertimo will make it all very easy for you.</p>
-        <p>It's perfect for an European investor who has assets in Euro, USD, GBP and crypto.</p>
-            <a class="button button-secondary">Learn more</a>
+        <p>Invertimo is perfect for an any investor with diverse assets, e.g in Euro, USD, GBP and crypto.</p>
+        <a class="button" href="/signup/">Try it</a>
 
     </li>
-
     <li class="picture-card">
-        <img src="{% static 'dollars.jpeg' %}" />
+        <img src="{% static 'gains.png' %}" />
     </li>
+
+
 </ul>
 <ul class="features">
     <li class="feature-card">
         <h2>
-            Track your dividends, contributions and growth
+            What contributed to the value of your portfolio over time?
         </h2>
         <p>
-            How much dividends did you get this year?
-            How much of your portfolio growth was due to your contributions vs dividends vs investment growth?
-            Track this easily even if you use multiple brokers.
+            Invertimo automatically fetches prices for recognized assets and can help you
+            better understand your portfolio over time.
         </p>
     </li>
-    <li class="feature-card">
-        <h2>Understand your portfolio</h2>
-
-        <p>Are you as diversified as you think?
-            Does your allocation match your long term plans?
-            Are certain positions underperforming?
-            See how different positions contributed to your portfolio over time.
-        </p>
+    <li class="picture-card">
+        <img src="{% static 'account_overview.png' %}" />
     </li>
 
 </ul>
 
 <div class="hero">
-    <p>
-        The app is in Alpha. Interested in hearing more about it?
-    </p>
-
-    <a class="button" href="/signup/">Sign up</a>
-
-</div>
-<div class="hero">
+    <h2>Developed with ❤️ as open source</h2>
     <p>
         The code is open source and can be found on <a href="https://github.com/ilonajulczuk/invertimo">github</a>.
+    </p>
+    <p>
+        Developed by <a href="https://twitter.com/attilczuk">@attilczuk</a>.
     </p>
 </div>
 {% endblock %}

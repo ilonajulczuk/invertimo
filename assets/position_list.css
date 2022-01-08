@@ -65,12 +65,12 @@ ul.position-list {
     flex-basis: 250px;
 }
 
-
-
 .position-card-chart {
     flex: 1 1 500px;
     margin-bottom: 2em;
     margin-top: 0em;
+    /* Avoid the size blowing up, e.g. if last element of the grid. */
+    max-width: 650px;
 }
 
 .position-card-chart h3 {
