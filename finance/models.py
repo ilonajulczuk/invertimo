@@ -495,6 +495,7 @@ class Lot(models.Model):
 
 class IntegrationType(models.IntegerChoices):
     DEGIRO = 1, _("DEGIRO")
+    BINANCE_CSV = 2, _("BINANCE_CSV")
 
 
 class ImportStatus(models.IntegerChoices):

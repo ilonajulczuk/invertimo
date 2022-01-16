@@ -5,7 +5,8 @@ from django.contrib.auth.models import User
 from django.db.models import Sum
 from django.test import SimpleTestCase, TestCase
 
-from finance import accounts, degiro_parser, models, utils
+from finance import accounts, models, utils
+from finance.integrations import degiro_parser
 
 DATE_FORMAT = "%Y-%m-%d %H:%M%z"
 

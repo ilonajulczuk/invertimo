@@ -18,7 +18,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 
 from finance import accounts, gains, models
-from finance.degiro_parser import (
+from finance.integrations.degiro_parser import (
     CurrencyMismatch,
     InvalidFormat,
     import_transactions_from_file,
