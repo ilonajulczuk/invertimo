@@ -359,6 +359,14 @@ class TestBinanceParser(TestCase):
         # 2 in the new account, 30 from the old fixture.
         self.assertEqual(models.Position.objects.count(), 32)
 
+        eth = models.Asset.objects.get(name="ETH")
+        self.assertEqual(eth.exchange.name, "Other / NA")
+        self.assertEqual(eth.isin, "")
+        self.assertIsNone(eth.currency)
+        self.assertIsNone(eth.country)
+        eth_position = models.Position.objects.get(asset=eth, account=account)
+        self.assertEqual(eth_position.quantity, decimal.Decimal("0.18"))
+
         total_value = models.Transaction.objects.aggregate(
             Sum("total_in_account_currency")
         )["total_in_account_currency__sum"]
