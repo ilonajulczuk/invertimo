@@ -106,6 +106,7 @@ class AssetType(models.IntegerChoices):
     STOCK = 1, _("Stock")
     BOND = 2, _("Bond")
     FUND = 3, _("Fund")
+    CRYPTO = 4, _("Crypto")
 
 
 class Asset(models.Model):
@@ -120,7 +121,7 @@ class Asset(models.Model):
         null=True,
         blank=True,
     )
-    currency = models.IntegerField(choices=Currency.choices, default=Currency.USD)
+    currency = models.IntegerField(choices=Currency.choices, null=True)
     country = models.CharField(max_length=200, null=True)
 
     asset_type = models.IntegerField(choices=AssetType.choices, default=AssetType.STOCK)

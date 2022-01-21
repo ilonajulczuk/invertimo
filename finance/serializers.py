@@ -6,8 +6,8 @@ import datetime
 from typing import Any, TypeVar
 from django.contrib.auth.models import User
 
-from finance import models
-from finance import exchanges, gains
+from finance import models, stock_exchanges
+from finance import gains
 from finance.models import (
     Account,
     AccountEvent,
@@ -370,7 +370,7 @@ class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction])
         return value
 
     def validate_exchange(self, value):
-        if value == exchanges.OTHER_OR_NA_EXCHANGE_NAME:
+        if value == stock_exchanges.OTHER_OR_NA_EXCHANGE_NAME:
             return value
         if not models.Exchange.objects.filter(name=value).exists():
             raise serializers.ValidationError(

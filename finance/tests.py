@@ -2,11 +2,9 @@ import datetime
 import decimal
 
 from django.contrib.auth.models import User
-from django.db.models import Sum
 from django.test import SimpleTestCase, TestCase
 
 from finance import accounts, models, utils
-from finance.integrations import degiro_parser
 
 DATE_FORMAT = "%Y-%m-%d %H:%M%z"
 
@@ -67,51 +65,6 @@ def _add_transaction(account, isin, exchange, executed_at, quantity, price):
     )
 
 
-class TestDegiroParser(TestCase):
-
-    # This fixture provides data about 65 different exchanges,
-    # and sets up a single account for testing.
-    fixtures = ["exchanges_postgres.json"]
-
-    def test_importing_single_transaction(self):
-        # TODO: mock out the API call, don't call the official API
-        # every time the test runs.
-        account_balance = decimal.Decimal("-15237.26000")
-        base_num_of_transactions = 6
-        account = models.Account.objects.create(
-            user=User.objects.all()[0], nickname="test"
-        )
-        transaction_import = degiro_parser.import_transactions_from_file(
-            account, "./finance/transactions_example_short.csv", True
-        )
-        failed_records = transaction_import.records.filter(successful=False)
-        self.assertEqual(len(failed_records), 0)
-        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
-        account = models.Account.objects.get(nickname="test")
-        self.assertAlmostEqual(account.balance, account_balance)
-
-        # 6 in the new account, 30 from the old fixture.
-        self.assertEqual(models.Position.objects.count(), 36)
-
-        total_value = models.Transaction.objects.aggregate(
-            Sum("total_in_account_currency")
-        )["total_in_account_currency__sum"]
-        self.assertAlmostEqual(total_value, account_balance)
-
-        # Import the same transactions again and make
-        # sure that they aren't double recorded.
-        degiro_parser.import_transactions_from_file(
-            account, "./finance/transactions_example_short.csv", True
-        )
-        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
-        self.assertEqual(models.Position.objects.count(), 36)
-        account = models.Account.objects.get(nickname="test")
-        total_value = models.Transaction.objects.aggregate(
-            Sum("total_in_account_currency")
-        )["total_in_account_currency__sum"]
-
-        self.assertAlmostEqual(account.balance, account_balance)
-        self.assertAlmostEqual(total_value, account_balance)
 
 
 class TestUtils(SimpleTestCase):

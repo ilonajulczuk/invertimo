@@ -1,6 +1,8 @@
 import requests
 
 from finance import models
+from finance.assets import AssetRepository
+
 from typing import Any, Dict
 from django.conf import settings
 
@@ -78,31 +80,6 @@ def query_exchanges() -> Any:
     URL = f"https://eodhistoricaldata.com/api/exchanges-list/?api_token={settings.EOD_APIKEY}"
     response = requests.get(URL)
     return response.json()
-
-
-class AssetRepository:
-    def __init__(self, exchange: models.Exchange):
-        self.exchange = exchange
-
-    def get(self, isin: str):
-        assets = models.Asset.objects.filter(isin=isin, exchange=self.exchange)
-        if assets:
-            return assets[0]
-
-    def add(
-        self, isin: str, symbol: str, currency: models.Currency, country: str, name: str, tracked: bool
-    ):
-        asset, _ = models.Asset.objects.get_or_create(
-            exchange=self.exchange,
-            isin=isin,
-            symbol=symbol,
-            currency=currency,
-            country=country,
-            name=name,
-            tracked=tracked,
-        )
-        return asset
-
 
 def get_or_create_asset(isin: str, exchange: models.Exchange, asset_defaults, add_untracked_if_not_found=True):
     repository = AssetRepository(exchange)

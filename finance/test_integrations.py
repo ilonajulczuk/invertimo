@@ -1,10 +1,15 @@
+import decimal
 from django.test import TestCase
 
+from django.contrib.auth.models import User
+from finance.integrations import degiro_parser
+from finance.integrations import binance_parser
+
+from django.db.models import Sum
 from finance import models
 from finance import testing_utils
 from unittest.mock import patch
 
-# from finance import exchanges
 
 asset_response = [
     {
@@ -86,6 +91,56 @@ def _assets_with_isin_side_effect(isin):
     return asset_response
 
 
+
+class TestDegiroParser(TestCase):
+
+    # This fixture provides data about 65 different exchanges,
+    # and sets up a single account for testing.
+    fixtures = ["exchanges_postgres.json"]
+
+    @patch("finance.stock_exchanges.query_asset")
+    def test_importing_transactions_from_file(self, query_asset_mock):
+        query_asset_mock.side_effect = _assets_with_isin_side_effect
+
+        account_balance = decimal.Decimal("-15237.26000")
+        base_num_of_transactions = 6
+        account = models.Account.objects.create(
+            user=User.objects.all()[0], nickname="test"
+        )
+        transaction_import = degiro_parser.import_transactions_from_file(
+            account, "./finance/transactions_example_short.csv", True
+        )
+        failed_records = transaction_import.records.filter(successful=False)
+        self.assertEqual(len(failed_records), 0)
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        account = models.Account.objects.get(nickname="test")
+        self.assertAlmostEqual(account.balance, account_balance)
+
+        # 6 in the new account, 30 from the old fixture.
+        self.assertEqual(models.Position.objects.count(), 36)
+
+        total_value = models.Transaction.objects.aggregate(
+            Sum("total_in_account_currency")
+        )["total_in_account_currency__sum"]
+        self.assertAlmostEqual(total_value, account_balance)
+
+        # Import the same transactions again and make
+        # sure that they aren't double recorded.
+        degiro_parser.import_transactions_from_file(
+            account, "./finance/transactions_example_short.csv", True
+        )
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        self.assertEqual(models.Position.objects.count(), 36)
+        account = models.Account.objects.get(nickname="test")
+        total_value = models.Transaction.objects.aggregate(
+            Sum("total_in_account_currency")
+        )["total_in_account_currency__sum"]
+
+        self.assertAlmostEqual(account.balance, account_balance)
+        self.assertAlmostEqual(total_value, account_balance)
+
+
+
 class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/integrations/degiro/transactions/"
     VIEW_NAME = "degiro-transaction-upload-list"
@@ -107,7 +162,7 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
     def test_cannot_upload_to_wrong_account(self):
         pass
 
-    @patch("finance.exchanges.query_asset")
+    @patch("finance.stock_exchanges.query_asset")
     def test_can_upload_to_owned_account(self, query_asset_mock):
         query_asset_mock.side_effect = _assets_with_isin_side_effect
         response = self.client.get(self.get_url())
@@ -149,7 +204,7 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
         self.assertEqual(len(data[0]["records"]), 0)
         self.assertEqual(data[0]["status"], models.ImportStatus.FAILURE.label)
 
-    @patch("finance.exchanges.query_asset")
+    @patch("finance.stock_exchanges.query_asset")
     def test_some_assets_not_found_by_isin(self, query_asset_mock):
         # If asset is not found then the empty value is returned.
         calls = 0
@@ -186,7 +241,7 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
         # TODO: instead of ignoring these assets, consider adding them as untracked?
         self.assertEqual(models.Transaction.objects.count(), 4)
 
-    @patch("finance.exchanges.query_asset")
+    @patch("finance.stock_exchanges.query_asset")
     def test_some_assets_not_found_by_isin_but_still_imported(self, query_asset_mock):
         # If asset is not found then the empty value is returned.
         calls = 0
@@ -242,7 +297,7 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
         self.assertEqual(len(data[0]["records"]), 0)
         self.assertEqual(data[0]["status"], models.ImportStatus.FAILURE.label)
 
-    @patch("finance.exchanges.query_asset")
+    @patch("finance.stock_exchanges.query_asset")
     def test_transactions_latest_to_oldest_uploads_correctly(self, query_asset_mock):
         # This makes sure that the transactions from the file are sorted correctly
         # before being ingested.
@@ -262,7 +317,7 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
         self.assertEqual(data["status"], models.ImportStatus.SUCCESS.label)
         self.assertEqual(len(data["records"]), 184)
 
-    @patch("finance.exchanges.query_asset")
+    @patch("finance.stock_exchanges.query_asset")
     def test_incomplete_transaction_list_prevents_uploading(self, query_asset_mock):
         # This is a scenario when you upload the transactions out of
         # order, e.g. later transactions of selling assets you haven't bought.
@@ -278,3 +333,48 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(models.Transaction.objects.count(), 122)
+
+
+class TestBinanceParser(TestCase):
+
+    # This fixture provides data about 65 different exchanges,
+    # and sets up a single account for testing.
+    fixtures = ["exchanges_postgres.json"]
+
+    def test_importing_binance_data(self):
+        account_balance = decimal.Decimal("-992.64000")
+        base_num_of_transactions = 8
+        account = models.Account.objects.create(
+            user=User.objects.all()[0], nickname="test"
+        )
+        transaction_import = binance_parser.import_transactions_from_file(
+            account, "./finance/binance_transaction_sample.csv", True
+        )
+        failed_records = transaction_import.records.filter(successful=False)
+        self.assertEqual(len(failed_records), 0)
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        account = models.Account.objects.get(nickname="test")
+        self.assertAlmostEqual(account.balance, account_balance)
+
+        # 2 in the new account, 30 from the old fixture.
+        self.assertEqual(models.Position.objects.count(), 32)
+
+        total_value = models.Transaction.objects.aggregate(
+            Sum("total_in_account_currency")
+        )["total_in_account_currency__sum"]
+        self.assertAlmostEqual(total_value, account_balance)
+
+        # Import the same transactions again and make
+        # sure that they aren't double recorded.
+        transaction_import = binance_parser.import_transactions_from_file(
+            account, "./finance/binance_transaction_sample.csv", True
+        )
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        self.assertEqual(models.Position.objects.count(), 32)
+        account = models.Account.objects.get(nickname="test")
+        total_value = models.Transaction.objects.aggregate(
+            Sum("total_in_account_currency")
+        )["total_in_account_currency__sum"]
+
+        self.assertAlmostEqual(account.balance, account_balance)
+        self.assertAlmostEqual(total_value, account_balance)

@@ -7,7 +7,7 @@ from django.db import transaction
 from django.db.models import Count
 
 from django.utils.dateparse import parse_datetime
-from finance import exchanges, models, prices, gains
+from finance import models, prices, gains, stock_exchanges, assets
 
 
 class CantDeleteNonEmptyAccount(ValueError):
@@ -196,7 +196,7 @@ class AccountRepository:
         order_id: Optional[str] = None,
     ) -> models.Transaction:
 
-        exchange_entity = exchanges.ExchangeRepository().get_by_name(exchange)
+        exchange_entity = stock_exchanges.ExchangeRepository().get_by_name(exchange)
         asset, _ = models.Asset.objects.get_or_create(
             symbol=symbol,
             exchange=exchange_entity,
@@ -221,6 +221,45 @@ class AccountRepository:
             custom_asset=True,
         )
         return transaction
+
+    @transaction.atomic
+    def add_transaction_crypto_asset(
+        self,
+        account: models.Account,
+        symbol: str,
+        executed_at: datetime.datetime,
+        quantity: decimal.Decimal,
+        price: decimal.Decimal,
+        local_value: decimal.Decimal,
+        value_in_account_currency: decimal.Decimal,
+        total_in_account_currency: decimal.Decimal,
+        transaction_costs: Optional[decimal.Decimal] = None,
+        order_id: Optional[str] = None,
+    ):
+
+        na_exchange = stock_exchanges.ExchangeRepository().get_by_name(
+            stock_exchanges.OTHER_OR_NA_EXCHANGE_NAME
+        )
+        asset_repository = assets.AssetRepository(exchange=na_exchange)
+
+        asset = asset_repository.add_crypto(
+            symbol=symbol,
+        )
+        position = self._get_or_create_position_for_asset(account, asset.pk)
+
+        return self._add_transaction(
+            account,
+            position,
+            executed_at,
+            quantity,
+            price,
+            transaction_costs,
+            local_value,
+            value_in_account_currency,
+            total_in_account_currency,
+            order_id,
+            custom_asset=True,
+        )
 
     @transaction.atomic
     def add_event(
@@ -317,7 +356,7 @@ class AccountRepository:
         )
         if positions:
             return positions[0]
-        asset = exchanges.get_or_create_asset(
+        asset = stock_exchanges.get_or_create_asset(
             isin, exchange, asset_defaults, add_untracked_if_not_found=import_all_assets
         )
         if asset:
