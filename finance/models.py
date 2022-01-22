@@ -365,18 +365,18 @@ class Transaction(models.Model):
     position = models.ForeignKey(
         Position, related_name="transactions", on_delete=models.CASCADE
     )
-    quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    price = models.DecimalField(max_digits=12, decimal_places=5)
+    quantity = models.DecimalField(max_digits=20, decimal_places=10)
+    price = models.DecimalField(max_digits=18, decimal_places=10)
 
-    transaction_costs = models.DecimalField(max_digits=12, decimal_places=5, null=True)
+    transaction_costs = models.DecimalField(max_digits=18, decimal_places=10, null=True)
 
     # The currency is stored with the asset.
-    local_value = models.DecimalField(max_digits=12, decimal_places=5)
+    local_value = models.DecimalField(max_digits=19, decimal_places=10)
     # The main currency is stored within the account.
-    value_in_account_currency = models.DecimalField(max_digits=12, decimal_places=5)
+    value_in_account_currency = models.DecimalField(max_digits=18, decimal_places=10)
 
     # This is value + transaction_costs + other costs, e.g. taxes on some exchanges.
-    total_in_account_currency = models.DecimalField(max_digits=12, decimal_places=5)
+    total_in_account_currency = models.DecimalField(max_digits=18, decimal_places=10)
     # value_in_account_currency + transaction cost == total cost.
 
     order_id = models.CharField(max_length=200, null=True, blank=True)

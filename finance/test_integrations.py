@@ -1,4 +1,5 @@
 import decimal
+import datetime
 from django.test import TestCase
 
 from django.contrib.auth.models import User
@@ -6,7 +7,7 @@ from finance.integrations import degiro_parser
 from finance.integrations import binance_parser
 
 from django.db.models import Sum
-from finance import models
+from finance import models, utils
 from finance import testing_utils
 from unittest.mock import patch
 
@@ -91,7 +92,6 @@ def _assets_with_isin_side_effect(isin):
     return asset_response
 
 
-
 class TestDegiroParser(TestCase):
 
     # This fixture provides data about 65 different exchanges,
@@ -138,7 +138,6 @@ class TestDegiroParser(TestCase):
 
         self.assertAlmostEqual(account.balance, account_balance)
         self.assertAlmostEqual(total_value, account_balance)
-
 
 
 class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
@@ -346,6 +345,69 @@ class TestBinanceParser(TestCase):
         base_num_of_transactions = 8
         account = models.Account.objects.create(
             user=User.objects.all()[0], nickname="test"
+        )
+        account = models.Account.objects.get(nickname="test")
+        transaction_import = binance_parser.import_transactions_from_file(
+            account, "./finance/binance_transaction_sample.csv", True
+        )
+        failed_records = transaction_import.records.filter(successful=False)
+        self.assertEqual(len(failed_records), 0)
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        account = models.Account.objects.get(nickname="test")
+        self.assertAlmostEqual(account.balance, account_balance)
+
+        # 2 in the new account, 30 from the old fixture.
+        self.assertEqual(models.Position.objects.count(), 32)
+
+        eth = models.Asset.objects.get(name="ETH")
+        self.assertEqual(eth.exchange.name, "Other / NA")
+        self.assertEqual(eth.isin, "")
+        self.assertIsNone(eth.currency)
+        self.assertIsNone(eth.country)
+        eth_position = models.Position.objects.get(asset=eth, account=account)
+        self.assertEqual(eth_position.quantity, decimal.Decimal("0.18"))
+
+        total_value = models.Transaction.objects.aggregate(
+            Sum("total_in_account_currency")
+        )["total_in_account_currency__sum"]
+        self.assertAlmostEqual(total_value, account_balance)
+
+        # Import the same transactions again and make
+        # sure that they aren't double recorded.
+        account = models.Account.objects.get(nickname="test")
+        transaction_import = binance_parser.import_transactions_from_file(
+            account, "./finance/binance_transaction_sample.csv", True
+        )
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        self.assertEqual(models.Position.objects.count(), 32)
+        account = models.Account.objects.get(nickname="test")
+        total_value = models.Transaction.objects.aggregate(
+            Sum("total_in_account_currency")
+        )["total_in_account_currency__sum"]
+
+        self.assertAlmostEqual(account.balance, account_balance)
+        self.assertAlmostEqual(total_value, account_balance)
+
+    def test_importing_binance_data_fiat_doesnt_match_account_currency(self):
+
+        from_date = datetime.date.fromisoformat("2021-10-14")
+        to_date = datetime.date.fromisoformat("2022-01-15")
+
+        dates = utils.generate_date_intervals(from_date, to_date)
+        for i, date in enumerate(dates):
+            models.CurrencyExchangeRate.objects.create(
+                date=date,
+                value=1 + (i % 3) / 10,
+                from_currency=models.Currency.EUR,
+                to_currency=models.Currency.USD,
+            )
+
+        account_balance = decimal.Decimal("-1161.16800")
+        base_num_of_transactions = 8
+        account = models.Account.objects.create(
+            user=User.objects.all()[0],
+            nickname="test",
+            currency=models.Currency.USD,
         )
         transaction_import = binance_parser.import_transactions_from_file(
             account, "./finance/binance_transaction_sample.csv", True

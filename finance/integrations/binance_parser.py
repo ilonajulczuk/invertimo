@@ -11,6 +11,7 @@ from collections import defaultdict
 from finance import accounts, models
 from finance.gains import SoldBeforeBought
 from finance.integrations.degiro_parser import CurrencyMismatch
+from finance import prices
 
 
 BINANCE_SUPPORTED_OPERATIONS = [
@@ -24,7 +25,10 @@ BINANCE_SUPPORTED_OPERATIONS = [
     "Deposit",
     "Transaction Related",
     "ETH 2.0 Staking",
+    # Here are the ones I haven't actually seen, so naming assumed.
+    "Withdrawal",
 ]
+
 
 class InvalidFormat(ValueError):
     pass
@@ -42,15 +46,15 @@ REQUIRED_TRANSACTION_COLUMNS = (
 
 
 SUPPORTED_FIAT = (
-    "EUR", "USD", "GBP",
+    "EUR",
+    "USD",
+    "GBP",
 )
 
 
 def import_transactions_from_file(account, filename_or_file, import_all_assets):
     try:
-        return _import_transactions_from_file(
-            account, filename_or_file
-        )
+        return _import_transactions_from_file(account, filename_or_file)
     except Exception as e:
         models.TransactionImport.objects.create(
             integration=models.IntegrationType.BINANCE_CSV,
@@ -79,7 +83,9 @@ def _import_transactions_from_file(account, filename_or_file):
                 raise InvalidFormat(f"Column: '{column}' missing in the csv file")
         transactions_data_clean = transactions_data.sort_values(by="UTC_Time")
 
-        transaction_half_records = transactions_data_clean[transactions_data_clean["Operation"] == "Transaction Related"]
+        transaction_half_records = transactions_data_clean[
+            transactions_data_clean["Operation"] == "Transaction Related"
+        ]
 
         transaction_half_record_pairs = defaultdict(list)
         for half_record in transaction_half_records.iloc:
@@ -108,6 +114,7 @@ def _import_transactions_from_file(account, filename_or_file):
                     }
                 )
             except Exception as e:
+                print(e)
                 failed_records.append(
                     {
                         "record": half_records,
@@ -118,7 +125,6 @@ def _import_transactions_from_file(account, filename_or_file):
 
     except pd.errors.ParserError as e:
         raise InvalidFormat("Failed to parse csv", e)
-
 
     status = models.ImportStatus.SUCCESS
     if failed_records:
@@ -152,6 +158,12 @@ def _import_transactions_from_file(account, filename_or_file):
     return transaction_import
 
 
+def to_decimal(pd_f, precision=10) -> decimal.Decimal:
+    with decimal.localcontext() as c:
+        c.prec = precision
+        return decimal.Decimal(pd_f.astype(str)) + 0
+
+
 def import_transaction(
     account: models.Account,
     fiat_record: pd.Series,
@@ -162,23 +174,42 @@ def import_transaction(
     symbol = token_record["Coin"]
     fiat_currency = fiat_record["Coin"]
 
-    if fiat_currency != account.currency.label:
-        raise CurrencyMismatch("For now only supporting transactions with fiat == account currency")
-
-    def to_decimal(pd_f):
-            return decimal.Decimal(pd_f.astype(str))
-    quantity = to_decimal(token_record["Change"])
     fiat_value = to_decimal(fiat_record["Change"])
-    price = - fiat_value / quantity
+    if fiat_currency != models.Currency(account.currency).label:
+        from_currency = models.currency_enum_from_string(fiat_currency)
+        to_currency = account.currency
+        exchange_rate = prices.get_closest_exchange_rate(
+            executed_at.date(), from_currency, to_currency
+        )
+        if exchange_rate is None:
+            raise CurrencyMismatch(
+                "Couldn't convert the fiat to account currency, missing exchange rate"
+            )
+        else:
+            fiat_value *= exchange_rate.value
+
+    quantity = to_decimal(token_record["Change"])
+    with decimal.localcontext() as c:
+        c.prec = 10
+        price = decimal.Decimal(-fiat_value / quantity) + 0
 
     return accounts.AccountRepository().add_transaction_crypto_asset(
-        account, symbol, executed_at,
-        quantity, price, fiat_value, fiat_value, fiat_value)
+        account,
+        symbol,
+        executed_at,
+        quantity,
+        price,
+        fiat_value,
+        fiat_value,
+        fiat_value,
+    )
 
 
 def pairs_to_fiat_and_token(half_records):
     if len(half_records) != 2:
-        raise ValueError(f"Expected 2 assets to change in result of transaction, got: {len(half_records)}")
+        raise ValueError(
+            f"Expected 2 assets to change in result of transaction, got: {len(half_records)}"
+        )
     fiat_record = None
     token_record = None
     if half_records[0]["Coin"] in SUPPORTED_FIAT:
@@ -188,5 +219,7 @@ def pairs_to_fiat_and_token(half_records):
         fiat_record = half_records[1]
         token_record = half_records[0]
     else:
-        raise ValueError(f"Only transactions from or too fiat currency are supported for now")
+        raise ValueError(
+            f"Only transactions from or too fiat currency are supported for now"
+        )
     return fiat_record, token_record
