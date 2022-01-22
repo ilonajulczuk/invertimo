@@ -340,7 +340,9 @@ class TestBinanceParser(TestCase):
     # and sets up a single account for testing.
     fixtures = ["exchanges_postgres.json"]
 
-    def test_importing_binance_data(self):
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_importing_binance_data(self, mock):
+        mock.return_value = False
         account_balance = decimal.Decimal("299.16000")
         base_num_of_transactions = 8
         account = models.Account.objects.create(
@@ -362,7 +364,7 @@ class TestBinanceParser(TestCase):
         eth = models.Asset.objects.get(name="ETH")
         self.assertEqual(eth.exchange.name, "Other / NA")
         self.assertEqual(eth.isin, "")
-        self.assertIsNone(eth.currency)
+        self.assertEqual(eth.currency, models.Currency.USD)
         self.assertIsNone(eth.country)
         eth_position = models.Position.objects.get(asset=eth, account=account)
         self.assertEqual(eth_position.quantity, decimal.Decimal("0.18"))
@@ -390,8 +392,9 @@ class TestBinanceParser(TestCase):
         self.assertAlmostEqual(account.balance, account_balance)
         self.assertAlmostEqual(total_value, expected_total_value)
 
-    def test_importing_binance_data_fiat_doesnt_match_account_currency(self):
-
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_importing_binance_data_fiat_doesnt_match_account_currency(self, mock):
+        mock.return_value = False
         from_date = datetime.date.fromisoformat("2021-10-14")
         to_date = datetime.date.fromisoformat("2022-01-15")
 
@@ -426,7 +429,7 @@ class TestBinanceParser(TestCase):
         eth = models.Asset.objects.get(name="ETH")
         self.assertEqual(eth.exchange.name, "Other / NA")
         self.assertEqual(eth.isin, "")
-        self.assertIsNone(eth.currency)
+        self.assertEqual(eth.currency, models.Currency.USD)
         self.assertIsNone(eth.country)
         eth_position = models.Position.objects.get(asset=eth, account=account)
         self.assertEqual(eth_position.quantity, decimal.Decimal("0.18"))

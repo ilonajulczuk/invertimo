@@ -1,4 +1,4 @@
-from finance import models
+from finance import models, prices
 
 
 class AssetRepository:
@@ -27,13 +27,17 @@ class AssetRepository:
     def add_crypto(self, symbol):
         # The exchange here should be Other / NA exchange as crypto assets are not tied to
         # particular exchanges.
+        tracked = prices.are_crypto_prices_available(symbol)
         asset, _ = models.Asset.objects.get_or_create(
             symbol=symbol,
             name=symbol,
-            tracked=False,
+            tracked=tracked,
             exchange=self.exchange,
             asset_type=models.AssetType.CRYPTO,
+            currency=models.Currency.USD,
         )
+        if tracked:
+            prices.collect_prices(asset)
         return asset
 
     def get_crypto(self, symbol):

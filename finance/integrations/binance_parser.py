@@ -234,7 +234,7 @@ def import_transaction(
     quantity = to_decimal(token_record["Change"])
     with decimal.localcontext() as c:
         c.prec = 10
-        price = decimal.Decimal(-fiat_value / quantity) + 0
+        price = decimal.Decimal(-fiat_value / quantity)
 
 
     return *accounts.AccountRepository().add_transaction_crypto_asset(
