@@ -341,7 +341,7 @@ class TestBinanceParser(TestCase):
     fixtures = ["exchanges_postgres.json"]
 
     def test_importing_binance_data(self):
-        account_balance = decimal.Decimal("-992.64000")
+        account_balance = decimal.Decimal("299.16000")
         base_num_of_transactions = 8
         account = models.Account.objects.create(
             user=User.objects.all()[0], nickname="test"
@@ -367,10 +367,12 @@ class TestBinanceParser(TestCase):
         eth_position = models.Position.objects.get(asset=eth, account=account)
         self.assertEqual(eth_position.quantity, decimal.Decimal("0.18"))
 
+        # total_value here doesn't include value of transfers.
+        expected_total_value = decimal.Decimal('-992.6400000000')
         total_value = models.Transaction.objects.aggregate(
             Sum("total_in_account_currency")
         )["total_in_account_currency__sum"]
-        self.assertAlmostEqual(total_value, account_balance)
+        self.assertAlmostEqual(total_value, expected_total_value)
 
         # Import the same transactions again and make
         # sure that they aren't double recorded.
@@ -386,7 +388,7 @@ class TestBinanceParser(TestCase):
         )["total_in_account_currency__sum"]
 
         self.assertAlmostEqual(account.balance, account_balance)
-        self.assertAlmostEqual(total_value, account_balance)
+        self.assertAlmostEqual(total_value, expected_total_value)
 
     def test_importing_binance_data_fiat_doesnt_match_account_currency(self):
 
@@ -397,12 +399,12 @@ class TestBinanceParser(TestCase):
         for i, date in enumerate(dates):
             models.CurrencyExchangeRate.objects.create(
                 date=date,
-                value=1 + (i % 3) / 10,
+                value=1.1,
                 from_currency=models.Currency.EUR,
                 to_currency=models.Currency.USD,
             )
 
-        account_balance = decimal.Decimal("-1161.16800")
+        account_balance = decimal.Decimal('329.07600')
         base_num_of_transactions = 8
         account = models.Account.objects.create(
             user=User.objects.all()[0],
@@ -429,10 +431,12 @@ class TestBinanceParser(TestCase):
         eth_position = models.Position.objects.get(asset=eth, account=account)
         self.assertEqual(eth_position.quantity, decimal.Decimal("0.18"))
 
+        # total_value here doesn't include value of transfers.
+        expected_total_value = decimal.Decimal('-1091.9040000000')
         total_value = models.Transaction.objects.aggregate(
             Sum("total_in_account_currency")
         )["total_in_account_currency__sum"]
-        self.assertAlmostEqual(total_value, account_balance)
+        self.assertAlmostEqual(total_value, expected_total_value)
 
         # Import the same transactions again and make
         # sure that they aren't double recorded.
@@ -447,4 +451,4 @@ class TestBinanceParser(TestCase):
         )["total_in_account_currency__sum"]
 
         self.assertAlmostEqual(account.balance, account_balance)
-        self.assertAlmostEqual(total_value, account_balance)
+        self.assertAlmostEqual(total_value, expected_total_value)

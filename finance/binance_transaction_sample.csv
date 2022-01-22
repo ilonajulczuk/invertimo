@@ -564,3 +564,4 @@ User_ID,UTC_Time,Account,Operation,Coin,Change,Remark
 139221274,2022-01-15 01:39:10,Spot,POS savings interest,BNB,1.362E-05,
 139221274,2022-01-15 04:04:39,Spot,Savings Interest,LINK,3.54E-05,
 139221274,2022-01-15 08:50:42,Spot,ETH 2.0 Staking Rewards,BETH,8.37E-05,
+139221274,2022-01-05 20:50:13,Spot,Withdrawal,EUR,-100,

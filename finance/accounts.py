@@ -270,7 +270,7 @@ class AccountRepository:
         event_type: models.EventType,
         position: Optional[models.Position] = None,
         withheld_taxes: Optional[decimal.Decimal] = None,
-    ) -> None:
+    ) -> Tuple[models.AccountEvent, bool]:
 
         if (
             event_type == models.EventType.DEPOSIT
@@ -311,6 +311,7 @@ class AccountRepository:
 
             account.balance += balance_change
         account.save()
+        return event, created
 
     @transaction.atomic
     def delete_event(self, event: models.AccountEvent) -> None:

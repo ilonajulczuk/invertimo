@@ -95,12 +95,12 @@ def _import_transactions_from_file(account, filename_or_file):
 
             try:
                 fiat_record, token_record = pairs_to_fiat_and_token(half_records)
-                transaction, created = import_transaction(
+                transaction, created, raw_record = import_transaction(
                     account, fiat_record, token_record
                 )
                 successful_records.append(
                     {
-                        "record": half_records,
+                        "record": raw_record,
                         "transaction": transaction,
                         "created": created,
                     }
@@ -108,7 +108,7 @@ def _import_transactions_from_file(account, filename_or_file):
             except SoldBeforeBought as e:
                 failed_records.append(
                     {
-                        "record": half_records,
+                        "record": _to_raw_record(half_records),
                         "issue": str(e),
                         "issue_type": models.ImportIssueType.SOLD_BEFORE_BOUGHT,
                     }
@@ -117,11 +117,16 @@ def _import_transactions_from_file(account, filename_or_file):
                 print(e)
                 failed_records.append(
                     {
-                        "record": half_records,
+                        "record": _to_raw_record(half_records),
                         "issue": str(e),
                         "issue_type": models.ImportIssueType.UNKNOWN_FAILURE,
                     }
                 )
+        transfer_records = transactions_data_clean[
+            (transactions_data_clean["Operation"] == "Deposit") |
+            (transactions_data_clean["Operation"] == "Withdrawal")
+        ]
+        import_fiat_transfers(account, transfer_records)
 
     except pd.errors.ParserError as e:
         raise InvalidFormat("Failed to parse csv", e)
@@ -141,7 +146,7 @@ def _import_transactions_from_file(account, filename_or_file):
     for entry in failed_records:
         models.TransactionImportRecord.objects.create(
             transaction_import=transaction_import,
-            raw_record=_to_raw_record(entry["record"]),
+            raw_record=entry["record"],
             successful=False,
             issue_type=entry["issue_type"],
             raw_issue=entry["issue"],
@@ -150,7 +155,7 @@ def _import_transactions_from_file(account, filename_or_file):
     for entry in successful_records:
         models.TransactionImportRecord.objects.create(
             transaction_import=transaction_import,
-            raw_record=_to_raw_record(entry["record"]),
+            raw_record=entry["record"],
             successful=True,
             transaction=entry["transaction"],
             created_new=entry["created"],
@@ -164,17 +169,54 @@ def to_decimal(pd_f, precision=10) -> decimal.Decimal:
         return decimal.Decimal(pd_f.astype(str)) + 0
 
 
+def _parse_utc_datetime(datetime_raw):
+    parsed = parse_datetime(datetime_raw)
+    parsed = parsed.astimezone(timezone.utc)
+    return parsed
+
+
+def import_fiat_transfers(account, records):
+    account_repository = accounts.AccountRepository()
+    for record in records.iloc:
+        event_type = models.EventType.DEPOSIT
+        if record["Operation"] == "Withdrawal":
+            event_type = models.EventType.WITHDRAWAL
+        executed_at = _parse_utc_datetime(record["UTC_Time"])
+
+        fiat_currency = record["Coin"]
+        fiat_value = to_decimal(record["Change"])
+
+        if fiat_currency != models.Currency(account.currency).label:
+            from_currency = models.currency_enum_from_string(fiat_currency)
+            to_currency = account.currency
+            exchange_rate = prices.get_closest_exchange_rate(
+                executed_at.date(), from_currency, to_currency
+            )
+            if exchange_rate is None:
+                raise CurrencyMismatch(
+                    "Couldn't convert the fiat to account currency, missing exchange rate"
+                )
+            else:
+                fiat_value *= exchange_rate.value
+
+        account_repository.add_event(account,
+                                     amount=fiat_value, executed_at=executed_at,
+                                     event_type=event_type,
+                                     )
+
 def import_transaction(
     account: models.Account,
     fiat_record: pd.Series,
     token_record: pd.Series,
 ) -> Tuple[models.Transaction, bool]:
-    executed_at = parse_datetime(fiat_record["UTC_Time"])
-    executed_at = executed_at.astimezone(timezone.utc)
+
+    raw_record = _to_raw_record((fiat_record, token_record))
+
+    executed_at = _parse_utc_datetime(fiat_record["UTC_Time"])
     symbol = token_record["Coin"]
     fiat_currency = fiat_record["Coin"]
-
     fiat_value = to_decimal(fiat_record["Change"])
+
     if fiat_currency != models.Currency(account.currency).label:
         from_currency = models.currency_enum_from_string(fiat_currency)
         to_currency = account.currency
@@ -187,13 +229,15 @@ def import_transaction(
             )
         else:
             fiat_value *= exchange_rate.value
+            raw_record += f" exchange rate: {exchange_rate.value}"
 
     quantity = to_decimal(token_record["Change"])
     with decimal.localcontext() as c:
         c.prec = 10
         price = decimal.Decimal(-fiat_value / quantity) + 0
 
-    return accounts.AccountRepository().add_transaction_crypto_asset(
+
+    return *accounts.AccountRepository().add_transaction_crypto_asset(
         account,
         symbol,
         executed_at,
@@ -202,7 +246,7 @@ def import_transaction(
         fiat_value,
         fiat_value,
         fiat_value,
-    )
+    ), raw_record
 
 
 def pairs_to_fiat_and_token(half_records):
