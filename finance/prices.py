@@ -1,7 +1,10 @@
+from typing import Optional
 from django.db.models.base import ModelState
 import requests
 import logging
 import datetime
+import decimal
+
 
 from django.conf import settings
 from finance import models
@@ -150,3 +153,22 @@ def are_crypto_prices_available(symbol):
         logging.warn(e)
         return False
     return False
+
+
+def get_crypto_usd_price_at_date(symbol, date) -> Optional[decimal.Decimal]:
+    try:
+        prices = models.PriceHistory.objects.filter(asset__symbol=symbol, date=date)
+        if prices:
+            return prices[0].value
+
+        date_string = date.isoformat()
+        url = (
+            f"https://eodhistoricaldata.com/api/eod/{symbol}-USD.CC?"
+            f"api_token={settings.EOD_APIKEY}&order=d&fmt=json&"
+            f"from={date_string}&to={date_string}")
+        r = requests.get(url)
+        records = r.json()
+        if records:
+            return decimal.Decimal(str(records[0]["close"]))
+    except Exception as e:
+        logging.warn(e)

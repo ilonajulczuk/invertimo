@@ -394,7 +394,10 @@ class EventType(models.IntegerChoices):
     DEPOSIT = 1, _("DEPOSIT")
     WITHDRAWAL = 2, _("WITHDRAWAL")
     DIVIDEND = 3, _("DIVIDEND")
-    # TODO: add some cool crypto related ones :).
+
+    # The following values are relevant to crypto assets.
+    SAVINGS_INTEREST = 4, _("SAVINGS_INTEREST")
+    STAKING_INTEREST = 5, _("STAKING_INTEREST")
     # Another could be split or merge.
 
 
@@ -421,8 +424,19 @@ class AccountEvent(models.Model):
     event_type = models.IntegerField(choices=EventType.choices)
 
     last_modified = models.DateTimeField(auto_now=True)
+
+    # Position is relevant to Dividend events.
     position = models.ForeignKey(
         Position,
+        related_name="events",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    # Transaction is relevant to crypto income events.
+    transaction = models.ForeignKey(
+        Transaction,
         related_name="events",
         on_delete=models.SET_NULL,
         null=True,

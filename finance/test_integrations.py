@@ -92,6 +92,26 @@ def _assets_with_isin_side_effect(isin):
     return asset_response
 
 
+def _add_dummy_exchange_rates():
+    from_date = datetime.date.fromisoformat("2021-10-14")
+    to_date = datetime.date.fromisoformat("2022-01-15")
+
+    dates = utils.generate_date_intervals(from_date, to_date)
+    for date in dates:
+        models.CurrencyExchangeRate.objects.create(
+            date=date,
+            value=1.1,
+            from_currency=models.Currency.EUR,
+            to_currency=models.Currency.USD,
+        )
+        models.CurrencyExchangeRate.objects.create(
+            date=date,
+            value=0.9,
+            from_currency=models.Currency.USD,
+            to_currency=models.Currency.EUR,
+        )
+
+
 class TestDegiroParser(TestCase):
 
     # This fixture provides data about 65 different exchanges,
@@ -340,15 +360,21 @@ class TestBinanceParser(TestCase):
     # and sets up a single account for testing.
     fixtures = ["exchanges_postgres.json"]
 
+    @patch("finance.prices.get_crypto_usd_price_at_date")
     @patch("finance.prices.are_crypto_prices_available")
-    def test_importing_binance_data(self, mock):
+    def test_importing_binance_data(self, mock, crypto_price_mock):
         mock.return_value = False
+        crypto_price_mock.return_value = decimal.Decimal("100")
+
         account_balance = decimal.Decimal("299.16000")
         base_num_of_transactions = 8
         account = models.Account.objects.create(
             user=User.objects.all()[0], nickname="test"
         )
         account = models.Account.objects.get(nickname="test")
+
+        _add_dummy_exchange_rates()
+
         transaction_import = binance_parser.import_transactions_from_file(
             account, "./finance/binance_transaction_sample.csv", True
         )
@@ -370,7 +396,7 @@ class TestBinanceParser(TestCase):
         self.assertEqual(eth_position.quantity, decimal.Decimal("0.18"))
 
         # total_value here doesn't include value of transfers.
-        expected_total_value = decimal.Decimal('-992.6400000000')
+        expected_total_value = decimal.Decimal("-992.6400000000")
         total_value = models.Transaction.objects.aggregate(
             Sum("total_in_account_currency")
         )["total_in_account_currency__sum"]
@@ -392,22 +418,16 @@ class TestBinanceParser(TestCase):
         self.assertAlmostEqual(account.balance, account_balance)
         self.assertAlmostEqual(total_value, expected_total_value)
 
+    @patch("finance.prices.get_crypto_usd_price_at_date")
     @patch("finance.prices.are_crypto_prices_available")
-    def test_importing_binance_data_fiat_doesnt_match_account_currency(self, mock):
+    def test_importing_binance_data_fiat_doesnt_match_account_currency(
+        self, mock, crypto_price_mock
+    ):
         mock.return_value = False
-        from_date = datetime.date.fromisoformat("2021-10-14")
-        to_date = datetime.date.fromisoformat("2022-01-15")
+        crypto_price_mock.return_value = decimal.Decimal("100")
+        _add_dummy_exchange_rates()
 
-        dates = utils.generate_date_intervals(from_date, to_date)
-        for i, date in enumerate(dates):
-            models.CurrencyExchangeRate.objects.create(
-                date=date,
-                value=1.1,
-                from_currency=models.Currency.EUR,
-                to_currency=models.Currency.USD,
-            )
-
-        account_balance = decimal.Decimal('329.07600')
+        account_balance = decimal.Decimal("329.07600")
         base_num_of_transactions = 8
         account = models.Account.objects.create(
             user=User.objects.all()[0],
@@ -435,7 +455,7 @@ class TestBinanceParser(TestCase):
         self.assertEqual(eth_position.quantity, decimal.Decimal("0.18"))
 
         # total_value here doesn't include value of transfers.
-        expected_total_value = decimal.Decimal('-1091.9040000000')
+        expected_total_value = decimal.Decimal("-1091.9040000000")
         total_value = models.Transaction.objects.aggregate(
             Sum("total_in_account_currency")
         )["total_in_account_currency__sum"]
@@ -445,6 +465,114 @@ class TestBinanceParser(TestCase):
         # sure that they aren't double recorded.
         transaction_import = binance_parser.import_transactions_from_file(
             account, "./finance/binance_transaction_sample.csv", True
+        )
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        self.assertEqual(models.Position.objects.count(), 32)
+        account = models.Account.objects.get(nickname="test")
+        total_value = models.Transaction.objects.aggregate(
+            Sum("total_in_account_currency")
+        )["total_in_account_currency__sum"]
+
+        self.assertAlmostEqual(account.balance, account_balance)
+        self.assertAlmostEqual(total_value, expected_total_value)
+
+
+    @patch("finance.prices.get_crypto_usd_price_at_date")
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_importing_binance_data_with_income(self, mock, crypto_price_mock):
+        mock.return_value = False
+        crypto_price_mock.return_value = decimal.Decimal("100")
+
+        account_balance = decimal.Decimal("299.16000")
+        num_of_income_events = 1
+        base_num_of_transactions = 8 + num_of_income_events
+        account = models.Account.objects.create(
+            user=User.objects.all()[0], nickname="test"
+        )
+        account = models.Account.objects.get(nickname="test")
+
+        _add_dummy_exchange_rates()
+
+        transaction_import = binance_parser.import_transactions_from_file(
+            account, "./finance/binance_transaction_sample_with_income.csv", True
+        )
+        failed_records = transaction_import.records.filter(successful=False)
+        self.assertEqual(len(failed_records), 0)
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        account = models.Account.objects.get(nickname="test")
+        self.assertAlmostEqual(account.balance, account_balance)
+
+        # 2 in the new account, 30 from the old fixture.
+        self.assertEqual(models.Position.objects.count(), 32)
+
+        eth = models.Asset.objects.get(name="ETH")
+        self.assertEqual(eth.exchange.name, "Other / NA")
+        self.assertEqual(eth.isin, "")
+        self.assertEqual(eth.currency, models.Currency.USD)
+        self.assertIsNone(eth.country)
+        eth_position = models.Position.objects.get(asset=eth, account=account)
+        self.assertEqual(eth_position.quantity, decimal.Decimal("0.18"))
+
+        # Import the same transactions again and make
+        # sure that they aren't double recorded.
+        account = models.Account.objects.get(nickname="test")
+        transaction_import = binance_parser.import_transactions_from_file(
+            account, "./finance/binance_transaction_sample.csv", True
+        )
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        self.assertEqual(models.Position.objects.count(), 32)
+        account = models.Account.objects.get(nickname="test")
+
+        self.assertAlmostEqual(account.balance, account_balance)
+
+    @patch("finance.prices.get_crypto_usd_price_at_date")
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_importing_binance_data_usd_transacions(self, mock, crypto_price_mock):
+        mock.return_value = False
+        crypto_price_mock.return_value = decimal.Decimal("100")
+
+        account_balance = decimal.Decimal("-392.64000")
+        base_num_of_transactions = 4
+        account = models.Account.objects.create(
+            user=User.objects.all()[0],
+            nickname="test",
+            currency=models.Currency.USD,
+        )
+        account = models.Account.objects.get(nickname="test")
+
+        _add_dummy_exchange_rates()
+
+        transaction_import = binance_parser.import_transactions_from_file(
+            account, "./finance/binance_transaction_only_usd.csv", True
+        )
+        failed_records = transaction_import.records.filter(successful=False)
+        self.assertEqual(len(failed_records), 0)
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        account = models.Account.objects.get(nickname="test")
+        self.assertAlmostEqual(account.balance, account_balance)
+
+        # 2 in the new account, 30 from the old fixture.
+        self.assertEqual(models.Position.objects.count(), 32)
+
+        eth = models.Asset.objects.get(name="ETH")
+        self.assertEqual(eth.exchange.name, "Other / NA")
+        self.assertEqual(eth.isin, "")
+        self.assertEqual(eth.currency, models.Currency.USD)
+        self.assertIsNone(eth.country)
+        eth_position = models.Position.objects.get(asset=eth, account=account)
+        self.assertEqual(eth_position.quantity, decimal.Decimal("0.05"))
+
+        expected_total_value = decimal.Decimal(account_balance)
+        total_value = models.Transaction.objects.aggregate(
+            Sum("total_in_account_currency")
+        )["total_in_account_currency__sum"]
+        self.assertAlmostEqual(total_value, expected_total_value)
+
+        # Import the same transactions again and make
+        # sure that they aren't double recorded.
+        account = models.Account.objects.get(nickname="test")
+        transaction_import = binance_parser.import_transactions_from_file(
+            account, "./finance/binance_transaction_only_usd.csv", True
         )
         self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
         self.assertEqual(models.Position.objects.count(), 32)

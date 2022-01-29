@@ -1,0 +1,9 @@
+User_ID,UTC_Time,Account,Operation,Coin,Change,Remark
+139221274,2021-11-29 09:56:38,Spot,Transaction Related,DOT,2.53024468,
+139221274,2021-11-29 09:56:38,Spot,Transaction Related,USD,-80,
+139221274,2021-11-29 09:57:28,Spot,Transaction Related,USD,-115,
+139221274,2021-11-29 09:57:28,Spot,Transaction Related,ETH,0.03015547,
+139221274,2021-12-20 21:29:02,Spot,Transaction Related,DOT,6,
+139221274,2021-12-20 21:29:02,Spot,Transaction Related,USD,-130.64,
+139221274,2021-12-20 21:29:42,Spot,Transaction Related,USD,-67,
+139221274,2021-12-20 21:29:42,Spot,Transaction Related,ETH,0.0191104,

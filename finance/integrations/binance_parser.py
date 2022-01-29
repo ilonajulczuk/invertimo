@@ -1,4 +1,5 @@
 import decimal
+import datetime
 from typing import Tuple
 
 
@@ -29,6 +30,12 @@ BINANCE_SUPPORTED_OPERATIONS = [
     "Withdrawal",
 ]
 
+CRYPTO_INCOME_OPERATIONS = [
+    "POS savings interest",
+    "Savings Interest",
+    "ETH 2.0 Staking Rewards",
+]
+
 
 class InvalidFormat(ValueError):
     pass
@@ -51,7 +58,7 @@ SUPPORTED_FIAT = (
     "GBP",
 )
 
-
+# TODO: consider renaming to import history?
 def import_transactions_from_file(account, filename_or_file, import_all_assets):
     try:
         return _import_transactions_from_file(account, filename_or_file)
@@ -123,10 +130,13 @@ def _import_transactions_from_file(account, filename_or_file):
                     }
                 )
         transfer_records = transactions_data_clean[
-            (transactions_data_clean["Operation"] == "Deposit") |
-            (transactions_data_clean["Operation"] == "Withdrawal")
+            transactions_data_clean["Operation"].isin(("Deposit","Withdrawal"))
         ]
         import_fiat_transfers(account, transfer_records)
+        income_records = transactions_data_clean[
+            transactions_data_clean["Operation"].isin(CRYPTO_INCOME_OPERATIONS)
+        ]
+        import_income_transactions(account, income_records)
 
     except pd.errors.ParserError as e:
         raise InvalidFormat("Failed to parse csv", e)
@@ -199,10 +209,13 @@ def import_fiat_transfers(account, records):
             else:
                 fiat_value *= exchange_rate.value
 
-        account_repository.add_event(account,
-                                     amount=fiat_value, executed_at=executed_at,
-                                     event_type=event_type,
-                                     )
+        account_repository.add_event(
+            account,
+            amount=fiat_value,
+            executed_at=executed_at,
+            event_type=event_type,
+        )
+
 
 def import_transaction(
     account: models.Account,
@@ -215,10 +228,11 @@ def import_transaction(
     executed_at = _parse_utc_datetime(fiat_record["UTC_Time"])
     symbol = token_record["Coin"]
     fiat_currency = fiat_record["Coin"]
-    fiat_value = to_decimal(fiat_record["Change"])
+    raw_fiat_value = to_decimal(fiat_record["Change"])
+    fiat_value = raw_fiat_value
+    from_currency = models.currency_enum_from_string(fiat_currency)
 
     if fiat_currency != models.Currency(account.currency).label:
-        from_currency = models.currency_enum_from_string(fiat_currency)
         to_currency = account.currency
         exchange_rate = prices.get_closest_exchange_rate(
             executed_at.date(), from_currency, to_currency
@@ -230,23 +244,37 @@ def import_transaction(
         else:
             fiat_value *= exchange_rate.value
             raw_record += f" exchange rate: {exchange_rate.value}"
+    if fiat_currency == "USD":
+        fiat_value_usd = raw_fiat_value
+    else:
+        to_currency = models.Currency.USD
+        exchange_rate = prices.get_closest_exchange_rate(
+            executed_at.date(), from_currency, to_currency
+        )
+        if exchange_rate is None:
+            raise CurrencyMismatch(
+                "Couldn't convert the fiat to USD, missing exchange rate"
+            )
+        fiat_value_usd = raw_fiat_value * exchange_rate.value
 
     quantity = to_decimal(token_record["Change"])
     with decimal.localcontext() as c:
         c.prec = 10
-        price = decimal.Decimal(-fiat_value / quantity)
+        price = decimal.Decimal(-fiat_value_usd / quantity)
 
-
-    return *accounts.AccountRepository().add_transaction_crypto_asset(
-        account,
-        symbol,
-        executed_at,
-        quantity,
-        price,
-        fiat_value,
-        fiat_value,
-        fiat_value,
-    ), raw_record
+    return (
+        *accounts.AccountRepository().add_transaction_crypto_asset(
+            account,
+            symbol,
+            executed_at,
+            quantity,
+            price,
+            fiat_value_usd,
+            fiat_value,
+            fiat_value,
+        ),
+        raw_record,
+    )
 
 
 def pairs_to_fiat_and_token(half_records):
@@ -267,3 +295,67 @@ def pairs_to_fiat_and_token(half_records):
             f"Only transactions from or too fiat currency are supported for now"
         )
     return fiat_record, token_record
+
+@transaction.atomic
+def import_income_transactions(account: models.Account, records: pd.DataFrame):
+
+    for record in records.iloc:
+
+        executed_at = _parse_utc_datetime(record["UTC_Time"])
+        executed_at_date = executed_at.date()
+        symbol = record["Coin"]
+        quantity = to_decimal(record["Change"])
+
+        if record["Operation"] == "POS savings interest":
+            event_type = models.EventType.STAKING_INTEREST
+        elif record["Operation"] == "Savings Interest":
+            event_type = models.EventType.SAVINGS_INTEREST
+        elif record["Operation"] == "ETH 2.0 Staking Rewards":
+            event_type = models.EventType.STAKING_INTEREST
+            # In binance, ETH is exchanged for BETH, but it's actually ETH.
+            symbol = "ETH"
+        else:
+            raise ValueError("Unsupported Operation")
+
+        price = prices.get_crypto_usd_price_at_date(symbol, date=executed_at_date)
+
+        fiat_value_usd = -quantity * price
+        fiat_value = _convert_usd_to_account_currency(
+            fiat_value_usd, account, executed_at_date
+        )
+
+        transaction, created = accounts.AccountRepository().add_transaction_crypto_asset(
+            account,
+            symbol,
+            executed_at,
+            quantity,
+            price,
+            # Local value.
+            fiat_value_usd,
+            fiat_value,
+            fiat_value,
+        )
+
+        accounts.AccountRepository().add_crypto_income_event(
+            -fiat_value,
+            executed_at,
+            event_type,
+            transaction,
+        )
+
+
+
+def _convert_usd_to_account_currency(
+    value: decimal.Decimal, account: models.Account, date: datetime.date
+) -> decimal.Decimal:
+    if account.currency == models.Currency.USD:
+        return value
+
+    from_currency = account.currency
+    to_currency = models.Currency.USD
+    exchange_rate = prices.get_closest_exchange_rate(date, from_currency, to_currency)
+    if exchange_rate is None:
+        raise CurrencyMismatch(
+            "Couldn't convert USD to account currency, missing exchange rate"
+        )
+    return value * exchange_rate.value

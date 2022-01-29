@@ -19,3 +19,4 @@ User_ID,UTC_Time,Account,Operation,Coin,Change,Remark
 139221274,2021-12-20 21:27:15,Spot,Deposit,EUR,196.4,
 139221274,2022-01-05 20:50:13,Spot,Deposit,EUR,999,
 139221274,2022-01-05 20:50:13,Spot,Withdrawal,EUR,-100,
+139221274,2022-01-04 00:50:06,Spot,POS savings interest,DOT,0.01416702,

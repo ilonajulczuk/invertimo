@@ -425,3 +425,41 @@ class AccountRepository:
         gains.update_lots(position)
         position.quantity_history.cache_clear()
         position.value_history.cache_clear()
+
+    @transaction.atomic
+    def add_crypto_income_event(
+        self,
+        amount: decimal.Decimal,
+        executed_at: datetime.datetime,
+        event_type: models.EventType,
+        transaction: Optional[models.Transaction] = None,
+    ) -> Tuple[models.AccountEvent, bool]:
+
+        position = transaction.position
+        account = position.account
+
+        event, created = models.AccountEvent.objects.get_or_create(
+            account=account,
+            amount=amount,
+            executed_at=executed_at,
+            event_type=event_type,
+            position=position,
+            transaction=transaction,
+            withheld_taxes=0,
+        )
+
+        if created:
+            account.balance += amount
+        account.save()
+
+        return event, created
+
+    @transaction.atomic
+    def delete_crypto_income_event(
+        self,
+        event,
+    ) -> None:
+        event.account.balance -= event.amount
+        event.account.save()
+        self.delete_transaction(event.transaction)
+        event.delete()

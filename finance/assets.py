@@ -28,7 +28,7 @@ class AssetRepository:
         # The exchange here should be Other / NA exchange as crypto assets are not tied to
         # particular exchanges.
         tracked = prices.are_crypto_prices_available(symbol)
-        asset, _ = models.Asset.objects.get_or_create(
+        asset, created = models.Asset.objects.get_or_create(
             symbol=symbol,
             name=symbol,
             tracked=tracked,
@@ -36,7 +36,7 @@ class AssetRepository:
             asset_type=models.AssetType.CRYPTO,
             currency=models.Currency.USD,
         )
-        if tracked:
+        if tracked and created:
             prices.collect_prices(asset)
         return asset
 
