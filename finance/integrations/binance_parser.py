@@ -398,6 +398,7 @@ def import_income_transactions(account: models.Account, records: pd.DataFrame):
                 event_type,
                 transaction,
             )
+            # It looks like without this sometimes the account doesn't get correctly updated.
             account.refresh_from_db()
             successful_records.append(
                 {
@@ -407,13 +408,20 @@ def import_income_transactions(account: models.Account, records: pd.DataFrame):
                     "created": created,
                 }
             )
-        except Exception as e:
-            print(e)
+        except prices.PriceNotAvailable as e:
             failed_records.append(
                 {
                     "record": raw_record,
                     "issue": str(e),
                     "issue_type": models.ImportIssueType.FAILED_TO_FETCH_PRICE,
+                }
+            )
+        except Exception as e:
+            failed_records.append(
+                {
+                    "record": raw_record,
+                    "issue": str(e),
+                    "issue_type": models.ImportIssueType.UNKNOWN_FAILURE,
                 }
             )
     return successful_records, failed_records

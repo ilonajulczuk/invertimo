@@ -11,6 +11,11 @@ from finance import models
 
 logger = logging.getLogger(__name__)
 
+
+class PriceNotAvailable(ValueError):
+    pass
+
+
 symbol_to_currency_pair = {
     "USDEUR": {
         "from_currency": models.Currency.USD,
@@ -116,7 +121,6 @@ def collect_prices(asset):
         from_date = str(last_record.date)
 
     if asset.asset_type == models.AssetType.CRYPTO:
-        print("Crypto asset")
         url = f"https://eodhistoricaldata.com/api/eod/{symbol}-USD.CC?api_token={settings.EOD_APIKEY}&order=d&fmt=json&from={from_date}"
     else:
         exchange_code = asset.exchange.identifiers.get(
@@ -170,5 +174,8 @@ def get_crypto_usd_price_at_date(symbol, date) -> Optional[decimal.Decimal]:
         records = r.json()
         if records:
             return decimal.Decimal(str(records[0]["close"]))
+        else:
+            raise PriceNotAvailable(f"Unable to find price for '{symbol} at {date}")
     except Exception as e:
         logging.warn(e)
+        raise PriceNotAvailable(f"Unable to find price for '{symbol} at {date}")

@@ -1,15 +1,14 @@
-import decimal
 import datetime
-from django.test import TestCase
+import decimal
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
-from finance.integrations import degiro_parser
-from finance.integrations import binance_parser
-
 from django.db.models import Sum
-from finance import models, utils
-from finance import testing_utils
-from unittest.mock import patch
+from django.test import TestCase
+from pandas.core.algorithms import mode
+
+from finance import models, prices, testing_utils, utils
+from finance.integrations import binance_parser, degiro_parser
 
 
 asset_response = [
@@ -480,7 +479,6 @@ class TestBinanceParser(TestCase):
         self.assertAlmostEqual(account.balance, account_balance)
         self.assertAlmostEqual(total_value, expected_total_value)
 
-
     @patch("finance.prices.get_crypto_usd_price_at_date")
     @patch("finance.prices.are_crypto_prices_available")
     def test_importing_binance_data_with_income(self, mock, crypto_price_mock):
@@ -499,7 +497,9 @@ class TestBinanceParser(TestCase):
             account, "./finance/binance_transaction_sample_with_income.csv", True
         )
         failed_records = transaction_import.records.filter(successful=False)
-        self.assertEqual(len(failed_records), 0)
+        self.assertEqual(failed_records.count(), 0)
+        failed_event_records = transaction_import.event_records.filter(successful=False)
+        self.assertEqual(failed_event_records.count(), 0)
         self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
         account = models.Account.objects.get(nickname="test")
 
@@ -589,3 +589,31 @@ class TestBinanceParser(TestCase):
 
         self.assertAlmostEqual(account.balance, account_balance)
         self.assertAlmostEqual(total_value, expected_total_value)
+
+    @patch("finance.prices.get_crypto_usd_price_at_date")
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_importing_binance_data_with_income_bad_prices(self, mock, crypto_price_mock):
+        mock.return_value = False
+        crypto_price_mock.side_effect = prices.PriceNotAvailable(
+            "Price for asset in test not available :("
+        )
+
+        account_balance = decimal.Decimal("299.16000")
+        base_num_of_transactions = 8
+        account = models.Account.objects.create(
+            user=User.objects.all()[0], nickname="test"
+        )
+        _add_dummy_exchange_rates()
+
+        transaction_import = binance_parser.import_transactions_from_file(
+            account, "./finance/binance_transaction_sample_with_income.csv", True
+        )
+        failed_records = transaction_import.records.filter(successful=False)
+        self.assertEqual(failed_records.count(), 0)
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+
+        failed_event_records = transaction_import.event_records.filter(successful=False)
+        self.assertEqual(failed_event_records.count(), 5)
+        successful_event_records = transaction_import.event_records.filter(successful=True)
+        self.assertEqual(successful_event_records.count(), 4)
+        self.assertAlmostEqual(account.balance, account_balance)
