@@ -372,6 +372,9 @@ class TransactionsViewSet(viewsets.ModelViewSet):
                     "quantity": ["Can't sell asset before buying it."],
                 }
             )
+        except accounts.CantModifyTransactionWithEvent:
+            raise serializers.ValidationError("Can't delete a transaction associated with an event, without deleting the event first.")
+
 
     def perform_update(self, serializer):
         account_repository = accounts.AccountRepository()
@@ -385,6 +388,8 @@ class TransactionsViewSet(viewsets.ModelViewSet):
                     "quantity": ["Can't sell asset before buying it."],
                 }
             )
+        except accounts.CantModifyTransactionWithEvent:
+            raise serializers.ValidationError("Can't update a transaction associated with an event, without deleting the event first.")
 
 
 class AccountEventViewSet(

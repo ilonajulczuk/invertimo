@@ -18,6 +18,10 @@ class CantUpdateNonEmptyAccount(ValueError):
     pass
 
 
+class CantModifyTransactionWithEvent(ValueError):
+    pass
+
+
 class AccountRepository:
     def get(self, user: User, id: int) -> models.Account:
         return models.Account.objects.get(user=user, id=id)
@@ -374,12 +378,13 @@ class AccountRepository:
 
     @transaction.atomic
     def delete_transaction(self, transaction: models.Transaction) -> None:
-
         position = transaction.position
-
         account = position.account
+        if transaction.events.count():
+            raise CantModifyTransactionWithEvent(
+                "Can't delete a transaction associated with an event, without deleting the event first.")
 
-        # This assume no splits and merges support.
+        # This assumes no splits and merges support.
         position.quantity -= transaction.quantity
         position.save()
         account.balance -= transaction.total_in_account_currency
