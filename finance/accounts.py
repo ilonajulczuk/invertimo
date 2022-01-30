@@ -382,7 +382,8 @@ class AccountRepository:
         account = position.account
         if transaction.events.count():
             raise CantModifyTransactionWithEvent(
-                "Can't delete a transaction associated with an event, without deleting the event first.")
+                "Can't delete a transaction associated with an event, without deleting the event first."
+            )
 
         # This assumes no splits and merges support.
         position.quantity -= transaction.quantity

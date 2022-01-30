@@ -418,6 +418,10 @@ class TestBinanceParser(TestCase):
         self.assertAlmostEqual(account.balance, account_balance)
         self.assertAlmostEqual(total_value, expected_total_value)
 
+        self.assertEqual(models.TransactionImport.objects.count(), 2)
+        transaction_import = models.TransactionImport.objects.last()
+        self.assertEqual(transaction_import.event_records.count(), 4)
+
     @patch("finance.prices.get_crypto_usd_price_at_date")
     @patch("finance.prices.are_crypto_prices_available")
     def test_importing_binance_data_fiat_doesnt_match_account_currency(
@@ -484,13 +488,11 @@ class TestBinanceParser(TestCase):
         crypto_price_mock.return_value = decimal.Decimal("100")
 
         account_balance = decimal.Decimal("299.16000")
-        num_of_income_events = 1
+        num_of_income_events = 5
         base_num_of_transactions = 8 + num_of_income_events
         account = models.Account.objects.create(
             user=User.objects.all()[0], nickname="test"
         )
-        account = models.Account.objects.get(nickname="test")
-
         _add_dummy_exchange_rates()
 
         transaction_import = binance_parser.import_transactions_from_file(
@@ -500,10 +502,11 @@ class TestBinanceParser(TestCase):
         self.assertEqual(len(failed_records), 0)
         self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
         account = models.Account.objects.get(nickname="test")
+
         self.assertAlmostEqual(account.balance, account_balance)
 
         # 2 in the new account, 30 from the old fixture.
-        self.assertEqual(models.Position.objects.count(), 32)
+        self.assertEqual(models.Position.objects.count(), 35)
 
         eth = models.Asset.objects.get(name="ETH")
         self.assertEqual(eth.exchange.name, "Other / NA")
@@ -520,10 +523,13 @@ class TestBinanceParser(TestCase):
             account, "./finance/binance_transaction_sample.csv", True
         )
         self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
-        self.assertEqual(models.Position.objects.count(), 32)
+        self.assertEqual(models.Position.objects.count(), 35)
         account = models.Account.objects.get(nickname="test")
 
         self.assertAlmostEqual(account.balance, account_balance)
+        self.assertEqual(models.TransactionImport.objects.count(), 2)
+        transaction_import = models.TransactionImport.objects.last()
+        self.assertEqual(transaction_import.event_records.count(), 9)
 
     @patch("finance.prices.get_crypto_usd_price_at_date")
     @patch("finance.prices.are_crypto_prices_available")

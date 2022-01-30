@@ -38,7 +38,7 @@ class Account(models.Model):
     nickname = models.CharField(max_length=200)
     description = models.TextField(blank=True)
 
-    balance = models.DecimalField(max_digits=12, decimal_places=5, default=0)
+    balance = models.DecimalField(max_digits=17, decimal_places=10, default=0)
     last_modified = models.DateTimeField(auto_now=True, null=True)
 
     def __str__(self):
@@ -525,16 +525,46 @@ class TransactionImport(models.Model):
     integration = models.IntegerField(choices=IntegrationType.choices)
     status = models.IntegerField(choices=ImportStatus.choices)
 
+    class Meta:
+        ordering = ["-created_at"]
+
 
 class ImportIssueType(models.IntegerChoices):
     UNKNOWN_FAILURE = 1, _("UNKNOWN_FAILURE")
     SOLD_BEFORE_BOUGHT = 2, _("SOLD_BEFORE_BOUGHT")
     BAD_FORMAT = 3, _("BAD_FORMAT")
+    FAILED_TO_FETCH_PRICE = 4, _("FAILED_TO_FETCH_PRICE")
 
 
 class TransactionImportRecord(models.Model):
-    transaction_import = models.ForeignKey(TransactionImport, related_name="records", on_delete=models.CASCADE)
-    transaction = models.ForeignKey(Transaction, null=True, related_name="import_records", on_delete=models.SET_NULL)
+    transaction_import = models.ForeignKey(
+        TransactionImport, related_name="records", on_delete=models.CASCADE
+    )
+    transaction = models.ForeignKey(
+        Transaction, null=True, related_name="import_records", on_delete=models.SET_NULL
+    )
+    raw_record = models.TextField()
+    created_new = models.BooleanField(default=False)
+    successful = models.BooleanField(default=True)
+    issue_type = models.IntegerField(choices=ImportIssueType.choices, null=True)
+    raw_issue = models.TextField(null=True)
+
+
+class EventImportRecord(models.Model):
+    transaction_import = models.ForeignKey(
+        TransactionImport, related_name="event_records", on_delete=models.CASCADE
+    )
+    event = models.ForeignKey(
+        AccountEvent, null=True, related_name="event_records", on_delete=models.SET_NULL
+    )
+    # Staking / Savings interest events will have a transaction associated!
+    transaction = models.ForeignKey(
+        Transaction,
+        null=True,
+        related_name="event_transaction_records",
+        on_delete=models.SET_NULL,
+    )
+
     raw_record = models.TextField()
     created_new = models.BooleanField(default=False)
     successful = models.BooleanField(default=True)

@@ -3,7 +3,6 @@ import decimal
 from typing import Tuple
 
 import pandas as pd
-from django.conf import settings
 from django.db import transaction
 
 from finance import accounts, models, stock_exchanges
