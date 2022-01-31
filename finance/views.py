@@ -18,11 +18,9 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 
 from finance import accounts, gains, models
-from finance.integrations.degiro_parser import (
-    CurrencyMismatch,
-    InvalidFormat,
-    import_transactions_from_file,
-)
+from finance.integrations import degiro_parser
+from finance.integrations import binance_parser
+
 from finance.models import (
     AccountEvent,
     Asset,
@@ -53,6 +51,7 @@ from finance.serializers import (
     PositionWithQuantitiesSerializer,
     TransactionImportSerializer,
     TransactionSerializer,
+    BinanceUploadSerializer,
 )
 
 
@@ -500,7 +499,6 @@ class DegiroUploadViewSet(
         return context
 
     def create(self, request):
-
         serializer = self.get_serializer(
             data=request.data, context=self.get_serializer_context()
         )
@@ -522,14 +520,75 @@ class DegiroUploadViewSet(
                 }
             )
         try:
-            transaction_import = import_transactions_from_file(
+            transaction_import = degiro_parser.import_transactions_from_file(
                 account, arguments["transaction_file"], import_all_assets=arguments["import_all_assets"]
             )
-        except CurrencyMismatch as e:
+        except degiro_parser.CurrencyMismatch as e:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST, data={"account": e.args[0]}
             )
-        except InvalidFormat as e:
+        except degiro_parser.InvalidFormat as e:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST, data={"transaction_file": e.args[0]}
+            )
+
+        serializer = TransactionImportSerializer(instance=transaction_import, context=self.get_serializer_context())
+        return Response(
+            status=status.HTTP_201_CREATED, data=serializer.data
+        )
+
+
+class BinanceUploadViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    model = TransactionImport
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self) -> QuerySet[models.TransactionImport]:
+        assert isinstance(self.request.user, User)
+        queryset = models.TransactionImport.objects.filter(account__user=self.request.user, integration=IntegrationType.BINANCE_CSV)
+        return queryset
+
+    def get_serializer_class(
+        self,
+    ) -> Type[Union[BinanceUploadSerializer, TransactionImportSerializer]]:
+        if self.action in ("list", "retrieve"):
+            return TransactionImportSerializer
+        return BinanceUploadSerializer
+
+    def get_serializer_context(self) -> Dict[str, Any]:
+        context: Dict[str, Any] = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
+    def create(self, request):
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        assert isinstance(self.request.user, User)
+        self.request.user
+
+        arguments = serializer.validated_data.copy()
+
+        try:
+            account_repository = accounts.AccountRepository()
+            account = account_repository.get(
+                user=self.request.user, id=serializer.validated_data["account"]
+            )
+        except models.Account.DoesNotExist:
+            raise exceptions.PermissionDenied(
+                detail={
+                    "account": "Current user doesn't have access to this account or it doesn't exist."
+                }
+            )
+        try:
+            transaction_import = binance_parser.import_transactions_from_file(
+                account, arguments["transaction_file"]
+            )
+        except binance_parser.InvalidFormat as e:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST, data={"transaction_file": e.args[0]}
             )
@@ -552,5 +611,6 @@ class TransactionImportViewSet(
 
     def get_queryset(self) -> QuerySet[models.TransactionImport]:
         assert isinstance(self.request.user, User)
-        queryset = models.TransactionImport.objects.filter(account__user=self.request.user, integration=IntegrationType.DEGIRO)
+        queryset = models.TransactionImport.objects.filter(
+            account__user=self.request.user).prefetch_related("event_records__event").prefetch_related("records")
         return queryset

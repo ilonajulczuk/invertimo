@@ -59,7 +59,7 @@ SUPPORTED_FIAT = (
 )
 
 # TODO: consider renaming to import history?
-def import_transactions_from_file(account, filename_or_file, import_all_assets):
+def import_transactions_from_file(account, filename_or_file):
     try:
         return _import_history_from_file(account, filename_or_file)
     except Exception as e:
