@@ -22,7 +22,7 @@ export function EventTypeDisplay({ eventType }) {
     } else if (eventType === "DIVIDEND") {
         return <span className={classes.eventType}><Icon>paid</Icon>Dividend</span>;
     } else {
-        <span>{eventType}</span>;
+        return <span>{eventType}</span>;
     }
 }
 

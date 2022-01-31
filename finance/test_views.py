@@ -46,8 +46,8 @@ def _add_dummy_account_and_asset(user, isin):
 
 
 def _add_transaction(
-    account, isin, exchange, executed_at, quantity, price,
-    add_price_history=True):
+    account, isin, exchange, executed_at, quantity, price, add_price_history=True
+):
     transaction_costs = decimal.Decimal(0.5)
     local_value = decimal.Decimal(0.5)
     value_in_account_currency = decimal.Decimal(0.5)
@@ -71,9 +71,15 @@ def _add_transaction(
     )
     asset = transaction.position.asset
     if add_price_history:
-        models.PriceHistory.objects.create(asset=asset, value=price, date=transaction.executed_at.date())
-        models.CurrencyExchangeRate.objects.create(from_currency=models.Currency.USD, to_currency=models.Currency.EUR, value=0.84, date="2020-02-03")
-
+        models.PriceHistory.objects.create(
+            asset=asset, value=price, date=transaction.executed_at.date()
+        )
+        models.CurrencyExchangeRate.objects.create(
+            from_currency=models.Currency.USD,
+            to_currency=models.Currency.EUR,
+            value=0.84,
+            date="2020-02-03",
+        )
 
 
 class TestPositionsView(testing_utils.ViewTestBase, TestCase):
@@ -264,7 +270,9 @@ class TestAccountDetailView(testing_utils.ViewTestBase, TestCase):
         super().setUp()
 
         self.isin = "USA123"
-        self.account, self.exchange, _ = _add_dummy_account_and_asset(self.user, isin=self.isin)
+        self.account, self.exchange, _ = _add_dummy_account_and_asset(
+            self.user, isin=self.isin
+        )
 
     def get_url(self):
         return self.URL % self.account.pk
@@ -277,7 +285,6 @@ class TestAccountDetailView(testing_utils.ViewTestBase, TestCase):
         # transactions or events (because they are deleted).
         response = self.client.delete(reverse(self.VIEW_NAME, args=[self.account.pk]))
         self.assertEqual(response.status_code, 204)
-
 
     def test_deleting_the_nonempty_account(self):
         for transaction in _FAKE_TRANSACTIONS:
@@ -302,7 +309,6 @@ class TestAccountDetailView(testing_utils.ViewTestBase, TestCase):
                 transaction[1],
                 transaction[2],
             )
-
 
         # Changing the name or description is fine.
         new_name = "cooler account name"
@@ -333,7 +339,6 @@ class TestAccountDetailView(testing_utils.ViewTestBase, TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
-
 
         for transaction in models.Transaction.objects.all():
             transaction.delete()
@@ -649,7 +654,6 @@ class TestTransactionDetailView(testing_utils.ViewTestBase, TestCase):
         old_account_balance = position.account.balance
 
         transaction = models.Transaction.objects.first()
-        middle_transaction = models.Transaction.objects.all()[3]
 
         self.assertEqual(models.Transaction.objects.count(), 8)
         response = self.client.put(
@@ -690,10 +694,8 @@ class TestTransactionDetailView(testing_utils.ViewTestBase, TestCase):
         position = models.Position.objects.first()
 
         old_quantity = position.quantity
-        old_account_balance = position.account.balance
 
         transaction = models.Transaction.objects.first()
-        middle_transaction = models.Transaction.objects.all()[3]
 
         self.assertEqual(models.Transaction.objects.count(), 8)
         response = self.client.put(
@@ -717,6 +719,48 @@ class TestTransactionDetailView(testing_utils.ViewTestBase, TestCase):
             position.quantity,
             old_quantity,
         )
+
+    def test_deleting_transaction_fails_if_selling_more_than_owned(self):
+        self.assertEqual(models.Position.objects.count(), 1)
+
+        # Add transaction that sells a lot.
+        _add_transaction(
+            self.account,
+            self.isin,
+            self.exchange,
+            "2022-01-27 10:00Z",
+            -20,
+            30,
+        )
+        first_transaction = models.Transaction.objects.last()
+        self.assertEqual(models.Transaction.objects.count(), 9)
+        response = self.client.delete(
+            reverse(self.VIEW_NAME, args=[first_transaction.pk])
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json(), {"quantity": ["Can't sell asset before buying it."]}
+        )
+        self.assertEqual(models.Transaction.objects.count(), 9)
+
+    def test_deleting_transaction_fails_if_transaction_has_event(self):
+        self.assertEqual(models.Position.objects.count(), 1)
+        first_transaction = models.Transaction.objects.last()
+        accounts.AccountRepository().add_crypto_income_event(
+            100,
+            first_transaction.executed_at,
+            models.EventType.STAKING_INTEREST,
+            first_transaction,
+        )
+        self.assertEqual(models.Transaction.objects.count(), 8)
+        response = self.client.delete(
+            reverse(self.VIEW_NAME, args=[first_transaction.pk])
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json(), ["Can't delete a transaction associated with an event, without deleting the event first."]
+        )
+        self.assertEqual(models.Transaction.objects.count(), 8)
 
 
 def _add_account_event(account, event_type, amount, executed_at=None, position=None):
@@ -951,7 +995,6 @@ class TestAccountEventDetailView(testing_utils.ViewTestBase, TestCase):
         )
 
 
-
 class TestAssetListView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/assets/"
     VIEW_NAME = "asset-list"
@@ -993,9 +1036,7 @@ class TestAssetListView(testing_utils.ViewTestBase, TestCase):
             added_by=self.user,
         )
 
-        user2 = User.objects.create(
-                username="anotheruser", email="test2@example.com"
-            )
+        user2 = User.objects.create(username="anotheruser", email="test2@example.com")
 
         self.custom_asset_of_another_user = models.Asset.objects.create(
             symbol="mystockson",

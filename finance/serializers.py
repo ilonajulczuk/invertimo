@@ -6,8 +6,8 @@ import datetime
 from typing import Any, TypeVar
 from django.contrib.auth.models import User
 
-from finance import models
-from finance import exchanges, gains
+from finance import models, stock_exchanges
+from finance import gains
 from finance.models import (
     Account,
     AccountEvent,
@@ -26,6 +26,7 @@ from finance.models import (
     TransactionImportRecord,
     ImportIssueType,
     IntegrationType,
+    EventImportRecord,
 )
 
 
@@ -118,7 +119,9 @@ class IntegrationTypeField(ChoicesToStringField):
     name = "integration type"
 
 
-class TransactionImportRecordSerializer(serializers.ModelSerializer[TransactionImportRecord]):
+class TransactionImportRecordSerializer(
+    serializers.ModelSerializer[TransactionImportRecord]
+):
     issue_type = ImportIssueTypeField(required=False)
 
     class Meta:
@@ -131,9 +134,40 @@ class TransactionImportRecordSerializer(serializers.ModelSerializer[TransactionI
             "successful",
             "issue_type",
             "raw_issue",
-            ]
+        ]
 
-class EmbeddedTransactionImportRecordSerializer(serializers.ModelSerializer[TransactionImportRecord]):
+
+class TransactionImportEventRecordSerializer(
+    serializers.ModelSerializer[EventImportRecord]
+):
+    issue_type = ImportIssueTypeField(required=False)
+    event_type = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EventImportRecord
+        fields = [
+            "id",
+            "event",
+            "event_type",
+            "transaction",
+            "raw_record",
+            "created_new",
+            "successful",
+            "issue_type",
+            "raw_issue",
+        ]
+
+    def get_event_type(self, obj):
+        if obj.event:
+            value = obj.event.event_type
+            return EventType(value).label
+        else:
+            return ""
+
+
+class EmbeddedTransactionImportRecordSerializer(
+    serializers.ModelSerializer[TransactionImportRecord]
+):
     issue_type = ImportIssueTypeField(required=False)
 
     integration = serializers.SerializerMethodField()
@@ -152,7 +186,7 @@ class EmbeddedTransactionImportRecordSerializer(serializers.ModelSerializer[Tran
             "transaction_import",
             "created_at",
             "integration",
-            ]
+        ]
 
     def get_integration(self, obj):
         value = obj.transaction_import.integration
@@ -165,6 +199,7 @@ class EmbeddedTransactionImportRecordSerializer(serializers.ModelSerializer[Tran
 class TransactionImportSerializer(serializers.ModelSerializer[TransactionImport]):
 
     records = TransactionImportRecordSerializer(many=True)
+    event_records = TransactionImportEventRecordSerializer(many=True)
     status = ImportStatusField()
     integration = IntegrationTypeField()
 
@@ -177,6 +212,7 @@ class TransactionImportSerializer(serializers.ModelSerializer[TransactionImport]
             "status",
             "integration",
             "records",
+            "event_records",
         ]
 
     def get_extra_kwargs(self):
@@ -370,7 +406,7 @@ class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction])
         return value
 
     def validate_exchange(self, value):
-        if value == exchanges.OTHER_OR_NA_EXCHANGE_NAME:
+        if value == stock_exchanges.OTHER_OR_NA_EXCHANGE_NAME:
             return value
         if not models.Exchange.objects.filter(name=value).exists():
             raise serializers.ValidationError(
@@ -671,7 +707,6 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
 
 
 class LotSerializer(serializers.ModelSerializer[Lot]):
-
     class Meta:
         model = Lot
         fields = "__all__"
@@ -683,3 +718,6 @@ class DegiroUploadSerializer(serializers.Serializer[Any]):
     import_all_assets = serializers.BooleanField(default=True)
 
 
+class BinanceUploadSerializer(serializers.Serializer[Any]):
+    account = serializers.IntegerField()
+    transaction_file = serializers.FileField()

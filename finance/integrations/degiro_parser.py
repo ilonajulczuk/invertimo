@@ -3,10 +3,9 @@ import decimal
 from typing import Tuple
 
 import pandas as pd
-from django.conf import settings
 from django.db import transaction
 
-from finance import accounts, exchanges, models
+from finance import accounts, models, stock_exchanges
 from finance.gains import SoldBeforeBought
 
 
@@ -60,7 +59,7 @@ def import_transaction(
         raise CurrencyMismatch("Currency of import didn't match the account")
     exchange_mic = transaction_record["Venue"]
     exchange_ref = transaction_record["Reference"]
-    exchange = exchanges.ExchangeRepository().get(exchange_mic, exchange_ref)
+    exchange = stock_exchanges.ExchangeRepository().get(exchange_mic, exchange_ref)
 
     def to_decimal(pd_f):
         return decimal.Decimal(pd_f.astype(str))

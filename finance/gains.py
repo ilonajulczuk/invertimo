@@ -115,7 +115,6 @@ def update_lots(position, transaction=None):
                     outstanding_quantity -= outstanding_quantity
 
             if abs(outstanding_quantity) > EPSILON:
-                # TODO: add handling of that in the API and frontend.
                 raise SoldBeforeBought(
                     f"Invalid transactions for position: {position}, selling more than owned (potentially transactions added with wrong dates)."
                 )

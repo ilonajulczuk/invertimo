@@ -1,11 +1,20 @@
+from typing import Optional
+from django.db.models.base import ModelState
 import requests
 import logging
 import datetime
+import decimal
+
 
 from django.conf import settings
 from finance import models
 
 logger = logging.getLogger(__name__)
+
+
+class PriceNotAvailable(ValueError):
+    pass
+
 
 symbol_to_currency_pair = {
     "USDEUR": {
@@ -53,9 +62,9 @@ def get_closest_exchange_rate(
     rates = models.CurrencyExchangeRate.objects.filter(
         from_currency=from_currency, to_currency=to_currency
     )
-    rate = rates.filter(date__lte=date).order_by('-date').first()
+    rate = rates.filter(date__lte=date).order_by("-date").first()
     if rate is None:
-        rate = rates.filter(date__gte=date).order_by('date').first()
+        rate = rates.filter(date__gte=date).order_by("date").first()
     return rate
 
 
@@ -103,9 +112,7 @@ def collect_exchange_rates():
 
 def collect_prices(asset):
     symbol = asset.symbol
-    exchange_code = asset.exchange.identifiers.get(
-        id_type=models.ExchangeIDType.CODE
-    ).value
+
     from_date = "2020-01-01"
     last_record = (
         models.PriceHistory.objects.filter(asset=asset).order_by("date").last()
@@ -113,9 +120,15 @@ def collect_prices(asset):
     if last_record:
         from_date = str(last_record.date)
 
-    r = requests.get(
-        f"https://eodhistoricaldata.com/api/eod/{symbol}.{exchange_code}?api_token={settings.EOD_APIKEY}&order=d&fmt=json&from={from_date}"
-    )
+    if asset.asset_type == models.AssetType.CRYPTO:
+        url = f"https://eodhistoricaldata.com/api/eod/{symbol}-USD.CC?api_token={settings.EOD_APIKEY}&order=d&fmt=json&from={from_date}"
+    else:
+        exchange_code = asset.exchange.identifiers.get(
+            id_type=models.ExchangeIDType.CODE
+        ).value
+        url = f"https://eodhistoricaldata.com/api/eod/{symbol}.{exchange_code}?api_token={settings.EOD_APIKEY}&order=d&fmt=json&from={from_date}"
+
+    r = requests.get(url)
     records = []
     try:
         records = r.json()
@@ -131,3 +144,38 @@ def collect_prices(asset):
         )
         prices.append(price)
     return prices
+
+
+def are_crypto_prices_available(symbol):
+    try:
+        url = f"https://eodhistoricaldata.com/api/eod/{symbol}-USD.CC?api_token={settings.EOD_APIKEY}&order=d&fmt=json"
+        r = requests.get(url)
+        records = r.json()
+        if records:
+            return True
+    except Exception as e:
+        logging.warn(e)
+        return False
+    return False
+
+
+def get_crypto_usd_price_at_date(symbol, date) -> Optional[decimal.Decimal]:
+    try:
+        prices = models.PriceHistory.objects.filter(asset__symbol=symbol, date=date)
+        if prices:
+            return prices[0].value
+
+        date_string = date.isoformat()
+        url = (
+            f"https://eodhistoricaldata.com/api/eod/{symbol}-USD.CC?"
+            f"api_token={settings.EOD_APIKEY}&order=d&fmt=json&"
+            f"from={date_string}&to={date_string}")
+        r = requests.get(url)
+        records = r.json()
+        if records:
+            return decimal.Decimal(str(records[0]["close"]))
+        else:
+            raise PriceNotAvailable(f"Unable to find price for '{symbol} at {date}")
+    except Exception as e:
+        logging.warn(e)
+        raise PriceNotAvailable(f"Unable to find price for '{symbol} at {date}")

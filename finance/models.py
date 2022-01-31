@@ -38,7 +38,7 @@ class Account(models.Model):
     nickname = models.CharField(max_length=200)
     description = models.TextField(blank=True)
 
-    balance = models.DecimalField(max_digits=12, decimal_places=5, default=0)
+    balance = models.DecimalField(max_digits=17, decimal_places=10, default=0)
     last_modified = models.DateTimeField(auto_now=True, null=True)
 
     def __str__(self):
@@ -106,6 +106,7 @@ class AssetType(models.IntegerChoices):
     STOCK = 1, _("Stock")
     BOND = 2, _("Bond")
     FUND = 3, _("Fund")
+    CRYPTO = 4, _("Crypto")
 
 
 class Asset(models.Model):
@@ -120,7 +121,7 @@ class Asset(models.Model):
         null=True,
         blank=True,
     )
-    currency = models.IntegerField(choices=Currency.choices, default=Currency.USD)
+    currency = models.IntegerField(choices=Currency.choices, null=True)
     country = models.CharField(max_length=200, null=True)
 
     asset_type = models.IntegerField(choices=AssetType.choices, default=AssetType.STOCK)
@@ -364,18 +365,18 @@ class Transaction(models.Model):
     position = models.ForeignKey(
         Position, related_name="transactions", on_delete=models.CASCADE
     )
-    quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    price = models.DecimalField(max_digits=12, decimal_places=5)
+    quantity = models.DecimalField(max_digits=20, decimal_places=10)
+    price = models.DecimalField(max_digits=18, decimal_places=10)
 
-    transaction_costs = models.DecimalField(max_digits=12, decimal_places=5, null=True)
+    transaction_costs = models.DecimalField(max_digits=18, decimal_places=10, null=True)
 
     # The currency is stored with the asset.
-    local_value = models.DecimalField(max_digits=12, decimal_places=5)
+    local_value = models.DecimalField(max_digits=19, decimal_places=10)
     # The main currency is stored within the account.
-    value_in_account_currency = models.DecimalField(max_digits=12, decimal_places=5)
+    value_in_account_currency = models.DecimalField(max_digits=18, decimal_places=10)
 
     # This is value + transaction_costs + other costs, e.g. taxes on some exchanges.
-    total_in_account_currency = models.DecimalField(max_digits=12, decimal_places=5)
+    total_in_account_currency = models.DecimalField(max_digits=18, decimal_places=10)
     # value_in_account_currency + transaction cost == total cost.
 
     order_id = models.CharField(max_length=200, null=True, blank=True)
@@ -393,7 +394,10 @@ class EventType(models.IntegerChoices):
     DEPOSIT = 1, _("DEPOSIT")
     WITHDRAWAL = 2, _("WITHDRAWAL")
     DIVIDEND = 3, _("DIVIDEND")
-    # TODO: add some cool crypto related ones :).
+
+    # The following values are relevant to crypto assets.
+    SAVINGS_INTEREST = 4, _("SAVINGS_INTEREST")
+    STAKING_INTEREST = 5, _("STAKING_INTEREST")
     # Another could be split or merge.
 
 
@@ -420,8 +424,19 @@ class AccountEvent(models.Model):
     event_type = models.IntegerField(choices=EventType.choices)
 
     last_modified = models.DateTimeField(auto_now=True)
+
+    # Position is relevant to Dividend events.
     position = models.ForeignKey(
         Position,
+        related_name="events",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    # Transaction is relevant to crypto income events.
+    transaction = models.ForeignKey(
+        Transaction,
         related_name="events",
         on_delete=models.SET_NULL,
         null=True,
@@ -495,6 +510,7 @@ class Lot(models.Model):
 
 class IntegrationType(models.IntegerChoices):
     DEGIRO = 1, _("DEGIRO")
+    BINANCE_CSV = 2, _("BINANCE_CSV")
 
 
 class ImportStatus(models.IntegerChoices):
@@ -509,16 +525,46 @@ class TransactionImport(models.Model):
     integration = models.IntegerField(choices=IntegrationType.choices)
     status = models.IntegerField(choices=ImportStatus.choices)
 
+    class Meta:
+        ordering = ["-created_at"]
+
 
 class ImportIssueType(models.IntegerChoices):
     UNKNOWN_FAILURE = 1, _("UNKNOWN_FAILURE")
     SOLD_BEFORE_BOUGHT = 2, _("SOLD_BEFORE_BOUGHT")
     BAD_FORMAT = 3, _("BAD_FORMAT")
+    FAILED_TO_FETCH_PRICE = 4, _("FAILED_TO_FETCH_PRICE")
 
 
 class TransactionImportRecord(models.Model):
-    transaction_import = models.ForeignKey(TransactionImport, related_name="records", on_delete=models.CASCADE)
-    transaction = models.ForeignKey(Transaction, null=True, related_name="import_records", on_delete=models.SET_NULL)
+    transaction_import = models.ForeignKey(
+        TransactionImport, related_name="records", on_delete=models.CASCADE
+    )
+    transaction = models.ForeignKey(
+        Transaction, null=True, related_name="import_records", on_delete=models.SET_NULL
+    )
+    raw_record = models.TextField()
+    created_new = models.BooleanField(default=False)
+    successful = models.BooleanField(default=True)
+    issue_type = models.IntegerField(choices=ImportIssueType.choices, null=True)
+    raw_issue = models.TextField(null=True)
+
+
+class EventImportRecord(models.Model):
+    transaction_import = models.ForeignKey(
+        TransactionImport, related_name="event_records", on_delete=models.CASCADE
+    )
+    event = models.ForeignKey(
+        AccountEvent, null=True, related_name="event_records", on_delete=models.SET_NULL
+    )
+    # Staking / Savings interest events will have a transaction associated!
+    transaction = models.ForeignKey(
+        Transaction,
+        null=True,
+        related_name="event_transaction_records",
+        on_delete=models.SET_NULL,
+    )
+
     raw_record = models.TextField()
     created_new = models.BooleanField(default=False)
     successful = models.BooleanField(default=True)
