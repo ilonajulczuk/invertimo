@@ -248,6 +248,17 @@ export class APIClient {
 
         return submitDataNonJSON(url, formData, 'POST');
     }
+
+    async uploadBinanceTransactions(data) {
+        let url = this.baseUrl + '/integrations/binance/transactions/';
+
+        const formData = new FormData();
+
+        formData.append('account', data.account);
+        formData.append('transaction_file', data.file);
+
+        return submitDataNonJSON(url, formData, 'POST');
+    }
 }
 
 const baseUrl = "./api";

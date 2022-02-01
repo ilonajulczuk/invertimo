@@ -14,6 +14,7 @@ import { EmbeddedDividendList } from './EventList.js';
 import { AreaChartWithCursor, LineChartWithCursor } from './components/charts.js';
 import { toSymbol } from './currencies';
 
+import _ from 'lodash';
 
 import './position_list.css';
 import { APIClientError } from './api_utils.js';
@@ -201,6 +202,7 @@ export function PositionDetail(props) {
     values = filterPoints(values, skipFactor);
     valuesAccountCurrency = filterPoints(valuesAccountCurrency, skipFactor);
 
+    const dividendEvents = _.filter(data.events, event => event.event_type == "DIVIDEND");
     return (
         <div>
 
@@ -242,7 +244,7 @@ export function PositionDetail(props) {
                             color="secondary"
                         >
                             <Icon>create</Icon>
-                                Record transaction
+                            Record transaction
                         </Button>
                     </div>
                     <EmbeddedTransactionList transactions={data.transactions} />
@@ -256,10 +258,13 @@ export function PositionDetail(props) {
                             color="secondary"
                         >
                             <Icon>paid</Icon>
-                                Record dividend
+                            Record dividend
                         </Button>
                     </div>
-                    <EmbeddedDividendList events={data.events} position={basicData} accounts={props.accounts} />
+                    <EmbeddedDividendList
+                        events={dividendEvents}
+                        position={basicData}
+                        accounts={props.accounts} />
                 </div>
 
             </div>

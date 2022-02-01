@@ -41,6 +41,8 @@ TransactionImportRecord.propTypes = {
         integration: PropTypes.string.isRequired,
         created_new: PropTypes.bool.isRequired,
         transaction_import: PropTypes.number.isRequired,
+        event: PropTypes.number,
+        event_type: PropTypes.string,
     }).isRequired,
 };
 
@@ -50,13 +52,14 @@ export function TransactionImportRecordReferencingTransaction(props) {
 
     const maybeTransaction = props.record.transaction ? <a href={`#/transactions/${props.record.transaction}`} >
         transaction</a> : null;
+    const maybeEvent = props.record.event ? <a href={`#/events/${props.record.event}`}>{props.record.event_type}</a> : null;
     const maybeIssue = props.record.issue_type ? "Issue type: " + props.record.issue_type : null;
     return <div>
         <Card variant="outlined" sx={{ marginTop: "1em", marginBottom: "1em" }}>
 
             <CardContent>
                 <h4>
-                    {maybeTransaction} {maybeDuplicate}
+                    {maybeEvent} {maybeTransaction} {maybeDuplicate}
                     {maybeIssue}
 
                 </h4>
@@ -82,5 +85,7 @@ TransactionImportRecordReferencingTransaction.propTypes = {
         issue_type: PropTypes.string,
         raw_issue: PropTypes.string,
         successful: PropTypes.bool.isRequired,
+        event: PropTypes.number,
+        event_type: PropTypes.string,
     }).isRequired,
 };

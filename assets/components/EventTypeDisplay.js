@@ -21,7 +21,12 @@ export function EventTypeDisplay({ eventType }) {
         return <span className={classes.eventType}><Icon>sync_alt</Icon>Withdrawal</span>;
     } else if (eventType === "DIVIDEND") {
         return <span className={classes.eventType}><Icon>paid</Icon>Dividend</span>;
-    } else {
+    } else if (eventType === "SAVINGS_INTEREST") {
+        return <span className={classes.eventType}><Icon>savings</Icon>Savings Interest</span>;
+    } else if (eventType === "STAKING_INTEREST") {
+    return <span className={classes.eventType}><Icon>savings</Icon>Staking Interest</span>;
+}
+    else {
         return <span>{eventType}</span>;
     }
 }
