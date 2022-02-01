@@ -435,18 +435,33 @@ class AccountRepository:
     @transaction.atomic
     def add_crypto_income_event(
         self,
-        amount: decimal.Decimal,
+        account: models.Account,
+        symbol: str,
         executed_at: datetime.datetime,
+        quantity: decimal.Decimal,
+        price: decimal.Decimal,
+        local_value: decimal.Decimal,
+        value_in_account_currency: decimal.Decimal,
         event_type: models.EventType,
-        transaction: Optional[models.Transaction] = None,
     ) -> Tuple[models.AccountEvent, bool]:
 
+        (transaction, _,) = self.add_transaction_crypto_asset(
+            account,
+            symbol,
+            executed_at,
+            quantity,
+            price,
+            # Local value.
+            local_value,
+            value_in_account_currency,
+            value_in_account_currency,
+        )
+
         position = transaction.position
-        account = position.account
 
         event, created = models.AccountEvent.objects.get_or_create(
             account=account,
-            amount=amount,
+            amount=-value_in_account_currency,
             executed_at=executed_at,
             event_type=event_type,
             position=position,
@@ -455,7 +470,7 @@ class AccountRepository:
         )
 
         if created:
-            account.balance += amount
+            account.balance += -value_in_account_currency
         account.save()
 
         return event, created

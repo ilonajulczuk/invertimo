@@ -377,34 +377,21 @@ def import_income_transactions(account: models.Account, records: pd.DataFrame):
                 fiat_value_usd, account, executed_at_date
             )
 
-            (
-                transaction,
-                _,
-            ) = accounts.AccountRepository().add_transaction_crypto_asset(
+            event, created = accounts.AccountRepository().add_crypto_income_event(
                 account,
                 symbol,
                 executed_at,
                 quantity,
                 price,
-                # Local value.
                 fiat_value_usd,
                 fiat_value,
-                fiat_value,
-            )
-
-            event, created = accounts.AccountRepository().add_crypto_income_event(
-                -fiat_value,
-                executed_at,
                 event_type,
-                transaction,
             )
-            # It looks like without this sometimes the account doesn't get correctly updated.
-            account.refresh_from_db()
             successful_records.append(
                 {
                     "record": raw_record,
                     "event": event,
-                    "transaction": transaction,
+                    "transaction": event.transaction,
                     "created": created,
                 }
             )
