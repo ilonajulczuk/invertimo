@@ -9,6 +9,7 @@ import {
 import { RecordTransactionForm } from './forms/RecordTransactionForm.js';
 import { TransactionImportDetail } from './TransactionImportDetail.js';
 import ImportTransactionsFromDegiroForm from './forms/ImportTransactionsFromDegiroForm.js';
+import ImportTransactionsFromBinanceForm from './forms/ImportTransactionsFromBinanceForm.js';
 import { TransactionList } from './TransactionList';
 import { TransactionDetail } from './TransactionDetail.js';
 import { useQuery } from './routing.js';
@@ -97,8 +98,23 @@ export default function Transactions(props) {
                     handleSubmit={props.handleUploadDegiroTransactions}
                 />
             </Route>
+            <Route path={`${path}/import/binance`}>
+                <h2><a href="#/transactions/">Transactions</a> / import / binance</h2>
+                <p>
+                    Export your <a href="http://binance.com" target="blank()">Binance</a> transactions to a .csv file and upload
+                    it easily here.
+                    You can find instructions on how to export your history <a href="https://www.binance.com/en/support/faq/990afa0a0a9341f78e7a9298a9575163" target="blank()">here</a>.
+                </p>
+                <p>
+                    Binance only support generating history for 3 month intervals, so you might need to do multiple exports.
+                </p>
+                <ImportTransactionsFromBinanceForm
+                    accounts={props.accounts}
+                    handleSubmit={props.handleUploadBinanceTransactions}
+                />
+            </Route>
             <Route path={`${path}/imports/:importId`}>
-                <TransactionImportDetail transactions={props.transactions}/>
+                <TransactionImportDetail transactions={props.transactions} />
             </Route>
             <Route path={`${path}/realized_gains`}>
                 <RealizedGainsReport positions={props.positions} accounts={props.accounts} />
@@ -132,4 +148,5 @@ Transactions.propTypes = {
     handleDeleteTransaction: PropTypes.func.isRequired,
     handleCorrectTransaction: PropTypes.func.isRequired,
     handleUploadDegiroTransactions: PropTypes.func.isRequired,
+    handleUploadBinanceTransactions: PropTypes.func.isRequired,
 };

@@ -30,9 +30,19 @@ export function TransactionImportResult(props) {
     const failedRawRecords = filter(props.importResult.records,
         record => !record.successful
     );
-    const successfulRecords = successfulRawRecords.map(record => <TransactionImportRecordReferencingTransaction key={record.id} record={record} />);
 
+    const successfulRecords = successfulRawRecords.map(record => <TransactionImportRecordReferencingTransaction key={record.id} record={record} />);
     const failedRecords = failedRawRecords.map(record => <TransactionImportRecordReferencingTransaction key={record.id} record={record} />);
+
+    const successfulRawEventRecords = filter(props.importResult.event_records, "successful");
+    const successfulRawEventRecordsDuplicates = filter(successfulRawEventRecords, o => !o.created_new);
+
+    const failedRawEventRecords = filter(props.importResult.event_records,
+        record => !record.successful
+    );
+
+    const successfulEventRecords = successfulRawEventRecords.map(record => <TransactionImportRecordReferencingTransaction key={record.id} record={record} />);
+    const failedEventRecords = failedRawEventRecords.map(record => <TransactionImportRecordReferencingTransaction key={record.id} record={record} />);
 
     return (
 
@@ -57,13 +67,22 @@ export function TransactionImportResult(props) {
                 <p>
                     Executed at: {createdAt}
                 </p>
+                <h3>Transactions</h3>
                 <p>{successfulRawRecords.length} successful records, {successfulRawRecordsDuplicates.length} of which duplicates.</p>
                 <p>{failedRawRecords.length} failed records.</p>
 
-                {successfulRawRecords.length ? <h3>Successful records</h3> : null}
+                {successfulRawRecords.length ? <h4>Successful records</h4> : null}
                 {successfulRecords}
-                {failedRawRecords.length ? <h3>Failed records</h3> : null}
+                {failedRawRecords.length ? <h4>Failed records</h4> : null}
                 {failedRecords}
+                <h3>Events</h3>
+                <p>{successfulRawEventRecords.length} successful records, {successfulRawEventRecordsDuplicates.length} of which duplicates.</p>
+                <p>{failedRawEventRecords.length} failed records.</p>
+
+                {successfulRawEventRecords.length ? <h4>Successful records</h4> : null}
+                {successfulEventRecords}
+                {failedRawEventRecords.length ? <h4>Failed records</h4> : null}
+                {failedEventRecords}
             </AccordionDetails>
         </Accordion >
     );
@@ -72,6 +91,7 @@ export function TransactionImportResult(props) {
 TransactionImportResult.propTypes = {
     importResult: PropTypes.shape({
         records: PropTypes.array.isRequired,
+        event_records: PropTypes.array.isRequired,
         status: PropTypes.string.isRequired,
         integration: PropTypes.string.isRequired,
         created_at: PropTypes.string.isRequired,

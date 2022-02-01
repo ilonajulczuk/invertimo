@@ -193,7 +193,15 @@ export function TransactionList(props) {
                         color="secondary"
                     >
                         <Icon>create</Icon>
-                        Batch transaction import from degiro
+                        Import from degiro
+                    </Button>
+                    <Button
+                        href="#/transactions/import/binance"
+                        variant="contained"
+                        color="secondary"
+                    >
+                        <Icon>create</Icon>
+                        Import from binance
                     </Button>
                 </div>
 

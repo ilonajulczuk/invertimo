@@ -133,7 +133,15 @@ export function PortfolioOverview(props) {
                         color="secondary"
                     >
                         <Icon>create</Icon>
-                        Batch transaction import from degiro
+                        Import from degiro
+                    </Button>
+                    <Button
+                        href="#/transactions/import/binance"
+                        variant="contained"
+                        color="secondary"
+                    >
+                        <Icon>create</Icon>
+                        Import from binance
                     </Button>
                     <Button
                         href="#/events/record_dividend"
@@ -210,6 +218,7 @@ export default class Portfolio extends React.Component {
         this.handleDeleteEvent = this.handleDeleteEvent.bind(this);
         this.handleDeleteAccount = this.handleDeleteAccount.bind(this);
         this.handleUploadDegiroTransactions = this.handleUploadDegiroTransactions.bind(this);
+        this.handleUploadBinanceTransactions = this.handleUploadBinanceTransactions.bind(this);
     }
 
     async handleAddAccount(accountData) {
@@ -251,6 +260,15 @@ export default class Portfolio extends React.Component {
 
     async handleUploadDegiroTransactions(data) {
         let result = await this.apiClient.uploadDegiroTransactions(data);
+        // Reload all the data, e.g. accounts, positions, etc.
+        if (result.ok) {
+            this.refreshFromServer();
+        }
+        return result;
+    }
+
+    async handleUploadBinanceTransactions(data) {
+        let result = await this.apiClient.uploadBinanceTransactions(data);
         // Reload all the data, e.g. accounts, positions, etc.
         if (result.ok) {
             this.refreshFromServer();
@@ -457,6 +475,7 @@ export default class Portfolio extends React.Component {
                 handleDeleteTransaction={this.handleDeleteTransaction}
                 handleCorrectTransaction={this.handleCorrectTransaction}
                 handleUploadDegiroTransactions={this.handleUploadDegiroTransactions}
+                handleUploadBinanceTransactions={this.handleUploadBinanceTransactions}
                 positions={this.state.positions}
                 accounts={this.state.accounts} />;
         }
