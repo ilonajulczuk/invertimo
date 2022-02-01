@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import Count
 
 from django.utils.dateparse import parse_datetime
+from pandas.core.algorithms import mode
 from finance import models, prices, gains, stock_exchanges, assets
 
 
@@ -342,6 +343,8 @@ class AccountRepository:
                         f"{position_currency} and {account_currency}"
                     )
                 balance_change *= exchange_rate.value
+        elif event.event_type in (models.EventType.STAKING_INTEREST, models.EventType.SAVINGS_INTEREST):
+            self.delete_transaction(event.transaction)
 
         account.balance -= balance_change
 
@@ -474,13 +477,3 @@ class AccountRepository:
         account.save()
 
         return event, created
-
-    @transaction.atomic
-    def delete_crypto_income_event(
-        self,
-        event,
-    ) -> None:
-        event.account.balance -= event.amount
-        event.account.save()
-        self.delete_transaction(event.transaction)
-        event.delete()
