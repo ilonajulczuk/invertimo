@@ -13,15 +13,14 @@ import Button from '@mui/material/Button';
 
 import makeStyles from '@mui/styles/makeStyles';
 
-
 import './event_list.css';
 import { toSymbol } from './currencies.js';
-
 import { DeleteDialog } from './forms/DeleteDialog.js';
 
 import { trimTrailingDecimalZeroes } from './display_utils.js';
 import { PositionLink } from './components/PositionLink.js';
 import { EventTypeDisplay } from './components/EventTypeDisplay.js';
+import { TransactionImportRecord } from './TransactionImportRecord.js';
 
 
 const useStyles = makeStyles({
@@ -70,9 +69,7 @@ export function EventDetail(props) {
 
     let accountsById = new Map(props.accounts.map(account => [account.id, account]));
     let account = accountsById.get(event.account);
-
     let positionsById = new Map(props.positions.map(position => [position.id, position]));
-
     let currency = toSymbol(account.currency);
 
     let positionDetail;
@@ -98,6 +95,10 @@ export function EventDetail(props) {
 
         </div>
     );
+
+    const eventImportRecords = event.event_records.map(
+        record => <TransactionImportRecord record={record} key={record.id} />);
+
     const handleDelete = () => {
         props.handleDeleteEvent(event.id);
         history.push("/events");
@@ -122,6 +123,10 @@ export function EventDetail(props) {
             {topInfo}
             <div className={classes.eventDetails}>
                 <p>In account <a href={`#accounts/${account.id}`}>{account.nickname}</a></p>
+                {event.event_records.length ? <h3>Import records</h3> : ""}
+                {eventImportRecords}
+
+
             </div>
             <Switch>
                 <Route path={`${path}/delete`}>

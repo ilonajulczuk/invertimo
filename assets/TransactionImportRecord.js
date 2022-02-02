@@ -17,13 +17,15 @@ import format from 'date-fns/format';
 export function TransactionImportRecord(props) {
     const createdAt = format(new Date(props.record.created_at), "yyyy-MM-dd  k:m O");
     const maybeDuplicate = props.record.created_new ? "" : "(duplicate)";
+    const maybeEvent = props.record.event ? <a href={`#/events/${props.record.event}`}>{props.record.event_type}</a> : null;
+
     return <Accordion elevation={2}>
         <AccordionSummary
             expandIcon={<Icon>expand_more</Icon>}
             aria-controls="import-result-content"
             id="import-result-header"
         >
-            <Typography>Transaction <a href={`#/transactions/imports/${props.record.transaction_import}`}> imported </a> from {props.record.integration} at {createdAt} {maybeDuplicate}</Typography>
+            <Typography>{maybeEvent ? maybeEvent : "Transaction"} <a href={`#/transactions/imports/${props.record.transaction_import}`}> imported </a> from {props.record.integration} at {createdAt} {maybeDuplicate}</Typography>
         </AccordionSummary>
         <AccordionDetails>
             <h4>Raw data</h4>

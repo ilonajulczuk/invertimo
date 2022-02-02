@@ -121,8 +121,11 @@ export function TransactionDetail(props) {
         </div>
     );
 
-    const importRecords = transaction.import_records.map(
+    const importRecords = transaction.records.map(
         record => <TransactionImportRecord record={record} key={record.id} />);
+
+    const eventImportRecords = transaction.event_records.map(
+            record => <TransactionImportRecord record={record} key={record.id} />);
 
     const handleDelete = async () => {
         const response = await props.handleDeleteTransaction(transaction.id);
@@ -171,8 +174,12 @@ export function TransactionDetail(props) {
 
                     {transaction.order_id ? ` with order id: #${transaction.order_id}` : ""}
                 </p>
-                {transaction.import_records.length ? <h3>Import records</h3> : ""}
+                {transaction.records.length ? <h3>Transaction import records</h3> : ""}
                 {importRecords}
+
+                {transaction.event_records.length ? <h3>Income event import records</h3> : ""}
+                {eventImportRecords}
+
             </div>
 
             <Switch>

@@ -281,7 +281,11 @@ class TransactionsViewSet(viewsets.ModelViewSet):
             .select_related("position")
             .select_related("position__asset")
             .select_related("position__asset__exchange")
-            .prefetch_related("import_records__transaction_import")
+            .prefetch_related("records__transaction_import")
+            .prefetch_related("records")
+            .prefetch_related("event_records")
+            .prefetch_related("event_records__event")
+            .prefetch_related("event_records__transaction_import")
         )
 
     def get_serializer_class(
@@ -411,6 +415,8 @@ class AccountEventViewSet(
             AccountEvent.objects.filter(account__user=user)
             .prefetch_related("position")
             .prefetch_related("account")
+            .prefetch_related("event_records")
+            .prefetch_related("event_records__transaction_import")
         )
 
     def get_serializer_context(self) -> Dict[str, Any]:

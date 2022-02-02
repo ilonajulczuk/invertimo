@@ -746,21 +746,25 @@ class TestTransactionDetailView(testing_utils.ViewTestBase, TestCase):
     def test_deleting_transaction_fails_if_transaction_has_event(self):
         self.assertEqual(models.Position.objects.count(), 1)
         first_transaction = models.Transaction.objects.last()
-        accounts.AccountRepository().add_crypto_income_event(
-            100,
+        event, _ = accounts.AccountRepository().add_crypto_income_event(
+            self.account,
+            self.isin,
             first_transaction.executed_at,
+            10,
+            200,
+            2000,
+            2100,
             models.EventType.STAKING_INTEREST,
-            first_transaction,
         )
-        self.assertEqual(models.Transaction.objects.count(), 8)
+        self.assertEqual(models.Transaction.objects.count(), 9)
         response = self.client.delete(
-            reverse(self.VIEW_NAME, args=[first_transaction.pk])
+            reverse(self.VIEW_NAME, args=[event.transaction.pk])
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.json(), ["Can't delete a transaction associated with an event, without deleting the event first."]
         )
-        self.assertEqual(models.Transaction.objects.count(), 8)
+        self.assertEqual(models.Transaction.objects.count(), 9)
 
 
 def _add_account_event(account, event_type, amount, executed_at=None, position=None):

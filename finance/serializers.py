@@ -196,6 +196,47 @@ class EmbeddedTransactionImportRecordSerializer(
         return obj.transaction_import.created_at
 
 
+
+class EmbeddedEventImportRecordSerializer(
+    serializers.ModelSerializer[TransactionImportRecord]
+):
+    issue_type = ImportIssueTypeField(required=False)
+
+    integration = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+    event_type = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EventImportRecord
+        fields = [
+            "id",
+            "transaction",
+            "event",
+            "event_type",
+            "raw_record",
+            "created_new",
+            "successful",
+            "issue_type",
+            "raw_issue",
+            "transaction_import",
+            "created_at",
+            "integration",
+        ]
+
+    def get_integration(self, obj):
+        value = obj.transaction_import.integration
+        return IntegrationType(value).label
+
+    def get_created_at(self, obj):
+        return obj.transaction_import.created_at
+
+    def get_event_type(self, obj):
+        if obj.event:
+            value = obj.event.event_type
+            return EventType(value).label
+        return ""
+
+
 class TransactionImportSerializer(serializers.ModelSerializer[TransactionImport]):
 
     records = TransactionImportRecordSerializer(many=True)
@@ -309,7 +350,8 @@ class TransactionSerializer(serializers.ModelSerializer[Transaction]):
     total_in_account_currency = serializers.DecimalField(
         max_digits=12, decimal_places=5
     )
-    import_records = EmbeddedTransactionImportRecordSerializer(many=True)
+    records = EmbeddedTransactionImportRecordSerializer(many=True)
+    event_records = EmbeddedEventImportRecordSerializer(many=True)
 
     class Meta:
         model = Transaction
@@ -325,7 +367,8 @@ class TransactionSerializer(serializers.ModelSerializer[Transaction]):
             "value_in_account_currency",
             "total_in_account_currency",
             "order_id",
-            "import_records",
+            "records",
+            "event_records",
         ]
 
 
@@ -627,6 +670,7 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
     event_type = EventTypeField()
     account = RelatedPkField(model=models.Account)
     position = RelatedPkField(model=models.Position)
+    event_records = EmbeddedEventImportRecordSerializer(many=True, required=False)
 
     class Meta:
         model = AccountEvent
@@ -638,6 +682,7 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
             "withheld_taxes",
             "account",
             "position",
+            "event_records",
         ]
 
     def get_extra_kwargs(self):

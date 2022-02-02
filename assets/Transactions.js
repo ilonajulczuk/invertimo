@@ -106,7 +106,7 @@ export default function Transactions(props) {
                     You can find instructions on how to export your history <a href="https://www.binance.com/en/support/faq/990afa0a0a9341f78e7a9298a9575163" target="blank()">here</a>.
                 </p>
                 <p>
-                    Binance only support generating history for 3 month intervals, so you might need to do multiple exports.
+                    Binance only supports generating history for 3 month intervals, so you might need to do multiple exports.
                 </p>
                 <ImportTransactionsFromBinanceForm
                     accounts={props.accounts}
