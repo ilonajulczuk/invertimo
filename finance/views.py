@@ -415,6 +415,8 @@ class AccountEventViewSet(
             AccountEvent.objects.filter(account__user=user)
             .prefetch_related("position")
             .prefetch_related("account")
+            .prefetch_related("event_records")
+            .prefetch_related("event_records__transaction_import")
         )
 
     def get_serializer_context(self) -> Dict[str, Any]:

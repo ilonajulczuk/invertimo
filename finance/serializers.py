@@ -670,6 +670,7 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
     event_type = EventTypeField()
     account = RelatedPkField(model=models.Account)
     position = RelatedPkField(model=models.Position)
+    event_records = EmbeddedEventImportRecordSerializer(many=True, required=False)
 
     class Meta:
         model = AccountEvent
@@ -681,6 +682,7 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
             "withheld_taxes",
             "account",
             "position",
+            "event_records",
         ]
 
     def get_extra_kwargs(self):

@@ -113,10 +113,10 @@ describe('transaction detail tests', () => {
         expect(pretty(container.innerHTML)).toContain('/transactions/1/correct');
         expect(pretty(container.innerHTML)).toContain('/transactions/1/delete');
 
+        // Related to the `records` and `event_records`.
         expect(pretty(container.innerHTML)).toContain('/transactions/imports/52');
         expect(pretty(container.innerHTML)).toContain('/transactions/imports/10');
         expect(pretty(container.innerHTML)).toContain('STAKING_INTEREST');
-
     });
 
 });
