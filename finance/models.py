@@ -541,7 +541,7 @@ class TransactionImportRecord(models.Model):
         TransactionImport, related_name="records", on_delete=models.CASCADE
     )
     transaction = models.ForeignKey(
-        Transaction, null=True, related_name="import_records", on_delete=models.SET_NULL
+        Transaction, null=True, related_name="records", on_delete=models.SET_NULL
     )
     raw_record = models.TextField()
     created_new = models.BooleanField(default=False)
@@ -561,7 +561,7 @@ class EventImportRecord(models.Model):
     transaction = models.ForeignKey(
         Transaction,
         null=True,
-        related_name="event_transaction_records",
+        related_name="event_records",
         on_delete=models.SET_NULL,
     )
 

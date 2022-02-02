@@ -62,7 +62,7 @@ describe('transaction detail tests', () => {
                     }
                 },
             },
-            import_records: [
+            records: [
                 {
                     "id": 342,
                     "transaction": 555,
@@ -75,6 +75,22 @@ describe('transaction detail tests', () => {
                     "created_at": "2021-12-28T16:59:30.701718Z",
                     "integration": "DEGIRO"
                 },
+            ],
+            event_records: [
+                {
+                    "id": 9,
+                    "transaction": 1115,
+                    "event": 45,
+                    "event_type": "STAKING_INTEREST",
+                    "raw_record": ",20\nUser_ID,139221274\nUTC_Time,2022-01-04 00:50:06\nAccount,Spot\nOperation,POS savings interest\nCoin,DOT\nChange,0.01416702\nRemark,\n",
+                    "created_new": true,
+                    "successful": true,
+                    "issue_type": null,
+                    "raw_issue": null,
+                    "transaction_import": 52,
+                    "created_at": "2022-01-31T18:04:51.005459Z",
+                    "integration": "BINANCE_CSV"
+                }
             ]
         }
     ];
@@ -96,6 +112,11 @@ describe('transaction detail tests', () => {
         expect(pretty(container.innerHTML)).toContain('The Walt Disney Company');
         expect(pretty(container.innerHTML)).toContain('/transactions/1/correct');
         expect(pretty(container.innerHTML)).toContain('/transactions/1/delete');
+
+        expect(pretty(container.innerHTML)).toContain('/transactions/imports/52');
+        expect(pretty(container.innerHTML)).toContain('/transactions/imports/10');
+        expect(pretty(container.innerHTML)).toContain('STAKING_INTEREST');
+
     });
 
 });
