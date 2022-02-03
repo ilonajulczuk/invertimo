@@ -43,11 +43,11 @@ function PositionHeader({ position, positionCurrency, accountCurrency, account }
                 <span>{position.asset.exchange.name}</span>
             </div>
             <div>
-                <span className="card-label">Quantity</span>{position.quantity}
+                <span className="card-label">Quantity</span>{Number(position.quantity)}
             </div>
             <div>
                 <span className="card-label">Price as of {position.latest_price_date}</span>
-                {position.latest_price} {positionCurrency}
+                {Number(position.latest_price)} {positionCurrency}
             </div>
             <div className="position-values">
                 <div className="column-stack">

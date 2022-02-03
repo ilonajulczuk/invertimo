@@ -39,8 +39,8 @@ export default function PositionList(props) {
         let account = accountsById.get(position.account);
         const accountCurrency = toSymbol(account.currency);
         const data = position;
-        const quantity = data.quantity;
-        const price = data.latest_price;
+        const quantity = Number(data.quantity);
+        const price = Number(data.latest_price);
         const value = Math.round(100 * quantity * price) / 100;
 
         let displayConvertedValue = (data.asset.currency != account.currency && data.latest_exchange_rate);
