@@ -49,6 +49,42 @@ TransactionImportRecord.propTypes = {
 };
 
 
+export function EventImportRecord(props) {
+    const createdAt = format(new Date(props.record.created_at), "yyyy-MM-dd  k:m O");
+    const maybeDuplicate = props.record.created_new ? "" : "(duplicate)";
+    const maybeTransaction = props.record.transaction ? <a href={`#/transactions/${props.record.transaction}`}>(related transaction)</a> : null;
+
+    return <Accordion elevation={2}>
+        <AccordionSummary
+            expandIcon={<Icon>expand_more</Icon>}
+            aria-controls="import-result-content"
+            id="import-result-header"
+        >
+            <Typography>{props.record.event_type} {maybeTransaction} <a href={`#/transactions/imports/${props.record.transaction_import}`}> imported </a> from {props.record.integration} at {createdAt} {maybeDuplicate}</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+            <h4>Raw data</h4>
+            <Typography>
+                {props.record.raw_record}
+            </Typography>
+        </AccordionDetails>
+    </Accordion>;
+}
+
+EventImportRecord.propTypes = {
+    record: PropTypes.shape({
+        created_at: PropTypes.string.isRequired,
+        raw_record: PropTypes.string.isRequired,
+        integration: PropTypes.string.isRequired,
+        created_new: PropTypes.bool.isRequired,
+        transaction_import: PropTypes.number.isRequired,
+        event: PropTypes.number,
+        event_type: PropTypes.string,
+        transaction: PropTypes.number,
+    }).isRequired,
+};
+
+
 export function TransactionImportRecordReferencingTransaction(props) {
     const maybeDuplicate = props.record.successful ? (props.record.created_new ? "(new)" : "(duplicate)") : "";
 

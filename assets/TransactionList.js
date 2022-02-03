@@ -10,6 +10,7 @@ import { ErrorBoundary } from './error_utils.js';
 import { PositionLink } from './components/PositionLink.js';
 import './transaction_list.css';
 
+import { roundToTwoDecimalString } from './forms/utils.js';
 
 export function EmbeddedTransactionList(props) {
 
@@ -144,8 +145,8 @@ export function TransactionList(props) {
         };
         transactionCopy.value = {
             displayValue: (<div className="position-name">
-                <span>{Number(transactionCopy.value_in_account_currency) + accountCurrencySymbol}</span>
-                <span>{Number(transactionCopy.local_value) + positionCurrencySymbol}</span>
+                <span>{roundToTwoDecimalString(transactionCopy.value_in_account_currency) + accountCurrencySymbol}</span>
+                <span>{roundToTwoDecimalString(transactionCopy.local_value) + positionCurrencySymbol}</span>
             </div>),
             comparisonKey: Number(transactionCopy.value_in_account_currency)
         };

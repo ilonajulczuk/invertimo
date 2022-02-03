@@ -24,6 +24,7 @@ import { CorrectTransactionForm } from './forms/CorrectTransactionForm.js';
 import { TransactionImportRecord } from './TransactionImportRecord.js';
 import { PositionLink } from './components/PositionLink.js';
 import { DeleteDialog } from './forms/DeleteDialog.js';
+import { roundToTwoDecimalString } from './forms/utils.js';
 
 
 const useStyles = makeStyles({
@@ -109,8 +110,8 @@ export function TransactionDetail(props) {
             </div>
             <div className="column-stack">
                 <span className="card-label">Value</span>
-                <span>{Number(transaction.value_in_account_currency) + accountCurrencySymbol}</span>
-                <span>{Number(transaction.local_value) + positionCurrencySymbol}</span>
+                <span>{roundToTwoDecimalString(transaction.value_in_account_currency) + accountCurrencySymbol}</span>
+                <span>{roundToTwoDecimalString(transaction.local_value) + positionCurrencySymbol}</span>
             </div>
             <div>
                 <span className="card-label">Fees</span> {Number(transaction.transaction_costs)}

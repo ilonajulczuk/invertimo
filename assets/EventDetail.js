@@ -20,7 +20,8 @@ import { DeleteDialog } from './forms/DeleteDialog.js';
 import { trimTrailingDecimalZeroes } from './display_utils.js';
 import { PositionLink } from './components/PositionLink.js';
 import { EventTypeDisplay } from './components/EventTypeDisplay.js';
-import { TransactionImportRecord } from './TransactionImportRecord.js';
+import { EventImportRecord } from './TransactionImportRecord.js';
+import { roundToTwoDecimalString } from './forms/utils.js';
 
 
 const useStyles = makeStyles({
@@ -77,13 +78,17 @@ export function EventDetail(props) {
         const position = positionsById.get(event.position);
         if (position) {
             positionDetail = <PositionLink position={position} account={account} />;
-            currency = toSymbol(position.asset.currency);
+            if (event.event_type === "DIVIDEND") {
+                currency = toSymbol(position.asset.currency);
+            }
         }
     }
+
+    const amount = roundToTwoDecimalString(event.amount);
     let topInfo = (
         <div className="position-card">
             <div><EventTypeDisplay eventType={event.event_type} /></div>
-            <div><span className="card-label">Amount</span> {trimTrailingDecimalZeroes(event.amount) + currency}</div>
+            <div><span className="card-label">Amount</span> {amount + currency}</div>
             {(event.event_type) === "DIVIDEND" ? <div>
                 <span className="card-label">Withheld taxes</span> {
                     trimTrailingDecimalZeroes(event.withheld_taxes) + currency}</div>
@@ -97,7 +102,7 @@ export function EventDetail(props) {
     );
 
     const eventImportRecords = event.event_records.map(
-        record => <TransactionImportRecord record={record} key={record.id} />);
+        record => <EventImportRecord record={record} key={record.id} />);
 
     const handleDelete = () => {
         props.handleDeleteEvent(event.id);

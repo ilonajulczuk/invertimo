@@ -8,9 +8,9 @@ import './transaction_list.css';
 import { ErrorBoundary } from './error_utils.js';
 import { TableWithSort } from './components/TableWithSort.js';
 import { toSymbol } from './currencies.js';
-import { trimTrailingDecimalZeroes } from './display_utils.js';
 import { PositionLink } from './components/PositionLink.js';
 import { EventTypeDisplay } from './components/EventTypeDisplay.js';
+import { roundToTwoDecimalString } from './forms/utils.js';
 
 
 export function EventList(props) {
@@ -49,16 +49,20 @@ export function EventList(props) {
                 }
             }
             if (position) {
-                currency = toSymbol(position.asset.currency);
+                if (event.event_type == "DIVIDEND") {
+                    currency = toSymbol(position.asset.currency);
+                }
                 positionDisplay = <PositionLink position={position} account={account} />;
             }
         }
+        const amount = roundToTwoDecimalString(event.amount);
         eventCopy.amount = {
             displayValue: (
-                trimTrailingDecimalZeroes(event.amount) + currency
+                amount + currency
             ),
-            comparisonKey: event.amount
+            comparisonKey: Number(event.amount)
         };
+
         eventCopy.position = {
             displayValue: positionDisplay,
             comparisonKey: event.position,
@@ -90,16 +94,16 @@ export function EventList(props) {
                         color="secondary"
                     >
                         <Icon>sync_alt</Icon>
-                    Record transfer
-                </Button>
+                        Record transfer
+                    </Button>
                     <Button
                         href="#/events/record_dividend"
                         variant="contained"
                         color="secondary"
                     >
                         <Icon>paid</Icon>
-                    Record dividend
-                </Button>
+                        Record dividend
+                    </Button>
                 </div>
 
             </div>
@@ -138,22 +142,24 @@ export function EmbeddedDividendList(props) {
 
         const currency = toSymbol(props.position.asset.currency);
 
+        const amount = roundToTwoDecimalString(event.amount);
         eventCopy.amount = {
             displayValue: (
-                trimTrailingDecimalZeroes(event.amount) + currency
+                amount + currency
             ),
-            comparisonKey: event.amount
+            comparisonKey: Number(event.amount)
         };
 
         eventCopy.withheld_taxes = {
             displayValue: (
-                trimTrailingDecimalZeroes(event.withheld_taxes) + currency
+                Number(event.withheld_taxes) + currency
             ),
             comparisonKey: event.withheld_taxes
         };
 
         eventCopy.event_type = {
-            displayValue: <EventTypeDisplay eventType={event.event_type} />
+            displayValue: <EventTypeDisplay eventType={event.event_type} />,
+            comparisonKey: event.event_type,
         };
 
         eventCopy.interaction = {
@@ -170,12 +176,12 @@ export function EmbeddedDividendList(props) {
     return (
         <ErrorBoundary>
             <TableWithSort
-             rows={events}
-             headCells={eventHeadCells}
-             defaultOrder="desc"
-             defaultOrderBy="executed_at"
-             additionalShrink={60}
-             />
+                rows={events}
+                headCells={eventHeadCells}
+                defaultOrder="desc"
+                defaultOrderBy="executed_at"
+                additionalShrink={60}
+            />
         </ErrorBoundary>
     );
 }

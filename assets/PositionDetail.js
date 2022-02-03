@@ -20,15 +20,20 @@ import './position_list.css';
 import { APIClientError } from './api_utils.js';
 import { PositionLink } from './components/PositionLink.js';
 
+import { roundToTwoDecimalString } from './forms/utils.js';
+
 
 function PositionHeader({ position, positionCurrency, accountCurrency, account }) {
-    const value = Math.round(100 * position.quantity * position.latest_price) / 100;
+    const value = position.quantity * position.latest_price;
+    const valueDisplay = roundToTwoDecimalString(value);
     const displayConvertedValue = (
         positionCurrency != accountCurrency
         && position.latest_exchange_rate);
 
-    const valueAccountCurrency = displayConvertedValue ? Math.round(100 * value * position.latest_exchange_rate) / 100 : value;
-    const unrealizedGain = Math.round(100 * (Number(position.cost_basis) + Number(valueAccountCurrency))) / 100;
+    const valueAccountCurrency = displayConvertedValue ? (value * position.latest_exchange_rate) : value;
+    const valueAccountCurrencyDisplay = roundToTwoDecimalString(valueAccountCurrency);
+
+    const unrealizedGain = roundToTwoDecimalString(Number(position.cost_basis) + Number(valueAccountCurrency));
 
     return (
         <div className="position-card">
@@ -53,10 +58,10 @@ function PositionHeader({ position, positionCurrency, accountCurrency, account }
                 <div className="column-stack">
                     <span className="card-label">Value as of {position.latest_price_date}</span>
                     <span>
-                        {value} {positionCurrency}
+                        {valueDisplay} {positionCurrency}
                     </span>
                     <span>
-                        {displayConvertedValue ? valueAccountCurrency + " " + accountCurrency : ""}
+                        {displayConvertedValue ? valueAccountCurrencyDisplay + " " + accountCurrency : ""}
                     </span>
 
                 </div>

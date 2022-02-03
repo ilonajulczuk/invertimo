@@ -10,3 +10,10 @@ export function matchNumberUpToTwoDecimalPlaces(value) {
 export function matchNumberUpToTenDecimalPlaces(value) {
     return value === undefined || (value + "").match(number10Regex);
 }
+
+
+export function roundToTwoDecimalString(toRound) {
+    const originalAmount = Number(toRound);
+    const roundedAmount = Math.round(originalAmount * 100) / 100;
+    return  originalAmount === roundedAmount ? originalAmount : "~" + roundedAmount;
+}
