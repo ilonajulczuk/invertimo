@@ -1,7 +1,12 @@
+const number2Regex = /^[+-]?\d*(\.\d{0,2})?$/;
+const number10Regex = /^[+-]?\d*(\.\d{0,10})?$/;
 
-
-const numberRegex = /^[+-]?\d*(\.\d{0,2})?$/;
 
 export function matchNumberUpToTwoDecimalPlaces(value) {
-    return value === undefined || (value + "").match(numberRegex);
+    return value === undefined || (value + "").match(number2Regex);
+}
+
+
+export function matchNumberUpToTenDecimalPlaces(value) {
+    return value === undefined || (value + "").match(number10Regex);
 }
