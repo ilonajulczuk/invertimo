@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { Formik, Form } from 'formik';
 import * as yup from 'yup';
 
-import { matchNumberUpToTwoDecimalPlaces } from './utils.js';
+import { matchNumberUpToTenDecimalPlaces } from './utils.js';
 import { toSymbol } from '../currencies.js';
 import { FormikDateField, FormikTextField } from './muiformik.js';
 import { useStyles } from './styles.js';
@@ -60,29 +60,29 @@ export function CorrectTransactionForm(props) {
         price: yup
             .number('Price needs to be a number')
             .required('Price is required')
-            .test('has-2-or-less-places', "Only up to two decimal places are allowed",
-                matchNumberUpToTwoDecimalPlaces),
+            .test('has-10-or-less-places', "Only up to ten decimal places are allowed",
+                matchNumberUpToTenDecimalPlaces),
         totalCostAccountCurrency: yup
             .number()
-            .test('has-2-or-less-places', "Only up to two decimal places are allowed",
-                matchNumberUpToTwoDecimalPlaces)
+            .test('has-10-or-less-places', "Only up to ten decimal places are allowed",
+                matchNumberUpToTenDecimalPlaces)
             .required('Total is required'),
         totalValue: yup
-            .number().test('has-2-or-less-places', "Only up to two decimal places are allowed",
-                matchNumberUpToTwoDecimalPlaces)
+            .number().test('has-10-or-less-places', "Only up to ten decimal places are allowed",
+                matchNumberUpToTenDecimalPlaces)
             .required(
                 'Total value in position currency has to be provided.'),
 
         totalValueAccountCurrency: yup
-            .number().test('has-2-or-less-places', "Only up to two decimal places are allowed",
-                matchNumberUpToTwoDecimalPlaces)
+            .number().test('has-10-or-less-places', "Only up to ten decimal places are allowed",
+                matchNumberUpToTenDecimalPlaces)
             .required(
                 'Total value in account currency has to be provided.'),
         fees: yup
             .number()
             .required('Fees are required')
-            .test('has-2-or-less-places', "Only up to two decimal places are allowed",
-                matchNumberUpToTwoDecimalPlaces),
+            .test('has-10-or-less-places', "Only up to ten decimal places are allowed",
+                matchNumberUpToTenDecimalPlaces),
         executedAt: yup
             .date()
             .typeError("Provide a date in YYYY/MM/DD format")
@@ -91,7 +91,7 @@ export function CorrectTransactionForm(props) {
 
     const initialValues = {
         quantity: props.transaction.quantity,
-        fees: props.transaction.transaction_costs,
+        fees: props.transaction.transaction_costs ?? 0,
         price: props.transaction.price,
         executedAt: new Date(props.transaction.executed_at),
         totalValue: props.transaction.local_value,

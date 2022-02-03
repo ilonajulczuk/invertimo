@@ -101,7 +101,7 @@ export function TransactionDetail(props) {
             </div>
             <div>
                 <span className="card-label">Quantity</span>
-                {transaction.quantity}
+                {Number(transaction.quantity)}
             </div>
             <div>
                 <span className="card-label">Price</span>

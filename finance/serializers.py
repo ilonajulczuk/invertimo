@@ -271,8 +271,8 @@ class TransactionImportSerializer(serializers.ModelSerializer[TransactionImport]
 
 class PositionSerializer(serializers.ModelSerializer[Position]):
     asset = AssetSerializer()
-    latest_price = serializers.DecimalField(max_digits=20, decimal_places=2)
-    latest_exchange_rate = serializers.DecimalField(max_digits=20, decimal_places=8)
+    latest_price = serializers.DecimalField(max_digits=20, decimal_places=10)
+    latest_exchange_rate = serializers.DecimalField(max_digits=20, decimal_places=10)
     latest_price_date = serializers.DateField()
 
     class Meta:
@@ -304,10 +304,10 @@ class EmbeddedPositionSerializer(serializers.ModelSerializer[Position]):
 
 
 class EmbeddedTransactionSerializer(serializers.ModelSerializer[Transaction]):
-    quantity = serializers.DecimalField(max_digits=20, decimal_places=2)
-    price = serializers.DecimalField(max_digits=20, decimal_places=2)
-    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=2)
-    local_value = serializers.DecimalField(max_digits=20, decimal_places=2)
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=10)
+    price = serializers.DecimalField(max_digits=20, decimal_places=10)
+    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=10)
+    local_value = serializers.DecimalField(max_digits=20, decimal_places=10)
 
     class Meta:
         model = Transaction
@@ -339,16 +339,16 @@ class EmbeddedAccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
 
 
 class TransactionSerializer(serializers.ModelSerializer[Transaction]):
-    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
-    price = serializers.DecimalField(max_digits=12, decimal_places=5)
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=10)
+    price = serializers.DecimalField(max_digits=20, decimal_places=10)
     position = EmbeddedPositionSerializer()
-    transaction_costs = serializers.DecimalField(max_digits=12, decimal_places=5)
-    local_value = serializers.DecimalField(max_digits=12, decimal_places=5)
+    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=10)
+    local_value = serializers.DecimalField(max_digits=20, decimal_places=10)
     value_in_account_currency = serializers.DecimalField(
-        max_digits=12, decimal_places=5
+        max_digits=20, decimal_places=10
     )
     total_in_account_currency = serializers.DecimalField(
-        max_digits=12, decimal_places=5
+        max_digits=20, decimal_places=10
     )
     records = EmbeddedTransactionImportRecordSerializer(many=True)
     event_records = EmbeddedEventImportRecordSerializer(many=True)
@@ -373,16 +373,16 @@ class TransactionSerializer(serializers.ModelSerializer[Transaction]):
 
 
 class AddTransactionKnownAssetSerializer(serializers.ModelSerializer[Transaction]):
-    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
-    price = serializers.DecimalField(max_digits=12, decimal_places=5)
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=10)
+    price = serializers.DecimalField(max_digits=20, decimal_places=10)
 
-    transaction_costs = serializers.DecimalField(max_digits=12, decimal_places=5)
-    local_value = serializers.DecimalField(max_digits=12, decimal_places=5)
+    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=10)
+    local_value = serializers.DecimalField(max_digits=20, decimal_places=10)
     value_in_account_currency = serializers.DecimalField(
-        max_digits=12, decimal_places=5
+        max_digits=20, decimal_places=10
     )
     total_in_account_currency = serializers.DecimalField(
-        max_digits=12, decimal_places=5
+        max_digits=20, decimal_places=10
     )
     account = serializers.IntegerField()
     asset = serializers.IntegerField()
@@ -419,16 +419,16 @@ class AddTransactionKnownAssetSerializer(serializers.ModelSerializer[Transaction
 
 
 class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction]):
-    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
-    price = serializers.DecimalField(max_digits=12, decimal_places=5)
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=10)
+    price = serializers.DecimalField(max_digits=20, decimal_places=10)
 
-    transaction_costs = serializers.DecimalField(max_digits=12, decimal_places=5)
-    local_value = serializers.DecimalField(max_digits=12, decimal_places=5)
+    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=10)
+    local_value = serializers.DecimalField(max_digits=20, decimal_places=10)
     value_in_account_currency = serializers.DecimalField(
-        max_digits=12, decimal_places=5
+        max_digits=20, decimal_places=10
     )
     total_in_account_currency = serializers.DecimalField(
-        max_digits=12, decimal_places=5
+        max_digits=20, decimal_places=10
     )
     account = serializers.IntegerField()
 
@@ -478,16 +478,16 @@ class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction])
 
 
 class CorrectTransactionSerializer(serializers.ModelSerializer[Transaction]):
-    quantity = serializers.DecimalField(max_digits=10, decimal_places=2)
-    price = serializers.DecimalField(max_digits=12, decimal_places=5)
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=10)
+    price = serializers.DecimalField(max_digits=20, decimal_places=10)
 
-    transaction_costs = serializers.DecimalField(max_digits=12, decimal_places=5)
-    local_value = serializers.DecimalField(max_digits=12, decimal_places=5)
+    transaction_costs = serializers.DecimalField(max_digits=20, decimal_places=10)
+    local_value = serializers.DecimalField(max_digits=20, decimal_places=10)
     value_in_account_currency = serializers.DecimalField(
-        max_digits=12, decimal_places=5
+        max_digits=20, decimal_places=10
     )
     total_in_account_currency = serializers.DecimalField(
-        max_digits=12, decimal_places=5
+        max_digits=20, decimal_places=10
     )
 
     class Meta:

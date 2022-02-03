@@ -43,6 +43,8 @@ export function EmbeddedTransactionList(props) {
         }
         transactionCopy.transaction_costs = Number(transactionCopy.transaction_costs);
         transactionCopy.price = Number(transactionCopy.price);
+        transactionCopy.quantity = Number(transactionCopy.quantity);
+        transactionCopy.local_value = Number(transactionCopy.local_value);
         transactionCopy.type = {
             displayValue: transactionTypeDisplay,
             comparisonKey: transaction.value_in_account_currency,
@@ -135,6 +137,7 @@ export function TransactionList(props) {
         const accountCurrencySymbol = toSymbol(account.currency);
         const positionCurrencySymbol = toSymbol(transaction.position.asset.currency);
 
+        transactionCopy.quantity = Number(transactionCopy.quantity);
         transactionCopy.price = {
             displayValue: transactionCopy.price + positionCurrencySymbol,
             comparisonKey: Number(transactionCopy.price),

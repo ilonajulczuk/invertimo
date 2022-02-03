@@ -10,6 +10,8 @@ from finance import models, prices, testing_utils, utils
 from finance.integrations import binance_parser, degiro_parser
 
 
+ETH_QUANTITY = decimal.Decimal("0.1850657800")
+
 asset_response = [
     {
         "Code": "NKE",
@@ -391,7 +393,7 @@ class TestBinanceParser(TestCase):
         self.assertEqual(eth.currency, models.Currency.USD)
         self.assertIsNone(eth.country)
         eth_position = models.Position.objects.get(asset=eth, account=account)
-        self.assertEqual(eth_position.quantity, decimal.Decimal("0.18"))
+        self.assertEqual(eth_position.quantity, ETH_QUANTITY)
 
         # total_value here doesn't include value of transfers.
         expected_total_value = decimal.Decimal("-992.6400000000")
@@ -454,7 +456,7 @@ class TestBinanceParser(TestCase):
         self.assertEqual(eth.currency, models.Currency.USD)
         self.assertIsNone(eth.country)
         eth_position = models.Position.objects.get(asset=eth, account=account)
-        self.assertEqual(eth_position.quantity, decimal.Decimal("0.18"))
+        self.assertEqual(eth_position.quantity, ETH_QUANTITY)
 
         # total_value here doesn't include value of transfers.
         expected_total_value = decimal.Decimal("-1091.9040000000")
@@ -513,7 +515,7 @@ class TestBinanceParser(TestCase):
         self.assertEqual(eth.currency, models.Currency.USD)
         self.assertIsNone(eth.country)
         eth_position = models.Position.objects.get(asset=eth, account=account)
-        self.assertEqual(eth_position.quantity, decimal.Decimal("0.18"))
+        self.assertEqual(eth_position.quantity, ETH_QUANTITY)
 
         # Import the same transactions again and make
         # sure that they aren't double recorded.
@@ -565,7 +567,7 @@ class TestBinanceParser(TestCase):
         self.assertEqual(eth.currency, models.Currency.USD)
         self.assertIsNone(eth.country)
         eth_position = models.Position.objects.get(asset=eth, account=account)
-        self.assertEqual(eth_position.quantity, decimal.Decimal("0.05"))
+        self.assertEqual(eth_position.quantity, decimal.Decimal("0.0492658700"))
 
         expected_total_value = decimal.Decimal(account_balance)
         total_value = models.Transaction.objects.aggregate(

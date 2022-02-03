@@ -11,7 +11,7 @@ import { useStyles } from './styles.js';
 import { currencyValues, toSymbol } from '../currencies.js';
 import { SelectAssetFormFragment } from './SelectAssetFormFragment.js';
 import { Snackbar } from '../components/Snackbar.js';
-import { matchNumberUpToTwoDecimalPlaces } from './utils.js';
+import { matchNumberUpToTenDecimalPlaces } from './utils.js';
 
 
 function formTransactionToAPITransaction(formData) {
@@ -229,8 +229,8 @@ export function RecordTransactionForm(props) {
             .number('Price needs to be a number')
             .required('Price is required')
             .positive()
-            .test('has-2-or-less-places', "Only up to two decimal places are allowed",
-                matchNumberUpToTwoDecimalPlaces),
+            .test('has-10-or-less-places', "Only up to ten decimal places are allowed",
+                matchNumberUpToTenDecimalPlaces),
         quantity: yup
             .number()
             .positive()
@@ -240,14 +240,14 @@ export function RecordTransactionForm(props) {
             .required('Account needs to be selected'),
         totalCostAccountCurrency: yup
             .number()
-            .test('has-2-or-less-places', "Only up to two decimal places are allowed",
-                matchNumberUpToTwoDecimalPlaces),
+            .test('has-10-or-less-places', "Only up to ten decimal places are allowed",
+                matchNumberUpToTenDecimalPlaces),
         // This value is only required if currency of the asset and account don't match.
         totalValueAccountCurrency: yup
             .number().when(['currency', 'account'], {
                 is: (currency, accountId) => accountId ? currency !== accountsById.get(accountId).currency : false,
-                then: yup.number().test('has-2-or-less-places', "Only up to two decimal places are allowed",
-                    matchNumberUpToTwoDecimalPlaces).required(
+                then: yup.number().test('has-10-or-less-places', "Only up to ten decimal places are allowed",
+                    matchNumberUpToTenDecimalPlaces).required(
                         'Total value in account currency has to be provided if the' +
                         ' asset currency is different than the account currency.'),
                 otherwise: yup.number(),
@@ -256,8 +256,8 @@ export function RecordTransactionForm(props) {
             .number()
             .positive()
             .required('Fees are required')
-            .test('has-2-or-less-places', "Only up to two decimal places are allowed",
-                matchNumberUpToTwoDecimalPlaces),
+            .test('has-2-or-less-places', "Only up to ten decimal places are allowed",
+                matchNumberUpToTenDecimalPlaces),
         executedAt: yup
             .date()
             .typeError("Provide a date in YYYY/MM/DD format")
