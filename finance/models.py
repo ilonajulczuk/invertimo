@@ -38,7 +38,7 @@ class Account(models.Model):
     nickname = models.CharField(max_length=200)
     description = models.TextField(blank=True)
 
-    balance = models.DecimalField(max_digits=17, decimal_places=10, default=0)
+    balance = models.DecimalField(max_digits=20, decimal_places=10, default=0)
     last_modified = models.DateTimeField(auto_now=True, null=True)
 
     def __str__(self):
@@ -188,12 +188,12 @@ class Position(models.Model):
     )
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="positions")
 
-    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    quantity = models.DecimalField(max_digits=20, decimal_places=10, default=0)
     last_modified = models.DateTimeField(auto_now=True)
 
     # Both are n account currency.
-    realized_gain = models.DecimalField(max_digits=12, decimal_places=5, default=0)
-    cost_basis = models.DecimalField(max_digits=12, decimal_places=5, default=0)
+    realized_gain = models.DecimalField(max_digits=20, decimal_places=10, default=0)
+    cost_basis = models.DecimalField(max_digits=20, decimal_places=10, default=0)
 
     def __str__(self):
         return (
@@ -366,17 +366,17 @@ class Transaction(models.Model):
         Position, related_name="transactions", on_delete=models.CASCADE
     )
     quantity = models.DecimalField(max_digits=20, decimal_places=10)
-    price = models.DecimalField(max_digits=18, decimal_places=10)
+    price = models.DecimalField(max_digits=20, decimal_places=10)
 
-    transaction_costs = models.DecimalField(max_digits=18, decimal_places=10, null=True)
+    transaction_costs = models.DecimalField(max_digits=20, decimal_places=10, null=True)
 
     # The currency is stored with the asset.
-    local_value = models.DecimalField(max_digits=19, decimal_places=10)
+    local_value = models.DecimalField(max_digits=20, decimal_places=10)
     # The main currency is stored within the account.
-    value_in_account_currency = models.DecimalField(max_digits=18, decimal_places=10)
+    value_in_account_currency = models.DecimalField(max_digits=20, decimal_places=10)
 
     # This is value + transaction_costs + other costs, e.g. taxes on some exchanges.
-    total_in_account_currency = models.DecimalField(max_digits=18, decimal_places=10)
+    total_in_account_currency = models.DecimalField(max_digits=20, decimal_places=10)
     # value_in_account_currency + transaction cost == total cost.
 
     order_id = models.CharField(max_length=200, null=True, blank=True)
@@ -443,8 +443,8 @@ class AccountEvent(models.Model):
         blank=True,
     )
 
-    amount = models.DecimalField(max_digits=18, decimal_places=6)
-    withheld_taxes = models.DecimalField(max_digits=18, decimal_places=6, default=0)
+    amount = models.DecimalField(max_digits=20, decimal_places=10)
+    withheld_taxes = models.DecimalField(max_digits=20, decimal_places=10, default=0)
 
     def clean(self):
         if self.event_type in _POSITION_REQUIRED_EVENT_TYPES:
@@ -462,7 +462,7 @@ class CurrencyExchangeRate(models.Model):
     from_currency = models.IntegerField(choices=Currency.choices)
     to_currency = models.IntegerField(choices=Currency.choices)
     date = models.DateField()
-    value = models.DecimalField(max_digits=12, decimal_places=5)
+    value = models.DecimalField(max_digits=20, decimal_places=10)
 
     class Meta:
         ordering = ["-date"]
@@ -470,7 +470,7 @@ class CurrencyExchangeRate(models.Model):
 
 class PriceHistory(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
-    value = models.DecimalField(max_digits=12, decimal_places=5)
+    value = models.DecimalField(max_digits=20, decimal_places=10)
     date = models.DateField()
 
     class Meta:
@@ -478,18 +478,18 @@ class PriceHistory(models.Model):
 
 
 class Lot(models.Model):
-    quantity = models.DecimalField(max_digits=12, decimal_places=5)
+    quantity = models.DecimalField(max_digits=20, decimal_places=10)
     buy_date = models.DateField()
-    buy_price = models.DecimalField(max_digits=12, decimal_places=5)
-    cost_basis_account_currency = models.DecimalField(max_digits=12, decimal_places=5)
+    buy_price = models.DecimalField(max_digits=20, decimal_places=10)
+    cost_basis_account_currency = models.DecimalField(max_digits=20, decimal_places=10)
 
     sell_date = models.DateField(null=True)
-    sell_price = models.DecimalField(max_digits=12, decimal_places=5, null=True)
+    sell_price = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     sell_basis_account_currency = models.DecimalField(
-        max_digits=12, decimal_places=5, null=True
+        max_digits=20, decimal_places=10, null=True
     )
     realized_gain_account_currency = models.DecimalField(
-        max_digits=12, decimal_places=5, null=True
+        max_digits=20, decimal_places=10, null=True
     )
 
     position = models.ForeignKey(

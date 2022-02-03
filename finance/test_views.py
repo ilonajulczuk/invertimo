@@ -830,7 +830,7 @@ class TestAccountEventListView(testing_utils.ViewTestBase, TestCase):
             data,
             {
                 "account": self.account.pk,
-                "amount": "4.500000",
+                "amount": "4.5000000000",
                 "event_type": "DEPOSIT",
                 "executed_at": "2021-03-04T00:00:00Z",
                 "position": None,
@@ -875,7 +875,7 @@ class TestAccountEventListView(testing_utils.ViewTestBase, TestCase):
             data,
             {
                 "account": self.account.pk,
-                "amount": "-4.500000",
+                "amount": "-4.5000000000",
                 "event_type": "WITHDRAWAL",
                 "executed_at": "2021-03-04T00:00:00Z",
                 "position": None,
@@ -924,8 +924,8 @@ class TestAccountEventListView(testing_utils.ViewTestBase, TestCase):
             data,
             {
                 "account": self.account.pk,
-                "amount": "4.500000",
-                "withheld_taxes": "0.200000",
+                "amount": "4.5000000000",
+                "withheld_taxes": "0.2000000000",
                 "event_type": "DIVIDEND",
                 "executed_at": "2021-03-04T00:00:00Z",
                 "position": position.pk,
