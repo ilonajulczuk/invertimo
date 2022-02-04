@@ -10,6 +10,8 @@ import { FormikCheckboxField, FormikSelectField } from './muiformik.js';
 import { Snackbar } from '../components/Snackbar.js';
 import { useStyles } from './styles.js';
 import { TransactionImportResult  } from '../TransactionImportResult.js';
+import SubmitSpinnerButton from '../components/SubmitSpinnerButton.js';
+
 import FormHelperText from '@mui/material/FormHelperText';
 import FormControl from '@mui/material/FormControl';
 
@@ -126,11 +128,9 @@ export default function ImportTransactionsFromDegiroForm(props) {
                             options={accountOptions}
                             className={classes.mediumInput}
                         />
-
                         <FormControl
                         >
                             <Button
-
                                 variant="contained"
                                 component="label"
                             >
@@ -145,6 +145,8 @@ export default function ImportTransactionsFromDegiroForm(props) {
                                         if (files.length == 1) {
                                             const uploadedFile = files[0];
                                             setFieldValue("file", uploadedFile, true);
+                                            // So that if the form is cleared, the same value can be selected.
+                                            e.target.value = "";
                                         }
                                     }}
                                 />
@@ -165,17 +167,7 @@ export default function ImportTransactionsFromDegiroForm(props) {
                             formHelperText="Even if the asset can't be found in the db"
                         />
                     </div>
-                    <div className={classes.bottomButtons}>
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            color="secondary"
-                            disabled={isSubmitting}
-                            className={classes.submitButton}
-                        >
-                            Import
-                        </Button>
-                    </div>
+                    <SubmitSpinnerButton isSubmitting={isSubmitting} text="Import" />
                     <Snackbar
                         snackbarOpen={snackbarOpen}
                         snackbarHandleClose={snackbarHandleClose}

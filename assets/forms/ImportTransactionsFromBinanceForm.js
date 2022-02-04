@@ -12,6 +12,7 @@ import { useStyles } from './styles.js';
 import { TransactionImportResult } from '../TransactionImportResult.js';
 import FormHelperText from '@mui/material/FormHelperText';
 import FormControl from '@mui/material/FormControl';
+import SubmitSpinnerButton from '../components/SubmitSpinnerButton.js';
 
 
 function formUpdateToAPIUpdate(formData) {
@@ -127,11 +128,9 @@ export default function ImportTransactionsFromBinanceForm(props) {
                             options={accountOptions}
                             className={classes.mediumInput}
                         />
-
                         <FormControl
                         >
                             <Button
-
                                 variant="contained"
                                 component="label"
                             >
@@ -146,6 +145,8 @@ export default function ImportTransactionsFromBinanceForm(props) {
                                         if (files.length == 1) {
                                             const uploadedFile = files[0];
                                             setFieldValue("file", uploadedFile, true);
+                                            // So that if the form is cleared, the same value can be selected.
+                                            e.target.value = "";
                                         }
                                     }}
                                 />
@@ -158,17 +159,7 @@ export default function ImportTransactionsFromBinanceForm(props) {
                         </FormControl>
 
                     </div>
-                    <div className={classes.bottomButtons}>
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            color="secondary"
-                            disabled={isSubmitting}
-                            className={classes.submitButton}
-                        >
-                            Import
-                        </Button>
-                    </div>
+                    <SubmitSpinnerButton isSubmitting={isSubmitting} text="Import" />
                     <Snackbar
                         snackbarOpen={snackbarOpen}
                         snackbarHandleClose={snackbarHandleClose}
