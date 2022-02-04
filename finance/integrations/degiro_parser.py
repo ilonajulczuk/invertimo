@@ -141,6 +141,8 @@ def _import_transactions_from_file(account, filename_or_file, import_all_assets)
         transactions_data_clean = transactions_data_clean.sort_values(by="Datetime")
     except pd.errors.ParserError as e:
         raise InvalidFormat("Failed to parse csv", e)
+    except KeyError as e:
+        raise InvalidFormat("Failed to parse csv", e)
 
     for x in range(0, len(transactions_data_clean)):
         try:
