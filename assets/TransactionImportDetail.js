@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 
 import {
     useRouteMatch,
@@ -8,7 +7,7 @@ import { TransactionImportResult } from './TransactionImportResult';
 import { getTransactionImportResult } from './api_utils';
 
 
-export function TransactionImportDetail(props) {
+export function TransactionImportDetail() {
     let match = useRouteMatch("/transactions/imports/:importId");
     let importId = match.params.importId;
 
@@ -27,7 +26,7 @@ export function TransactionImportDetail(props) {
         });
 
         return () => mounted = false;
-    }, [props.transactions, importId]);
+    }, [importId]);
 
     return (
         <div>
@@ -49,5 +48,4 @@ export function TransactionImportDetail(props) {
         }
 
 TransactionImportDetail.propTypes = {
-    transactions: PropTypes.array.isRequired,
 };
