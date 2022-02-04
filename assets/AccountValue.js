@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AreaChart } from './components/AreaChart.js';
 import { TimeSelector, daysFromDurationObject } from './TimeSelector.js';
 import PropTypes from 'prop-types';
-import { useState } from 'react';
 import { ErrorBoundary } from './error_utils.js';
 import { SelectPositions } from './SelectPositions.js';
 import './account_value.css';
@@ -10,6 +9,7 @@ import './account_value.css';
 import { toSymbol } from './currencies.js';
 import { generateColors } from './colors.js';
 import { addAcrossDatesWithFill } from './timeseries_utils.js';
+import _ from 'lodash';
 
 // TODO: add test for this.
 function sortByFirstValue(positions) {
@@ -33,7 +33,7 @@ function trimDataUntilDate(timeSeries, date, reverse) {
     // in reverse order.
     let trimmedTimeSeries = [];
     for (let i = 0; i < timeSeries.length; i++) {
-        const index = reverse ? timeSeries.length - i - 1: i;
+        const index = reverse ? timeSeries.length - i - 1 : i;
         if (new Date(timeSeries[index][0]) > date) {
             trimmedTimeSeries.push(timeSeries[index]);
         } else {
@@ -76,11 +76,24 @@ export default function AccountValue(props) {
     });
 
     const COLORS = generateColors(10);
+    let maybeDuplicateSymbols = new Map();
+    for (let position of positionsMap.values()) {
+        const count = maybeDuplicateSymbols.get(position.asset.symbol) ?? 0;
+        maybeDuplicateSymbols.set(position.asset.symbol, count + 1);
+    }
+    const duplicateSymbols = _.filter(
+        Array.from(maybeDuplicateSymbols.entries()),
+        entry => entry[1] > 1).map(entry => entry[0]);
 
     let values = valuesOfBiggestPositions.map((positionValues, i) => {
         let position = positionsMap.get(positionValues[0]);
+
+        let assetId = position.asset.symbol;
+        if (duplicateSymbols.includes(assetId)) {
+            assetId += " #(" + position.asset.id + ")";
+        }
         let row = {
-            id: position.asset.symbol,
+            id: assetId,
             color: COLORS[i],
             data: positionValues[1].map(elem => {
                 let exactDate = new Date(elem[0]);
@@ -89,7 +102,6 @@ export default function AccountValue(props) {
                     y: Number(elem[1])
                 };
             }
-
             )
         };
         return row;
