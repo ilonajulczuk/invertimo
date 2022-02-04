@@ -65,25 +65,32 @@ export default function Transactions(props) {
 
     // TODO: Should include all possible assets we could point to throughout the app.
     // E.g. could be from positions.
-    const assetsFromTransactionsMap = new Map(
-        props.transactions.map(
-            transaction => [transaction.position.asset.id, transaction.position.asset]));
     let assetsFromTransactions = [];
-    for (let asset of assetsFromTransactionsMap.values()) {
-        assetsFromTransactions.push(asset);
+    if (props.transactions) {
+        const assetsFromTransactionsMap = new Map(
+            props.transactions.map(
+                transaction => [transaction.position.asset.id, transaction.position.asset]));
+        for (let asset of assetsFromTransactionsMap.values()) {
+            assetsFromTransactions.push(asset);
+        }
     }
+    const loadingBlock = <h2>Loading transactions...</h2>;
     return (
         <Switch>
             <Route exact path={path}>
-                <TransactionList accounts={props.accounts} transactions={props.transactions} />
+                {props.transactions ?
+                    <TransactionList accounts={props.accounts} transactions={props.transactions} />
+                    : loadingBlock
+                }
             </Route>
             <Route path={`${path}/record`}>
-                <RecordTransaction accounts={props.accounts}
-                    hasTransactions={props.transactions.length > 0}
-                    handleSubmit={props.handleAddTransaction}
-                    defaultAssetOptions={assetsFromTransactions}
-                />
-
+                {props.transactions ?
+                    <RecordTransaction accounts={props.accounts}
+                        hasTransactions={props.transactions.length > 0}
+                        handleSubmit={props.handleAddTransaction}
+                        defaultAssetOptions={assetsFromTransactions}
+                    /> :
+                    loadingBlock}
             </Route>
 
             <Route path={`${path}/import/degiro`}>
@@ -114,18 +121,19 @@ export default function Transactions(props) {
                 />
             </Route>
             <Route path={`${path}/imports/:importId`}>
-                <TransactionImportDetail transactions={props.transactions} />
+                <TransactionImportDetail />
             </Route>
             <Route path={`${path}/realized_gains`}>
                 <RealizedGainsReport positions={props.positions} accounts={props.accounts} />
             </Route>
             <Route path={`${path}/:transactionId`}>
-                <TransactionDetail
-                    transactions={props.transactions}
-                    accounts={props.accounts}
-                    handleDeleteTransaction={props.handleDeleteTransaction}
-                    handleCorrectTransaction={props.handleCorrectTransaction}
-                />
+                {props.transactions ?
+                    <TransactionDetail
+                        transactions={props.transactions}
+                        accounts={props.accounts}
+                        handleDeleteTransaction={props.handleDeleteTransaction}
+                        handleCorrectTransaction={props.handleCorrectTransaction}
+                    /> : loadingBlock}
             </Route>
         </Switch>
     );
@@ -143,7 +151,7 @@ Transactions.propTypes = {
         transaction_costs: PropTypes.string,
         executed_at: PropTypes.string.isRequired,
         position: PropTypes.object.isRequired,
-    })).isRequired,
+    })),
     handleAddTransaction: PropTypes.func.isRequired,
     handleDeleteTransaction: PropTypes.func.isRequired,
     handleCorrectTransaction: PropTypes.func.isRequired,

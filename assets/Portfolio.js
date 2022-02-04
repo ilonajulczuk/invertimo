@@ -24,12 +24,12 @@ import { APIClient } from './api_utils.js';
 import { toSymbol } from './currencies.js';
 import { ErrorBoundary } from './error_utils.js';
 import { Accounts } from './Accounts.js';
+import AccountValues from './AccountValues';
 
 
 const PositionList = React.lazy(() => import('./PositionList'));
 const Onboarding = React.lazy(() => import('./Onboarding'));
 const Transactions = React.lazy(() => import('./Transactions'));
-const AccountValue = React.lazy(() => import('./AccountValue'));
 
 
 const useStyles = makeStyles({
@@ -379,7 +379,6 @@ export default class Portfolio extends React.Component {
     render() {
         const userEmail = JSON.parse(document.getElementById('userEmail').textContent);
 
-
         const navBar = <nav className="sidenav">
             <ul>
                 <li>
@@ -414,7 +413,7 @@ export default class Portfolio extends React.Component {
                 </div>
             </div>);
         }
-        if (this.state.positions === null || this.state.accountValues.size !== this.state.accounts.length) {
+        if (this.state.positions === null) {
             return (<div className="main-grid">
                 <Header email={userEmail} />
                 {navBar}
@@ -438,20 +437,6 @@ export default class Portfolio extends React.Component {
         }
         const noTransactions = numTransactions == 0;
 
-        let accountValues = this.state.accounts.filter(account =>
-            this.state.accountValues.get(account.id)).map((account) => {
-
-                let accountDetail = this.state.accountValues.get(account.id);
-                let values = [];
-                if (accountDetail) {
-                    values = accountDetail.values;
-                }
-                return (
-                    <AccountValue key={account.id} account={account}
-                        positions={this.state.positions} values={values} />
-                );
-            });
-
         let redirectOrDisplay;
         if (newUser) {
             redirectOrDisplay = <Redirect to="/start/investment_accounts" />;
@@ -463,22 +448,20 @@ export default class Portfolio extends React.Component {
                     <ErrorBoundary>
                         <PortfolioOverview positions={this.state.positions} accounts={this.state.accounts} />
                         <Suspense fallback={<div>Loading graphs...</div>}>
-                            {accountValues}
+                            <AccountValues accounts={this.state.accounts} accountValues={this.state.accountValues} positions={this.state.positions} />
                         </Suspense>
                     </ErrorBoundary>
                 </div>);
         }
-        let maybeTransactions = <h2>Loading transactions...</h2>;
-        if (this.state.transactions !== null) {
-            maybeTransactions = <Transactions transactions={this.state.transactions}
-                handleAddTransaction={this.handleAddTransaction}
-                handleDeleteTransaction={this.handleDeleteTransaction}
-                handleCorrectTransaction={this.handleCorrectTransaction}
-                handleUploadDegiroTransactions={this.handleUploadDegiroTransactions}
-                handleUploadBinanceTransactions={this.handleUploadBinanceTransactions}
-                positions={this.state.positions}
-                accounts={this.state.accounts} />;
-        }
+        let transactions = <Transactions transactions={this.state.transactions}
+            handleAddTransaction={this.handleAddTransaction}
+            handleDeleteTransaction={this.handleDeleteTransaction}
+            handleCorrectTransaction={this.handleCorrectTransaction}
+            handleUploadDegiroTransactions={this.handleUploadDegiroTransactions}
+            handleUploadBinanceTransactions={this.handleUploadBinanceTransactions}
+            positions={this.state.positions}
+            accounts={this.state.accounts} />;
+
         let maybeEvents = <h2>Loading events...</h2>;
         if (this.state.events !== null) {
             maybeEvents = (<Events
@@ -500,7 +483,7 @@ export default class Portfolio extends React.Component {
                         <Switch>
                             <Route path="/transactions">
                                 <ErrorBoundary>
-                                    {maybeTransactions}
+                                    {transactions}
                                 </ErrorBoundary>
                             </Route>
                             <Route path="/positions">
