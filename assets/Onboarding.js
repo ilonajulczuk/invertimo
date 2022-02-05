@@ -78,6 +78,9 @@ function AddAccountStep({ hasAccounts, handleAddAccount, existingAccounts }) {
             <>
                 <h3>You don&apos;t have any account yet...</h3>
                 <p>Let&apos;s add one now.</p>
+
+                <p>Account currency is a currency in which all the gains and income will be computed in so chose it carefully. We recommend to pick the currency that you are taxed
+                    in and keep the same account currency across all your accounts for simplicity.</p>
             </>
         );
     }
@@ -109,7 +112,7 @@ export default function Onboarding(props) {
     let hasTransactions = false;
     const hasAccounts = props.accounts.length > 0;
     if (props.transactions !== null) {
-        numTransactions =  props.transactions.length;
+        numTransactions = props.transactions.length;
         hasTransactions = numTransactions > 0;
     }
 
@@ -121,13 +124,15 @@ export default function Onboarding(props) {
             content: (<div>
                 <h3>What are investment accounts?</h3>
                 <p>Invertimo helps you track and understand your
-                investments across your various investment accounts,
-                      such as brokerages or exchanges.</p>
+                    investments across your various investment accounts,
+                    such as brokerages or exchanges.</p>
                 <p>To start you need to add at least one investment account
-                and then you will be able to import transactions and associate them with
-                that account.
+                    and then you will be able to import transactions and associate them with
+                    that account.
                 </p>
-                <p>You can later edit or add more investment accounts in the future.</p>
+                <p>Account currency is a currency in which all the gains and income will be computed in so chose it carefully. We recommend to pick the currency that you are taxed
+                    in and keep the same account currency across all your accounts for simplicity.</p>
+                <p>You can later delete or add more investment accounts in the future.</p>
             </div>),
         },
         {
@@ -146,16 +151,16 @@ export default function Onboarding(props) {
                 <div>
                     <h3>Transactions</h3>
                     <p>When you buy or sell any asset you are making transactions. The same
-                    goes to transferring money to or from your investment account.
-                    To correctly reflect the state of your account you need to
-                    record all the transactions.
+                        goes to transferring money to or from your investment account.
+                        To correctly reflect the state of your account you need to
+                        record all the transactions.
                     </p>
                     <h3>Positions</h3>
                     <p>A position is the amount of a security, asset, or property that is owned. The app will automatically create a position if you record a transaction for it.</p>
                     <p>Once you have a position you can track how much of it you own of it over time, your transactions associated with it, gains and dividends.
-                         If the position is an asset on a supported exchange, invertimo will automatically pull in a closing price for the last day, so you can track the performance of the position in your portfolio automatically. </p>
+                        If the position is an asset on a supported exchange, invertimo will automatically pull in a closing price for the last day, so you can track the performance of the position in your portfolio automatically. </p>
                     <p>A position is closed when you sell all of it and there is nothing left.
-                         We will still show it in invertimo, because there might be a tax implication.</p>
+                        We will still show it in invertimo, because there might be a tax implication.</p>
                 </div>
 
             ),
@@ -174,13 +179,13 @@ export default function Onboarding(props) {
                     <p>If you use Degiro, follow <a href="#/transactions/import/degiro">these steps</a>. We are working on adding more integrations!</p>
                     <h4>Manual recording</h4>
                     <p>You can always record some transactions with
-                    a form below.</p>
-                    <h3 style={{marginTop: "2em", marginBottom: "0em"}}>Record a transaction 👇</h3>
+                        a form below.</p>
+                    <h3 style={{ marginTop: "2em", marginBottom: "0em" }}>Record a transaction 👇</h3>
                     <RecordTransactionForm
-                    accounts={props.accounts}
-                     hasTransactions={hasTransactions}
-                      handleSubmit={props.handleAddTransaction}
-                      defaultAssetOptions={[]} />
+                        accounts={props.accounts}
+                        hasTransactions={hasTransactions}
+                        handleSubmit={props.handleAddTransaction}
+                        defaultAssetOptions={[]} />
                 </div>
             ),
             path: 'add_transaction',
