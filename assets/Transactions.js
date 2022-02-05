@@ -13,7 +13,6 @@ import ImportTransactionsFromBinanceForm from './forms/ImportTransactionsFromBin
 import { TransactionList } from './TransactionList';
 import { TransactionDetail } from './TransactionDetail.js';
 import { useQuery } from './routing.js';
-import RealizedGainsReport from './RealizedGainsReport.js';
 
 
 export function RecordTransaction(props) {
@@ -123,9 +122,7 @@ export default function Transactions(props) {
             <Route path={`${path}/imports/:importId`}>
                 <TransactionImportDetail />
             </Route>
-            <Route path={`${path}/realized_gains`}>
-                <RealizedGainsReport positions={props.positions} accounts={props.accounts} />
-            </Route>
+
             <Route path={`${path}/:transactionId`}>
                 {props.transactions ?
                     <TransactionDetail

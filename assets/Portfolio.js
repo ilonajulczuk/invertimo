@@ -30,6 +30,7 @@ import AccountValues from './AccountValues';
 const PositionList = React.lazy(() => import('./PositionList'));
 const Onboarding = React.lazy(() => import('./Onboarding'));
 const Transactions = React.lazy(() => import('./Transactions'));
+const Reports = React.lazy(() => import('./Reports'));
 
 
 const useStyles = makeStyles({
@@ -385,6 +386,9 @@ export default class Portfolio extends React.Component {
                     <NavLink to="/" exact={true}>Home</NavLink>
                 </li>
                 <li>
+                    <NavLink to="/reports">Reports</NavLink>
+                </li>
+                <li>
                     <NavLink to="/positions">Positions</NavLink>
                 </li>
                 <li>
@@ -497,6 +501,14 @@ export default class Portfolio extends React.Component {
                             <Route path="/events">
                                 <ErrorBoundary>
                                     {maybeEvents}
+                                </ErrorBoundary>
+                            </Route>
+                            <Route path="/reports">
+                                <ErrorBoundary>
+                                    <Reports
+                                        positions={this.state.positions}
+                                        accounts={this.state.accounts}
+                                        events={this.state.events} />
                                 </ErrorBoundary>
                             </Route>
                             <Route path="/accounts">

@@ -176,4 +176,3 @@ Accounts.propTypes = {
     handleDeleteAccount: PropTypes.func.isRequired,
     handleAddAccount: PropTypes.func.isRequired,
 };
-

@@ -68,7 +68,8 @@ export function EventList(props) {
             comparisonKey: event.position,
         };
         eventCopy.event_type = {
-            displayValue: <EventTypeDisplay eventType={event.event_type} />
+            displayValue: <EventTypeDisplay eventType={event.event_type} />,
+            comparisonKey: event.event_type,
         };
 
         eventCopy.interaction = {

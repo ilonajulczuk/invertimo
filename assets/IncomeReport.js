@@ -1,27 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 import isValid from 'date-fns/isValid';
 import AdapterDateFns from '@mui/lab/AdapterDateFns';
 import LocalizationProvider from '@mui/lab/LocalizationProvider';
 
 import PropTypes from 'prop-types';
-import { filter, map } from 'lodash';
 
 import DatePicker from "./components/DatePicker.js";
 
-import makeStyles from '@mui/styles/makeStyles';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import makeStyles from '@mui/styles/makeStyles';
 
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
+import Typography from '@mui/material/Typography';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 
+import { filter, map } from 'lodash';
 import { ErrorBoundary } from './error_utils.js';
-import { getLots } from './api_utils.js';
-import { LotList } from './LotList.js';
-import { PositionLink } from './components/PositionLink.js';
-import { roundDecimal, sumAsDecimals } from './forms/utils.js';
+
+import { sumAsDecimals } from './forms/utils.js';
 
 const useStyles = makeStyles({
     header: {
@@ -45,10 +43,10 @@ const useStyles = makeStyles({
     }
 });
 
-export default function RealizedGainsReport(props) {
+
+export default function IncomeReport(props) {
 
     const classes = useStyles();
-
     const thisYear = {
         from: new Date(new Date().getFullYear(), 0),
         to: null,
@@ -68,13 +66,6 @@ export default function RealizedGainsReport(props) {
     // Variables for custom dates.
     const [fromDate, setFromDate] = useState(new Date(new Date().getFullYear(), 0));
     const [toDate, setToDate] = useState(new Date());
-
-    const [showAssetHoldTime, setShowAssetHoldTime] = useState(false);
-    const handleSetShowAssetHoldAge = (event) => {
-        setShowAssetHoldTime(event.target.checked);
-    };
-
-    const [lots, setLots] = useState(null);
 
     const handleDateSelection = (event, newSelection) => {
         if (newSelection === null) {
@@ -100,32 +91,55 @@ export default function RealizedGainsReport(props) {
             setDates(newDates);
         }
     };
-
-    useEffect(() => {
-        let mounted = true;
-        getLots().then(lots => {
-            if (mounted) {
-                setLots(lots);
-            }
+    let incomeEventsDisplay = <div>Loading income events...</div>;
+    if (props.events) {
+        const eventsFilteredByDates = filter(props.events, (event) => {
+            return (new Date(event.executed_at) > dates.from || dates.from === null) && (new Date(event.executed_at) <= dates.to || dates.to === null);
         });
+        // TODO: values are account currency and account currencies can be different for different accounts.
+        // Because of that first it should be broken down by currency and then added together!
+        const stakingEvents = filter(eventsFilteredByDates, event => event.event_type == "STAKING_INTEREST");
+        const savingsEvents = filter(eventsFilteredByDates, event => event.event_type == "SAVINGS_INTEREST");
 
-        return () => mounted = false;
-    },
-        [props.positions]
-    );
+        const stakingEventsValues = map(stakingEvents, event => event.amount);
+        const savingsEventsValues = map(savingsEvents, event => event.amount);
+        const totalGainStaking = sumAsDecimals(stakingEventsValues);
+        const totalGainSavings = sumAsDecimals(savingsEventsValues);
 
-    const lotsDisplay = lots ? <GainsDisplay
-        lots={lots}
-        positions={props.positions}
-        accounts={props.accounts}
-        startDate={dates.from}
-        endDate={dates.to}
-        holdTime={showAssetHoldTime}
-    /> : <div>Loading...</div>;
+        incomeEventsDisplay = <div style={{ display: "flex", gap: 10, marginTop: "30px" }}>
+            <Card sx={{ minWidth: 275 }} variant="outlined">
+                <CardContent>
+                    <Typography variant="h6" component="h6">
+                        Total income
+                    </Typography>
+                    <Typography variant="body1" component="p">
+                        {totalGainStaking.plus(totalGainSavings).toString()}
+                    </Typography>
+
+                </CardContent>
+            </Card>
+            <Card variant="outlined">
+                <CardContent>
+                    <Typography variant="h6" component="h6">
+                        Staking income
+                    </Typography>
+                    <Typography variant="body1" component="p">
+                        {stakingEvents.length} staking events produced {totalGainStaking.toString()}
+                    </Typography>
+                    <Typography variant="h6" component="h6">
+                        Savings income
+                    </Typography>
+                    <Typography variant="body1" component="p">{savingsEvents.length} savings events produced {totalGainSavings.toString()}
+                    </Typography>
+                </CardContent>
+            </Card>
+        </div>;
+    }
+
     return (<ErrorBoundary>
 
-        <div className={classes.header}>
-            <h2><a href="#reports">Reports</a> / realized gains</h2>
+        <div>
+            <h2><a href="#reports">Reports</a> / crypto income</h2>
         </div>
         <div className={classes.header}>
 
@@ -189,87 +203,12 @@ export default function RealizedGainsReport(props) {
             </div>
         </div>
         <div className={classes.header}>
-            <FormGroup>
-                <FormControlLabel control={<Checkbox checked={showAssetHoldTime} onChange={handleSetShowAssetHoldAge} />} label="Show how long assets were held" />
-            </FormGroup>
-
         </div>
-        {lotsDisplay}
+        {incomeEventsDisplay}
 
     </ErrorBoundary>);
 }
 
-RealizedGainsReport.propTypes = {
-    accounts: PropTypes.array.isRequired,
-    positions: PropTypes.array.isRequired,
-};
-
-function GainsDisplay(props) {
-    // Divide lots per position.
-    // Then render position + total gains
-    // And then lots with links to transactions as a table with sort but no pagination.
-    // Or should I still have pagination?
-
-    const lotsFilteredByDates = filter(props.lots, (lot) => {
-        return (new Date(lot.sell_date) < props.endDate || props.endDate === null) && (new Date(lot.sell_date) >= props.startDate);
-    });
-
-    let lotsByPositionId = new Map(lotsFilteredByDates.map(lot => [lot.position, []]));
-    lotsFilteredByDates.forEach(lot => {
-        const lots = lotsByPositionId.get(lot.position);
-        lots.push(lot);
-    });
-    let positionsAndLots = [];
-    const positionsById = new Map(props.positions.map(position => [position.id, position]));
-    const accountsById = new Map(props.accounts.map(account => [account.id, account]));
-
-    for (let [positionId, lots] of lotsByPositionId) {
-        const position = positionsById.get(positionId);
-        const account = accountsById.get(position.account);
-
-        const gains = map(lots, lot => lot.realized_gain_account_currency);
-        const totalGain = sumAsDecimals(gains);
-        const totalGainRounded = roundDecimal(totalGain).toString();
-        positionsAndLots.push(
-            <div key={positionId}>
-                <div style={{ display: "flex", gap: "10px", alignItems: "baseline", marginBottom: "1rem", marginTop: "3rem" }}>
-                    <h3><PositionLink position={position} account={account} style={{ fontSize: "14px" }} /></h3>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span className="card-label">Total gain / loss</span>
-                        {totalGainRounded}
-                    </div>
-                </div>
-                <ul>
-                    <LotList lots={lots} position={position} account={account} holdTime={props.holdTime} />
-                </ul>
-            </div>
-        );
-    }
-
-    return <div>
-        {lotsFilteredByDates.length > 0 ? positionsAndLots : <p>Nothing during this period :(.</p>}
-    </div>;
-}
-
-
-GainsDisplay.propTypes = {
-    lots: PropTypes.arrayOf(PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        quantity: PropTypes.string.isRequired,
-        buy_date: PropTypes.string.isRequired,
-        buy_price: PropTypes.string.isRequired,
-        cost_basis_account_currency: PropTypes.string.isRequired,
-        sell_date: PropTypes.string.isRequired,
-        sell_price: PropTypes.string.isRequired,
-        sell_basis_account_currency: PropTypes.string.isRequired,
-        realized_gain_account_currency: PropTypes.string.isRequired,
-        position: PropTypes.number.isRequired,
-        buy_transaction: PropTypes.number.isRequired,
-        sell_transaction: PropTypes.number.isRequired,
-    })).isRequired,
-    accounts: PropTypes.array.isRequired,
-    positions: PropTypes.array.isRequired,
-    startDate: PropTypes.instanceOf(Date).isRequired,
-    endDate: PropTypes.instanceOf(Date),
-    holdTime: PropTypes.bool.isRequired,
+IncomeReport.propTypes = {
+    events: PropTypes.array,
 };
