@@ -54,7 +54,7 @@ export default function Reports(props) {
                 <RealizedGainsReport positions={props.positions} accounts={props.accounts} />
             </Route>
             <Route path={`${path}/crypto_income`}>
-                <IncomeReport positions={props.positions} events={props.events} />
+                <IncomeReport positions={props.positions} events={props.events} accounts={props.accounts} />
             </Route>
         </Switch>
     );

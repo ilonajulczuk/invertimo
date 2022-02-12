@@ -112,7 +112,7 @@ function GainsDisplay(props) {
         positionsAndLots.push(
             <div key={positionId}>
                 <div style={{ display: "flex", gap: "10px", alignItems: "baseline", marginBottom: "1rem", marginTop: "3rem" }}>
-                    <h3><PositionLink position={position} account={account} style={{ fontSize: "14px" }} /></h3>
+                    <h4><PositionLink position={position} account={account} /></h4>
                     <div style={{ display: "flex", flexDirection: "column" }}>
                         <span className="card-label">Total gain / loss</span>
                         {totalGainRounded}
