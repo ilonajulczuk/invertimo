@@ -1,17 +1,8 @@
 import React, { useState, useEffect } from 'react';
-
-import isValid from 'date-fns/isValid';
-import AdapterDateFns from '@mui/lab/AdapterDateFns';
-import LocalizationProvider from '@mui/lab/LocalizationProvider';
-
 import PropTypes from 'prop-types';
 import { filter, map } from 'lodash';
 
-import DatePicker from "./components/DatePicker.js";
-
 import makeStyles from '@mui/styles/makeStyles';
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -22,6 +13,8 @@ import { getLots } from './api_utils.js';
 import { LotList } from './LotList.js';
 import { PositionLink } from './components/PositionLink.js';
 import { roundDecimal, sumAsDecimals } from './forms/utils.js';
+import StartEndSelector, {DEFAULT_DATES} from './components/StartEndSelector.js';
+
 
 const useStyles = makeStyles({
     header: {
@@ -31,43 +24,13 @@ const useStyles = makeStyles({
         gap: "10px",
         flexWrap: "wrap",
     },
-    pickers: {
-        marginBottom: "16px",
-        "&>div": {
-            marginRight: "5px",
-        },
-        gap: "10px",
-        display: "flex",
-        flexWrap: "wrap",
-    },
-    toggleButtons: {
-        padding: "15px",
-    }
 });
 
 export default function RealizedGainsReport(props) {
 
     const classes = useStyles();
 
-    const thisYear = {
-        from: new Date(new Date().getFullYear(), 0),
-        to: null,
-    };
-    const lastYear = {
-        from: new Date(new Date().getFullYear() - 1, 0),
-        to: new Date(new Date().getFullYear(), 0),
-    };
-    const defaultDates = thisYear;
-
-    const selectionToDates = {
-        "this year": thisYear,
-        "last year": lastYear,
-    };
-    const [dateSelection, setDateSelection] = useState("this year");
-    const [dates, setDates] = useState(defaultDates);
-    // Variables for custom dates.
-    const [fromDate, setFromDate] = useState(new Date(new Date().getFullYear(), 0));
-    const [toDate, setToDate] = useState(new Date());
+    const [dates, setDates] = useState(DEFAULT_DATES);
 
     const [showAssetHoldTime, setShowAssetHoldTime] = useState(false);
     const handleSetShowAssetHoldAge = (event) => {
@@ -76,30 +39,6 @@ export default function RealizedGainsReport(props) {
 
     const [lots, setLots] = useState(null);
 
-    const handleDateSelection = (event, newSelection) => {
-        if (newSelection === null) {
-            return;
-        }
-        setDateSelection(newSelection);
-        if (newSelection in selectionToDates) {
-            setDates(selectionToDates[newSelection]);
-        } else {
-
-            let newDates = {
-                from: dates.from,
-                to: dates.to,
-            };
-
-            if (isValid(new Date(fromDate))) {
-                newDates.from = new Date(fromDate);
-            }
-
-            if (isValid(new Date(toDate))) {
-                newDates.to = new Date(toDate);
-            }
-            setDates(newDates);
-        }
-    };
 
     useEffect(() => {
         let mounted = true;
@@ -127,67 +66,7 @@ export default function RealizedGainsReport(props) {
         <div className={classes.header}>
             <h2><a href="#reports">Reports</a> / realized gains</h2>
         </div>
-        <div className={classes.header}>
-
-            <ToggleButtonGroup
-                value={dateSelection}
-                color="primary"
-                exclusive
-                onChange={handleDateSelection}
-                aria-label="date selection"
-            >
-                <ToggleButton value="this year" aria-label="this year"
-                    className={classes.toggleButtons}>
-                    This year up to now
-                </ToggleButton>
-                <ToggleButton value="last year" aria-label="last year"
-                    className={classes.toggleButtons}>
-                    Last year
-                </ToggleButton>
-                <ToggleButton value="custom" aria-label="custom dates"
-                    className={classes.toggleButtons}>
-                    Custom dates
-                </ToggleButton>
-            </ToggleButtonGroup>
-
-            <div className={classes.pickers}>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <DatePicker
-                        label="From date"
-                        value={fromDate}
-                        disabled={dateSelection !== "custom"}
-                        onChange={(value) => {
-                            if (isValid(new Date(value))) {
-                                let newDates = {
-                                    from: new Date(value),
-                                    to: dates.to,
-                                };
-                                setDates(newDates);
-                            }
-                            setFromDate(value);
-                        }}
-                        ariaLabel='change from date'
-                        helperText="Provide a date in YYYY/MM/DD format"
-                    />
-                    <DatePicker
-                        label="To date"
-                        value={toDate}
-                        disabled={dateSelection !== "custom"}
-                        onChange={(value) => {
-                            if (isValid(new Date(value))) {
-                                let newDates = {
-                                    from: dates.from,
-                                    to: new Date(value),
-                                };
-                                setDates(newDates);
-                            }
-                            setToDate(value);
-                        }}
-                        ariaLabel='change to date'
-                    />
-                </LocalizationProvider>
-            </div>
-        </div>
+        <StartEndSelector dates={dates} setDates={setDates} />
         <div className={classes.header}>
             <FormGroup>
                 <FormControlLabel control={<Checkbox checked={showAssetHoldTime} onChange={handleSetShowAssetHoldAge} />} label="Show how long assets were held" />
