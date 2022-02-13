@@ -127,7 +127,8 @@ export function EventDetail(props) {
 
             {topInfo}
             <div className={classes.eventDetails}>
-                <p>In account <a href={`#accounts/${account.id}`}>{account.nickname}</a></p>
+                <p>In account <a href={`#accounts/${account.id}`}>{account.nickname}</a> {event.transaction ? <a href={`#transactions/${event.transaction}`}>(related transaction).</a> : null}
+                </p>
                 {event.event_records.length ? <h3>Import records</h3> : ""}
                 {eventImportRecords}
 

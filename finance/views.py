@@ -2,7 +2,7 @@ import datetime
 from typing import Any, Dict, Type, Union
 
 from django.contrib.auth.models import User
-from django.db.models import Count, OuterRef, Q, QuerySet, Subquery
+from django.db.models import Count, OuterRef, Q, QuerySet, Subquery, F
 from django.shortcuts import get_object_or_404
 from rest_framework import (
     exceptions,
@@ -413,8 +413,10 @@ class AccountEventViewSet(
         user = self.request.user
         return (
             AccountEvent.objects.filter(account__user=user)
+            .annotate(transaction_quantity=F("transaction__quantity"))
             .prefetch_related("position")
             .prefetch_related("account")
+            .prefetch_related("transaction")
             .prefetch_related("event_records")
             .prefetch_related("event_records__transaction_import")
         )

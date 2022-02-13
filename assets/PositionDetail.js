@@ -10,7 +10,7 @@ import Button from '@mui/material/Button';
 import { filterPointsWithNoChange, filterPoints } from './timeseries_utils.js';
 import { TimeSelector, daysFromDurationObject } from './TimeSelector.js';
 import { EmbeddedTransactionList } from './TransactionList.js';
-import { EmbeddedDividendList } from './EventList.js';
+import { EmbeddedDividendList, EmbeddedIncomeEventList } from './EventList.js';
 import { AreaChartWithCursor, LineChartWithCursor } from './components/charts.js';
 import { toSymbol } from './currencies';
 
@@ -208,6 +208,9 @@ export function PositionDetail(props) {
     valuesAccountCurrency = filterPoints(valuesAccountCurrency, skipFactor);
 
     const dividendEvents = _.filter(data.events, event => event.event_type == "DIVIDEND");
+    const incomeEvents = _.filter(data.events,
+        event => event.event_type == "STAKING_INTEREST" || event.event_type == "SAVINGS_INTEREST");
+
     return (
         <div>
 
@@ -255,21 +258,38 @@ export function PositionDetail(props) {
                     <EmbeddedTransactionList transactions={data.transactions} />
                 </div>
                 <div>
-                    <div className="header-with-buttons">
-                        <h3>Dividends</h3>
-                        <Button
-                            href="#/events/record_dividend"
-                            variant="contained"
-                            color="secondary"
-                        >
-                            <Icon>paid</Icon>
-                            Record dividend
-                        </Button>
-                    </div>
-                    <EmbeddedDividendList
-                        events={dividendEvents}
-                        position={basicData}
-                        accounts={props.accounts} />
+                    {dividendEvents.length > 0 ?
+                        <><div className="header-with-buttons">
+                            <h3>Dividends</h3>
+                            <Button
+                                href="#/events/record_dividend"
+                                variant="contained"
+                                color="secondary"
+                            >
+                                <Icon>paid</Icon>
+                                Record dividend
+                            </Button>
+                        </div>
+                            <EmbeddedDividendList
+                                events={dividendEvents}
+                                position={basicData}
+                            />
+                        </>
+                        : null
+                    }
+                    {incomeEvents.length > 0 ? <>
+                        <div className="header-with-buttons">
+                            <h3>Income</h3>
+                        </div>
+                        <EmbeddedIncomeEventList
+                            events={incomeEvents}
+                            position={basicData}
+                            account={account}
+                        />
+
+                    </> : null}
+
+
                 </div>
 
             </div>

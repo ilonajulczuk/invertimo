@@ -13,6 +13,7 @@ import StartEndSelector, { DEFAULT_DATES } from './components/StartEndSelector.j
 import { sumAsDecimals } from './forms/utils.js';
 import { PositionLink } from './components/PositionLink.js';
 import { toSymbol } from './currencies';
+import { EmbeddedIncomeEventList } from './EventList.js';
 
 
 
@@ -95,14 +96,21 @@ function IncomeFromPosition(props) {
                     <Typography variant="body1" component="p">
                         {totalGainStaking.toDecimalPlaces(2).toString()} {accountCurrency}
                     </Typography>
-                    <span className='card-label' style={{ marginTop: 10 }}>Savings income
+
+                </div>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                    <span className='card-label'>Savings income
                     </span>
                     <Typography variant="body1" component="p">
                         {totalGainSavings.toDecimalPlaces(2).toString()} {accountCurrency}
                     </Typography>
                 </div>
             </div>
-
+            <EmbeddedIncomeEventList
+                events={props.events}
+                account={props.account}
+                position={props.position}
+            />
         </div>
     );
 }
