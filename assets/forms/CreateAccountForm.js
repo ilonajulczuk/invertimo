@@ -78,6 +78,11 @@ export function CreateAccountForm(props) {
         >
             {({ isSubmitting }) => (
                 <Form className={classes.formWithMargins}>
+                    <p><b>⚠️ Important:</b> Account currency is a currency in which all the gains and income will be computed in,
+                        so chose it carefully. We recommend to pick the currency that you are taxed
+                        in and keep the same account currency across all your accounts for simplicity.</p>
+
+
                     <div className={classes.inputs}>
                         <FormikTextField
                             className={classes.formControl}

@@ -1,3 +1,4 @@
+from typing_extensions import Required
 from rest_framework import serializers
 from rest_framework.request import Request
 
@@ -196,7 +197,6 @@ class EmbeddedTransactionImportRecordSerializer(
         return obj.transaction_import.created_at
 
 
-
 class EmbeddedEventImportRecordSerializer(
     serializers.ModelSerializer[TransactionImportRecord]
 ):
@@ -335,6 +335,7 @@ class EmbeddedAccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
             "amount",
             "withheld_taxes",
             "account",
+            "transaction",
         ]
 
 
@@ -670,7 +671,9 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
     event_type = EventTypeField()
     account = RelatedPkField(model=models.Account)
     position = RelatedPkField(model=models.Position)
+    transaction = RelatedPkField(model=models.Transaction, required=False)
     event_records = EmbeddedEventImportRecordSerializer(many=True, required=False)
+    transaction_quantity = serializers.DecimalField(max_digits=20, decimal_places=10, required=False)
 
     class Meta:
         model = AccountEvent
@@ -682,7 +685,9 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
             "withheld_taxes",
             "account",
             "position",
+            "transaction",
             "event_records",
+            "transaction_quantity",
         ]
 
     def get_extra_kwargs(self):
@@ -691,6 +696,8 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
         kwargs["account"]["queryset"] = self.get_account_queryset()
         kwargs["position"] = kwargs.get("position", {})
         kwargs["position"]["queryset"] = self.get_position_queryset()
+        kwargs["transaction"] = kwargs.get("transaction", {})
+        kwargs["transaction"]["queryset"] = self.get_transaction_queryset()
         return kwargs
 
     def get_account_queryset(self) -> QuerySet[models.Account]:
@@ -704,6 +711,12 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
         assert isinstance(request, Request)
         assert isinstance(request.user, User)
         return models.Position.objects.filter(account__user=request.user)
+
+    def get_transaction_queryset(self) -> QuerySet[models.Transaction]:
+        request = self.context.get("request")
+        assert isinstance(request, Request)
+        assert isinstance(request.user, User)
+        return models.Transaction.objects.filter(position__account__user=request.user)
 
     def validate_position(self, value):
         if value is None:
@@ -724,6 +737,17 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
         ).exists():
             raise serializers.ValidationError(
                 f"User doesn't have a account with id: '{value.pk}'"
+            )
+        return value
+
+    def validate_transaction(self, value):
+        if value is None:
+            return value
+        if not models.Transaction.objects.filter(
+            position__account__user=self.context["request"].user, pk=value.pk
+        ).exists():
+            raise serializers.ValidationError(
+                f"User doesn't have a transaction with id: '{value.pk}'"
             )
         return value
 

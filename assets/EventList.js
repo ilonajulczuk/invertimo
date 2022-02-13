@@ -68,7 +68,8 @@ export function EventList(props) {
             comparisonKey: event.position,
         };
         eventCopy.event_type = {
-            displayValue: <EventTypeDisplay eventType={event.event_type} />
+            displayValue: <EventTypeDisplay eventType={event.event_type} />,
+            comparisonKey: event.event_type,
         };
 
         eventCopy.interaction = {
@@ -190,4 +191,91 @@ export function EmbeddedDividendList(props) {
 EmbeddedDividendList.propTypes = {
     events: PropTypes.array.isRequired,
     position: PropTypes.object.isRequired,
+};
+
+
+export function EmbeddedIncomeEventList(props) {
+
+    let eventHeadCells = [
+        { id: 'event_type', label: 'Type' },
+        { id: 'amount', label: 'Value' },
+        { id: 'executed_at', label: 'Executed At' },
+        { id: 'transaction', label: 'Transaction'},
+        { id: 'interaction', label: '' },
+    ];
+    if (props.events.length > 0 && props.events[0].transaction_quantity) {
+        eventHeadCells = [
+            { id: 'event_type', label: 'Type' },
+            { id: 'amount', label: 'Value' },
+            { id: 'executed_at', label: 'Executed At' },
+            { id: 'transaction_quantity', label: 'Received Tokens'},
+            { id: 'transaction', label: 'Transaction'},
+            { id: 'interaction', label: '' },
+        ];
+    }
+
+    const events = props.events.map(event => {
+
+        let eventCopy = { ...event };
+        let date = new Date(eventCopy.executed_at);
+        eventCopy.executed_at = {
+            displayValue: date.toLocaleDateString(),
+            comparisonKey: date,
+        };
+
+        const currency = toSymbol(props.account.currency);
+
+        const amount = roundToTwoDecimalString(event.amount);
+        eventCopy.amount = {
+            displayValue: (
+                amount + currency
+            ),
+            comparisonKey: Number(event.amount)
+        };
+
+        if (event.transaction_quantity) {
+            eventCopy.transaction_quantity = Number(event.transaction_quantity);
+        }
+
+        eventCopy.transaction = {
+            displayValue: (
+                <a href={`#/transactions/${event.transaction}`}>Transaction</a>
+            ),
+            comparisonKey: event.transaction
+        };
+
+        eventCopy.event_type = {
+            displayValue: <EventTypeDisplay eventType={event.event_type} />,
+            comparisonKey: event.event_type,
+        };
+
+        eventCopy.interaction = {
+            displayValue: (
+                <div className="column-stack">
+                    <Button
+                        href={"#/events/" + event.id}
+                    >Details</Button>
+                </div>)
+        };
+
+        return eventCopy;
+    });
+    return (
+        <ErrorBoundary>
+            <TableWithSort
+                rows={events}
+                headCells={eventHeadCells}
+                defaultOrder="desc"
+                defaultOrderBy="executed_at"
+                additionalShrink={60}
+            />
+        </ErrorBoundary>
+    );
+
+}
+
+EmbeddedIncomeEventList.propTypes = {
+    events: PropTypes.array.isRequired,
+    position: PropTypes.object.isRequired,
+    account: PropTypes.object.isRequired,
 };

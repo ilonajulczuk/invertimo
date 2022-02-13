@@ -168,15 +168,13 @@ export function TransactionList(props) {
         return transactionCopy;
     });
 
-
-
     return (
         <ErrorBoundary>
             <div className='header-with-buttons'>
                 <h2>Transactions</h2>
                 <div className='header-button-group'>
                     <Button
-                        href="#/transactions/realized_gains"
+                        href="#/reports/realized_gains"
                         variant="contained"
                         color="primary"
                     >
