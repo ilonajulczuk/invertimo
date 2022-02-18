@@ -32,6 +32,7 @@ export default function SplitButtonNav({ options, color }) {
     const handleMenuItemClick = (event, index) => {
         setSelectedIndex(index);
         setOpen(false);
+        history.push(options[index].link);
     };
 
     const handleToggle = () => {
@@ -47,13 +48,12 @@ export default function SplitButtonNav({ options, color }) {
 
     return (
         <React.Fragment>
-            <ButtonGroup variant="contained" color={color} ref={anchorRef} aria-label="split button">
+            <ButtonGroup variant="contained" color={color} ref={anchorRef}>
                 <Button onClick={handleClick}>{options[selectedIndex].label}</Button>
                 <Button
                     size="small"
                     aria-controls={open ? 'split-button-menu' : undefined}
                     aria-expanded={open ? 'true' : undefined}
-                    aria-label="select merge strategy"
                     aria-haspopup="menu"
                     onClick={handleToggle}
                 >
