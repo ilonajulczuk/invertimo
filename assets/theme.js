@@ -8,6 +8,7 @@ export const themeOptions = {
     palette: {
         mode: 'light',
         primary: {
+            veryLight: "rgba(27, 152, 161, 0.08)",
             light: "hsl(184deg 51% 48%)",
             main: '#1b98a1',
             dark: "hsl(184deg 61% 36%)",
@@ -16,6 +17,7 @@ export const themeOptions = {
             main: 'hsl(4deg 61% 51%)',
             dark: 'hsl(4deg 70% 42%)',
             light: 'hsl(4deg 71% 60% / 83%)',
+            veryLight: '#fcd7d585',
             contrastText: '#fff',
         },
     },
