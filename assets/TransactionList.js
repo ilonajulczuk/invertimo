@@ -194,7 +194,7 @@ export function TransactionList(props) {
                         variant="contained"
                         color="secondary"
                     >
-                        <Icon>create</Icon>
+                        <Icon>sync</Icon>
                         Import from degiro
                     </Button>
                     <Button
@@ -202,7 +202,7 @@ export function TransactionList(props) {
                         variant="contained"
                         color="secondary"
                     >
-                        <Icon>create</Icon>
+                        <Icon>sync</Icon>
                         Import from binance
                     </Button>
                 </div>

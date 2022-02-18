@@ -25,6 +25,7 @@ import { toSymbol } from './currencies.js';
 import { ErrorBoundary } from './error_utils.js';
 import { Accounts } from './Accounts.js';
 import AccountValues from './AccountValues';
+import SplitButtonNav from './components/SplitButtonNav';
 
 
 const PositionList = React.lazy(() => import('./PositionList'));
@@ -115,51 +116,23 @@ export function PortfolioOverview(props) {
             />
         );
     });
+
+    const recordOptions = [
+        { label: <><Icon>create</Icon>Record transaction</>, link: "/transactions/record" },
+        { label: <><Icon>paid</Icon>Record dividend</>, link: "/events/record_dividend" },
+        { label: <><Icon>sync_alt</Icon>Record transfer</>, link: "/events/record_transfer" }
+    ];
+    const importOptions = [
+        { label: <><Icon>sync</Icon>Import from degiro</>, link: "/transactions/import/degiro" },
+        { label: <><Icon>sync</Icon>Import from binance</>, link: "/transactions/import/binance" },
+    ];
     return (
         <div className="portfolio-overview">
             <div className="quick-actions">
                 <span className="card-label">Quick actions</span>
-                <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
-                    <Button
-                        href="#/transactions/record"
-                        variant="contained"
-                        color="secondary"
-                    >
-                        <Icon>create</Icon>
-                        Record transaction
-                    </Button>
-                    <Button
-                        href="#/transactions/import/degiro"
-                        variant="contained"
-                        color="secondary"
-                    >
-                        <Icon>create</Icon>
-                        Import from degiro
-                    </Button>
-                    <Button
-                        href="#/transactions/import/binance"
-                        variant="contained"
-                        color="secondary"
-                    >
-                        <Icon>create</Icon>
-                        Import from binance
-                    </Button>
-                    <Button
-                        href="#/events/record_dividend"
-                        variant="contained"
-                        color="secondary"
-                    >
-                        <Icon>paid</Icon>
-                        Record dividend
-                    </Button>
-                    <Button
-                        href="#/events/record_transfer"
-                        variant="contained"
-                        color="secondary"
-                    >
-                        <Icon>sync_alt</Icon>
-                        Record transfer
-                    </Button>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                    <SplitButtonNav options={recordOptions} color="secondary" />
+                    <SplitButtonNav options={importOptions} color="secondary" />
                     <Button
                         href="#/accounts"
                         variant="contained"
