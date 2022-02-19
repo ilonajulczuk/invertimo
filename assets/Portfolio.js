@@ -102,6 +102,14 @@ export function divideByAccount(accounts, positions) {
     return positionsByAccount;
 }
 
+function IconWithText({icon, text}) {
+    return <><Icon sx={{marginRight: "10px"}}>{icon}</Icon>{text}</>;
+}
+
+IconWithText.propTypes = {
+    icon: PropTypes.string.isRequired,
+    text: PropTypes.string.isRequired,
+};
 
 export function PortfolioOverview(props) {
     let accounts = props.accounts;
@@ -117,14 +125,15 @@ export function PortfolioOverview(props) {
         );
     });
 
+
     const recordOptions = [
-        { label: <><Icon>create</Icon>Record transaction</>, link: "/transactions/record" },
-        { label: <><Icon>paid</Icon>Record dividend</>, link: "/events/record_dividend" },
-        { label: <><Icon>sync_alt</Icon>Record transfer</>, link: "/events/record_transfer" }
+        { label: <IconWithText icon="create" text="Record transaction"/>, link: "/transactions/record" },
+        { label: <IconWithText icon="paid" text="Record dividend"/>, link: "/events/record_dividend" },
+        { label: <IconWithText icon="sync_alt" text="Record transfer"/>, link: "/events/record_transfer" }
     ];
     const importOptions = [
-        { label: <><Icon>sync</Icon>Import from degiro</>, link: "/transactions/import/degiro" },
-        { label: <><Icon>sync</Icon>Import from binance</>, link: "/transactions/import/binance" },
+        { label: <IconWithText icon="sync" text="Import from degiro"/>, link: "/transactions/import/degiro" },
+        { label: <IconWithText icon="sync" text="Import from binance"/>, link: "/transactions/import/binance" },
     ];
     return (
         <div className="portfolio-overview">

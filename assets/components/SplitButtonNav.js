@@ -1,6 +1,3 @@
-
-
-
 import * as React from 'react';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -81,6 +78,12 @@ export default function SplitButtonNav({ options, color }) {
                         }}>
                             <ClickAwayListener onClickAway={handleClose}>
                                 <MenuList id="split-button-menu"
+                                    sx={{
+                                        padding: 0,
+                                        "& li:last-of-type": {
+                                            paddingBottom: "12px",
+                                        }
+                                    }}
                                 >
                                     {options.map((option, index) => (
                                         <MenuItem
