@@ -125,7 +125,6 @@ export function PortfolioOverview(props) {
         );
     });
 
-
     const recordOptions = [
         { label: <IconWithText icon="create" text="Record transaction"/>, link: "/transactions/record" },
         { label: <IconWithText icon="paid" text="Record dividend"/>, link: "/events/record_dividend" },
