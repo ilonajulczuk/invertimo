@@ -458,6 +458,21 @@ class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction])
             )
         return value
 
+    def validate(self, data):
+        errors = {}
+        if data["asset_type"] == models.AssetType.CRYPTO:
+            if data["currency"] != models.Currency.USD:
+                errors[
+                    "currency"
+                ] = "Invalid currency for a crypto asset, only 'USD' is supported."
+            if data["exchange"] != stock_exchanges.OTHER_OR_NA_EXCHANGE_NAME:
+                errors[
+                    "exchange"
+                ] = "Invalid exchange for a crypto asset, only 'Other / NA' is supported."
+        if errors:
+            raise serializers.ValidationError(errors)
+        return data
+
     class Meta:
         model = Transaction
         fields = [
@@ -673,7 +688,9 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
     position = RelatedPkField(model=models.Position)
     transaction = RelatedPkField(model=models.Transaction, required=False)
     event_records = EmbeddedEventImportRecordSerializer(many=True, required=False)
-    transaction_quantity = serializers.DecimalField(max_digits=20, decimal_places=10, required=False)
+    transaction_quantity = serializers.DecimalField(
+        max_digits=20, decimal_places=10, required=False
+    )
 
     class Meta:
         model = AccountEvent

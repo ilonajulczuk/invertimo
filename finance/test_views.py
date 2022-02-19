@@ -1,19 +1,16 @@
 import datetime
 import decimal
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import TestCase
-from django.utils import timezone
-
-
-from hypothesis.extra.django import TestCase as HypothesisTestCase
 from django.urls import reverse
+from django.utils import timezone
+from hypothesis import given
+from hypothesis import strategies as st
+from hypothesis.extra.django import TestCase as HypothesisTestCase
 
-from hypothesis import given, strategies as st
-
-from finance import accounts, models, utils
-
-from finance import testing_utils
+from finance import accounts, models, testing_utils, utils, assets, stock_exchanges
 
 
 _FAKE_TRANSACTIONS = [
@@ -494,6 +491,103 @@ class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
                 "local_value": 123.56,
                 "value_in_account_currency": 123.33,
                 "total_in_account_currency": 123.33,
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+
+    @patch("finance.prices.collect_prices")
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_add_transaction_for_new_crypto_asset_tracked(self, mock, _):
+        mock.return_value = True
+        response = self.client.post(
+            reverse("transaction-add-with-custom-asset"),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "currency": "USD",
+                "exchange": "Other / NA",
+                "asset_type": "Crypto",
+                "symbol": "ETH",
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(models.Asset.objects.count(), 2)
+        self.assertTrue(models.Asset.objects.get(symbol="ETH").tracked)
+
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_add_transaction_for_new_crypto_asset_not_tracked(self, mock):
+        mock.return_value = False
+        response = self.client.post(
+            reverse("transaction-add-with-custom-asset"),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "currency": "USD",
+                "exchange": "Other / NA",
+                "asset_type": "Crypto",
+                "symbol": "DIS",
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(models.Asset.objects.count(), 2)
+        self.assertFalse(models.Asset.objects.get(symbol="DIS").tracked)
+
+    def test_add_transaction_for_crypto_asset_bad_values(self):
+        response = self.client.post(
+            reverse("transaction-add-with-custom-asset"),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "currency": "GBP",
+                "exchange": "USA stocks",
+                "asset_type": "Crypto",
+                "symbol": "ETH",
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+
+    @patch("finance.prices.collect_prices")
+    def test_add_transaction_for_known_crypto_asset(self, _):
+        symbol = "ETH"
+        na_exchange = stock_exchanges.ExchangeRepository().get_by_name(
+            stock_exchanges.OTHER_OR_NA_EXCHANGE_NAME
+        )
+        asset_repository = assets.AssetRepository(exchange=na_exchange)
+
+        asset = asset_repository.add_crypto(
+            symbol=symbol,
+        )
+
+        response = self.client.post(
+            reverse(self.VIEW_NAME),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "asset": asset.pk,
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
                 "currency": "EUR",
             },
         )
@@ -515,7 +609,6 @@ class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
                 "local_value": 123.56,
                 "value_in_account_currency": 123.33,
                 "total_in_account_currency": 123.33,
-                "currency": "EUR",
             },
         )
         self.assertEqual(response.status_code, 201)
@@ -536,7 +629,6 @@ class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
                 "local_value": 123.56,
                 "value_in_account_currency": 123.33,
                 "total_in_account_currency": 123.33,
-                "currency": "EUR",
             },
         )
         self.assertEqual(response.status_code, 400)
