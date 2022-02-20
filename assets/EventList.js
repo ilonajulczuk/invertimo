@@ -105,6 +105,14 @@ export function EventList(props) {
                         <Icon>paid</Icon>
                         Record dividend
                     </Button>
+                    <Button
+                        href="#/events/record_crypto_income"
+                        variant="contained"
+                        color="secondary"
+                    >
+                        <Icon>savings</Icon>
+                        Record crypto income
+                    </Button>
                 </div>
 
             </div>

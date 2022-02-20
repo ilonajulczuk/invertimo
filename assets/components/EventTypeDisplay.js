@@ -8,6 +8,7 @@ const useStyles = makeStyles({
     eventType: {
         display: "flex",
         alignItems: "center",
+        gap: "5px",
     }
 });
 

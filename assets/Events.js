@@ -10,6 +10,7 @@ import { EventList } from './EventList.js';
 import { EventDetail } from './EventDetail.js';
 import { RecordTransferForm } from './forms/RecordTransferForm.js';
 import { RecordDividendForm } from './forms/RecordDividendForm.js';
+import { RecordCryptoIncomeForm } from './forms/RecordCryptoIncomeForm.js';
 
 
 export function Events(props) {
@@ -35,6 +36,13 @@ export function Events(props) {
                     handleSubmit={props.handleAddEvent}
                     accounts={props.accounts} />
             </Route>
+            <Route path={`${path}/record_crypto_income`}>
+                <h2><a href="#events/">Events</a> / record crypto income</h2>
+                <RecordCryptoIncomeForm
+                    handleSubmit={props.handleAddCryptoIncomeEvent}
+                    accounts={props.accounts}
+                    defaultAssetOptions={[]} />
+            </Route>
             <Route path={`${path}/:eventId`}>
                 <EventDetail accounts={props.accounts}
                     events={props.events}
@@ -50,5 +58,6 @@ Events.propTypes = {
     events: PropTypes.array.isRequired,
     positions: PropTypes.array.isRequired,
     handleAddEvent: PropTypes.func.isRequired,
+    handleAddCryptoIncomeEvent: PropTypes.func.isRequired,
     handleDeleteEvent: PropTypes.func.isRequired,
 };

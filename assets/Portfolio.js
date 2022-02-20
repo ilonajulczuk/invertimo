@@ -453,6 +453,10 @@ export default class Portfolio extends React.Component {
                 accounts={this.state.accounts}
                 events={this.state.events} positions={this.state.positions}
                 handleAddEvent={this.handleAddEvent}
+                handleAddCryptoIncomeEvent={(data)=> {
+                    console.log("create new crypto event", data);
+                    return {ok: true};
+                }}
                 handleDeleteEvent={this.handleDeleteEvent}
             />
             );
