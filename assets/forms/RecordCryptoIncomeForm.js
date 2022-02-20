@@ -53,7 +53,6 @@ export function RecordCryptoIncomeForm(props) {
         getAssets().then(assets => {
             if (mounted) {
                 const filteredAssets = filter(assets, (asset) => asset.asset_type === "Crypto");
-                console.log(filteredAssets);
                 const uniqueAssets = uniqBy(filteredAssets, "symbol");
                 setOptions(uniqueAssets.map(asset => asset.symbol));
                 setLoading(false);
@@ -80,7 +79,7 @@ export function RecordCryptoIncomeForm(props) {
             .number()
             .positive()
             .required('Local value is required'),
-        value_account_currency: yup
+        value_in_account_currency: yup
             .number()
             .positive()
             .required('Value in account currency is required'),
@@ -105,7 +104,7 @@ export function RecordCryptoIncomeForm(props) {
         price: "",
         quantity: "",
         local_value: "",
-        value_account_currency: "",
+        value_in_account_currency: "",
         event_type: "STAKING_INTEREST",
         symbol: "",
     };
@@ -279,9 +278,9 @@ export function RecordCryptoIncomeForm(props) {
                         />
                         <FormikTextField
                             className={classes.formControl}
-                            id="value_account_currency"
+                            id="value_in_account_currency"
                             label={`Value in ${formattedAccountCurrency(values, accountsById)} (account currency)`}
-                            name="value_account_currency"
+                            name="value_in_account_currency"
                             type="number"
                             InputLabelProps={{
                                 shrink: true,

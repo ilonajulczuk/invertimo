@@ -38,6 +38,7 @@ export function Events(props) {
             </Route>
             <Route path={`${path}/record_crypto_income`}>
                 <h2><a href="#events/">Events</a> / record crypto income</h2>
+                <p>This form helps you record income you received from staking or savings interest. If you use  <a href="http://binance.com" target="blank()">Binance</a>, you can instead use automatic import <a href="#/transactions/import/binance">here</a>. </p>
                 <RecordCryptoIncomeForm
                     handleSubmit={props.handleAddCryptoIncomeEvent}
                     accounts={props.accounts}
