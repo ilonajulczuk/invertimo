@@ -148,6 +148,12 @@ def collect_prices(asset):
 
 def are_crypto_prices_available(symbol):
     try:
+        if models.PriceHistory.objects.filter(
+            asset__symbol=symbol,
+            asset__tracked=True,
+            asset__asset_type=models.AssetType.CRYPTO,
+        ).exists():
+            return True
         url = f"https://eodhistoricaldata.com/api/eod/{symbol}-USD.CC?api_token={settings.EOD_APIKEY}&order=d&fmt=json"
         r = requests.get(url)
         records = r.json()
@@ -169,7 +175,8 @@ def get_crypto_usd_price_at_date(symbol, date) -> Optional[decimal.Decimal]:
         url = (
             f"https://eodhistoricaldata.com/api/eod/{symbol}-USD.CC?"
             f"api_token={settings.EOD_APIKEY}&order=d&fmt=json&"
-            f"from={date_string}&to={date_string}")
+            f"from={date_string}&to={date_string}"
+        )
         r = requests.get(url)
         records = r.json()
         if records:

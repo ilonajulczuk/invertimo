@@ -202,14 +202,20 @@ class AccountRepository:
     ) -> models.Transaction:
 
         exchange_entity = stock_exchanges.ExchangeRepository().get_by_name(exchange)
-        asset, _ = models.Asset.objects.get_or_create(
+        tracked = False
+        if asset_type == models.AssetType.CRYPTO:
+            tracked = prices.are_crypto_prices_available(symbol)
+        asset, created = models.Asset.objects.get_or_create(
             symbol=symbol,
             exchange=exchange_entity,
             currency=currency,
             asset_type=asset_type,
-            tracked=False,
-            added_by=account.user,
+            tracked=tracked,
+            added_by=account.user if not tracked else None,
         )
+        if tracked and created:
+            prices.collect_prices(asset)
+
         position = self._get_or_create_position_for_asset(account, asset.pk)
 
         transaction, _ = self._add_transaction(
@@ -223,7 +229,7 @@ class AccountRepository:
             value_in_account_currency,
             total_in_account_currency,
             order_id,
-            custom_asset=True,
+            custom_asset=not tracked,
         )
         return transaction
 
@@ -263,7 +269,7 @@ class AccountRepository:
             value_in_account_currency,
             total_in_account_currency,
             order_id,
-            custom_asset=True,
+            custom_asset=not asset.tracked,
         )
 
     @transaction.atomic

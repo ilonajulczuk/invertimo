@@ -370,6 +370,7 @@ class TransactionSerializer(serializers.ModelSerializer[Transaction]):
             "order_id",
             "records",
             "event_records",
+            "events",
         ]
 
 
@@ -457,6 +458,21 @@ class AddTransactionNewAssetSerializer(serializers.ModelSerializer[Transaction])
                 f"There is no exchange with name: '{value}'"
             )
         return value
+
+    def validate(self, data):
+        errors = {}
+        if data["asset_type"] == models.AssetType.CRYPTO:
+            if data["currency"] != models.Currency.USD:
+                errors[
+                    "currency"
+                ] = "Invalid currency for a crypto asset, only 'USD' is supported."
+            if data["exchange"] != stock_exchanges.OTHER_OR_NA_EXCHANGE_NAME:
+                errors[
+                    "exchange"
+                ] = "Invalid exchange for a crypto asset, only 'Other / NA' is supported."
+        if errors:
+            raise serializers.ValidationError(errors)
+        return data
 
     class Meta:
         model = Transaction
@@ -673,7 +689,9 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
     position = RelatedPkField(model=models.Position)
     transaction = RelatedPkField(model=models.Transaction, required=False)
     event_records = EmbeddedEventImportRecordSerializer(many=True, required=False)
-    transaction_quantity = serializers.DecimalField(max_digits=20, decimal_places=10, required=False)
+    transaction_quantity = serializers.DecimalField(
+        max_digits=20, decimal_places=10, required=False
+    )
 
     class Meta:
         model = AccountEvent
@@ -762,7 +780,7 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
                 raise serializers.ValidationError(
                     {"amount": "Amount can't be negative unless it's a withdrawal"}
                 )
-        if data["event_type"] == models.EventType.DIVIDEND:
+        if data["event_type"] in models.EVENT_TYPES_WITH_POSITION:
             if data["position"] is None:
                 raise serializers.ValidationError(
                     {"position": "Position can't be empty for dividend event"}
@@ -772,6 +790,65 @@ class AccountEventSerializer(serializers.ModelSerializer[AccountEvent]):
                 raise serializers.ValidationError(
                     {"position": "Position can't be set for this type of event"}
                 )
+        return data
+
+
+class AddCryptoIncomeEventSerializer(serializers.ModelSerializer[AccountEvent]):
+    event_type = EventTypeField()
+    account = RelatedPkField(model=models.Account)
+
+    quantity = serializers.DecimalField(max_digits=20, decimal_places=10, min_value=0)
+    price = serializers.DecimalField(max_digits=20, decimal_places=10, min_value=0)
+
+    local_value = serializers.DecimalField(max_digits=20, decimal_places=10, min_value=0)
+    value_in_account_currency = serializers.DecimalField(
+        max_digits=20, decimal_places=10, min_value=0
+    )
+    symbol = serializers.CharField()
+
+    class Meta:
+        model = AccountEvent
+        fields = [
+            "id",
+            "event_type",
+            "account",
+            "quantity",
+            "price",
+            "local_value",
+            "value_in_account_currency",
+            "symbol",
+            "executed_at",
+        ]
+
+    def get_extra_kwargs(self):
+        kwargs = super().get_extra_kwargs()
+        kwargs["account"] = kwargs.get("account", {})
+        kwargs["account"]["queryset"] = self.get_account_queryset()
+        return kwargs
+
+    def get_account_queryset(self) -> QuerySet[models.Account]:
+        request = self.context.get("request")
+        assert isinstance(request, Request)
+        assert isinstance(request.user, User)
+        return models.Account.objects.filter(user=request.user)
+
+    def validate_account(self, value):
+        if value is None:
+            raise serializers.ValidationError(f"Account can't be empty")
+        if not models.Account.objects.filter(
+            user=self.context["request"].user, pk=value.pk
+        ).exists():
+            raise serializers.ValidationError(
+                f"User doesn't have a account with id: '{value.pk}'"
+            )
+        return value
+
+    def validate(self, data):
+        if data["event_type"] not in models.EVENT_TYPES_FOR_CRYPTO_INCOME:
+            raise serializers.ValidationError(
+                {"event_type": "Unsupported event_type specified."}
+            )
+
         return data
 
 

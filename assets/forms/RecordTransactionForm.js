@@ -365,7 +365,7 @@ export function RecordTransactionForm(props) {
                         <FormikTextField
                             className={classes.formControl}
                             id="price"
-                            label={sameCurrency ? "Price" : `Price in ${toSymbol(formikProps.values.currency)}`}
+                            label={sameCurrency(formikProps.values, accountsById) ? "Price" : `Price in ${toSymbol(formikProps.values.currency)}`}
                             name="price"
                             type="number"
                             InputLabelProps={{

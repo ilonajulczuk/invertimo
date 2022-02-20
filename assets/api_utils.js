@@ -231,6 +231,11 @@ export class APIClient {
         return postData(url, data);
     }
 
+    async addCryptoIncomeEvent(data) {
+        let url = this.baseUrl + '/account-events/add_crypto_income/';
+        return postData(url, data);
+    }
+
     async deleteEvent(eventId) {
         let url = this.baseUrl + '/account-events/' + eventId + "/";
         return deleteData(url);

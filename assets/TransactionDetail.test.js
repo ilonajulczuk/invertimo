@@ -59,9 +59,11 @@ describe('transaction detail tests', () => {
                     "tracked": true,
                     "exchange": {
                         name: "USA Stocks"
-                    }
+                    },
+                    "asset_type": "Stock",
                 },
             },
+            events: [],
             records: [
                 {
                     "id": 342,

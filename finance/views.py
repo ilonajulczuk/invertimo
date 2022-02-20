@@ -2,57 +2,35 @@ import datetime
 from typing import Any, Dict, Type, Union
 
 from django.contrib.auth.models import User
-from django.db.models import Count, OuterRef, Q, QuerySet, Subquery, F
+from django.db.models import Count, F, OuterRef, Q, QuerySet, Subquery
 from django.shortcuts import get_object_or_404
-from rest_framework import (
-    exceptions,
-    generics,
-    mixins,
-    permissions,
-    serializers,
-    status,
-    viewsets,
-)
+from rest_framework import (exceptions, generics, mixins, permissions,
+                            serializers, status, viewsets)
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 
 from finance import accounts, gains, models
-from finance.integrations import degiro_parser
-from finance.integrations import binance_parser
-
-from finance.models import (
-    AccountEvent,
-    Asset,
-    CurrencyExchangeRate,
-    IntegrationType,
-    Lot,
-    Position,
-    PriceHistory,
-    Transaction,
-    TransactionImport,
-)
-from finance.serializers import (
-    AccountEditSerializer,
-    AccountEventSerializer,
-    AccountSerializer,
-    AccountWithValuesSerializer,
-    AddTransactionKnownAssetSerializer,
-    AddTransactionNewAssetSerializer,
-    AssetPriceHistorySerializer,
-    AssetSerializer,
-    CorrectTransactionSerializer,
-    CurrencyExchangeRateSerializer,
-    CurrencyQuerySerializer,
-    DegiroUploadSerializer,
-    FromToDatesSerializer,
-    LotSerializer,
-    PositionSerializer,
-    PositionWithQuantitiesSerializer,
-    TransactionImportSerializer,
-    TransactionSerializer,
-    BinanceUploadSerializer,
-)
+from finance.integrations import binance_parser, degiro_parser
+from finance.models import (AccountEvent, Asset, CurrencyExchangeRate,
+                            IntegrationType, Lot, Position, PriceHistory,
+                            Transaction, TransactionImport)
+from finance.serializers import (AccountEditSerializer, AccountEventSerializer,
+                                 AccountSerializer,
+                                 AccountWithValuesSerializer,
+                                 AddCryptoIncomeEventSerializer,
+                                 AddTransactionKnownAssetSerializer,
+                                 AddTransactionNewAssetSerializer,
+                                 AssetPriceHistorySerializer, AssetSerializer,
+                                 BinanceUploadSerializer,
+                                 CorrectTransactionSerializer,
+                                 CurrencyExchangeRateSerializer,
+                                 CurrencyQuerySerializer,
+                                 DegiroUploadSerializer, FromToDatesSerializer,
+                                 LotSerializer, PositionSerializer,
+                                 PositionWithQuantitiesSerializer,
+                                 TransactionImportSerializer,
+                                 TransactionSerializer)
 
 
 class AccountsViewSet(viewsets.ModelViewSet):
@@ -283,6 +261,7 @@ class TransactionsViewSet(viewsets.ModelViewSet):
             .select_related("position__asset__exchange")
             .prefetch_related("records__transaction_import")
             .prefetch_related("records")
+            .prefetch_related("events")
             .prefetch_related("event_records")
             .prefetch_related("event_records__event")
             .prefetch_related("event_records__transaction_import")
@@ -376,8 +355,9 @@ class TransactionsViewSet(viewsets.ModelViewSet):
                 }
             )
         except accounts.CantModifyTransactionWithEvent:
-            raise serializers.ValidationError("Can't delete a transaction associated with an event, without deleting the event first.")
-
+            raise serializers.ValidationError(
+                "Can't delete a transaction associated with an event, without deleting the event first."
+            )
 
     def perform_update(self, serializer):
         account_repository = accounts.AccountRepository()
@@ -392,7 +372,9 @@ class TransactionsViewSet(viewsets.ModelViewSet):
                 }
             )
         except accounts.CantModifyTransactionWithEvent:
-            raise serializers.ValidationError("Can't update a transaction associated with an event, without deleting the event first.")
+            raise serializers.ValidationError(
+                "Can't update a transaction associated with an event, without deleting the event first."
+            )
 
 
 class AccountEventViewSet(
@@ -421,6 +403,18 @@ class AccountEventViewSet(
             .prefetch_related("event_records__transaction_import")
         )
 
+    def get_serializer_class(
+        self,
+    ) -> Type[
+        Union[
+            AccountEventSerializer,
+            AddCryptoIncomeEventSerializer
+        ]
+    ]:
+        if self.action == "add_crypto_income":
+            return AddCryptoIncomeEventSerializer
+        return AccountEventSerializer
+
     def get_serializer_context(self) -> Dict[str, Any]:
         context: Dict[str, Any] = super().get_serializer_context()
         context["request"] = self.request
@@ -434,7 +428,31 @@ class AccountEventViewSet(
         assert isinstance(self.request.user, User)
         account_repository = accounts.AccountRepository()
         arguments = serializer.validated_data.copy()
+        if arguments["event_type"] in models.EVENT_TYPES_FOR_CRYPTO_INCOME:
+            raise serializers.ValidationError(
+                {
+                    "event_type": "Crypto income events not supported in this API endpoint, '/add_crypto_event' instead"
+                }
+            )
         account_repository.add_event(**arguments)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
+
+    @action(detail=False, methods=["post"])
+    def add_crypto_income(self, request):
+        serializer = self.get_serializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        assert isinstance(self.request.user, User)
+        account_repository = accounts.AccountRepository()
+        arguments = serializer.validated_data.copy()
+        arguments["local_value"] = -arguments["local_value"]
+        arguments["value_in_account_currency"] = -arguments["value_in_account_currency"]
+        account_repository.add_crypto_income_event(**arguments)
+
         headers = self.get_success_headers(serializer.data)
         return Response(
             serializer.data, status=status.HTTP_201_CREATED, headers=headers
@@ -458,7 +476,7 @@ class AssetViewSet(
     def get_queryset(self) -> QuerySet[Asset]:
         assert isinstance(self.request.user, User)
         user = self.request.user
-        return Asset.objects.filter(Q(added_by=None) | Q(added_by=user)).select_related(
+        return Asset.objects.filter(Q(added_by=None, tracked=True) | Q(added_by=user)).select_related(
             "exchange"
         )
 
@@ -491,7 +509,9 @@ class DegiroUploadViewSet(
 
     def get_queryset(self) -> QuerySet[models.TransactionImport]:
         assert isinstance(self.request.user, User)
-        queryset = models.TransactionImport.objects.filter(account__user=self.request.user, integration=IntegrationType.DEGIRO)
+        queryset = models.TransactionImport.objects.filter(
+            account__user=self.request.user, integration=IntegrationType.DEGIRO
+        )
         return queryset
 
     def get_serializer_class(
@@ -529,7 +549,9 @@ class DegiroUploadViewSet(
             )
         try:
             transaction_import = degiro_parser.import_transactions_from_file(
-                account, arguments["transaction_file"], import_all_assets=arguments["import_all_assets"]
+                account,
+                arguments["transaction_file"],
+                import_all_assets=arguments["import_all_assets"],
             )
         except degiro_parser.CurrencyMismatch as e:
             return Response(
@@ -540,10 +562,10 @@ class DegiroUploadViewSet(
                 status=status.HTTP_400_BAD_REQUEST, data={"transaction_file": e.args[0]}
             )
 
-        serializer = TransactionImportSerializer(instance=transaction_import, context=self.get_serializer_context())
-        return Response(
-            status=status.HTTP_201_CREATED, data=serializer.data
+        serializer = TransactionImportSerializer(
+            instance=transaction_import, context=self.get_serializer_context()
         )
+        return Response(status=status.HTTP_201_CREATED, data=serializer.data)
 
 
 class BinanceUploadViewSet(
@@ -556,7 +578,9 @@ class BinanceUploadViewSet(
 
     def get_queryset(self) -> QuerySet[models.TransactionImport]:
         assert isinstance(self.request.user, User)
-        queryset = models.TransactionImport.objects.filter(account__user=self.request.user, integration=IntegrationType.BINANCE_CSV)
+        queryset = models.TransactionImport.objects.filter(
+            account__user=self.request.user, integration=IntegrationType.BINANCE_CSV
+        )
         return queryset
 
     def get_serializer_class(
@@ -601,10 +625,10 @@ class BinanceUploadViewSet(
                 status=status.HTTP_400_BAD_REQUEST, data={"transaction_file": e.args[0]}
             )
 
-        serializer = TransactionImportSerializer(instance=transaction_import, context=self.get_serializer_context())
-        return Response(
-            status=status.HTTP_201_CREATED, data=serializer.data
+        serializer = TransactionImportSerializer(
+            instance=transaction_import, context=self.get_serializer_context()
         )
+        return Response(status=status.HTTP_201_CREATED, data=serializer.data)
 
 
 class TransactionImportViewSet(
@@ -619,6 +643,9 @@ class TransactionImportViewSet(
 
     def get_queryset(self) -> QuerySet[models.TransactionImport]:
         assert isinstance(self.request.user, User)
-        queryset = models.TransactionImport.objects.filter(
-            account__user=self.request.user).prefetch_related("event_records__event").prefetch_related("records")
+        queryset = (
+            models.TransactionImport.objects.filter(account__user=self.request.user)
+            .prefetch_related("event_records__event")
+            .prefetch_related("records")
+        )
         return queryset

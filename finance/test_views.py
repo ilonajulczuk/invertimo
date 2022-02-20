@@ -1,19 +1,16 @@
 import datetime
 import decimal
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import TestCase
-from django.utils import timezone
-
-
-from hypothesis.extra.django import TestCase as HypothesisTestCase
 from django.urls import reverse
+from django.utils import timezone
+from hypothesis import given
+from hypothesis import strategies as st
+from hypothesis.extra.django import TestCase as HypothesisTestCase
 
-from hypothesis import given, strategies as st
-
-from finance import accounts, models, utils
-
-from finance import testing_utils
+from finance import accounts, models, testing_utils, utils, assets, stock_exchanges
 
 
 _FAKE_TRANSACTIONS = [
@@ -494,6 +491,103 @@ class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
                 "local_value": 123.56,
                 "value_in_account_currency": 123.33,
                 "total_in_account_currency": 123.33,
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+
+    @patch("finance.prices.collect_prices")
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_add_transaction_for_new_crypto_asset_tracked(self, mock, _):
+        mock.return_value = True
+        response = self.client.post(
+            reverse("transaction-add-with-custom-asset"),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "currency": "USD",
+                "exchange": "Other / NA",
+                "asset_type": "Crypto",
+                "symbol": "ETH",
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(models.Asset.objects.count(), 2)
+        self.assertTrue(models.Asset.objects.get(symbol="ETH").tracked)
+
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_add_transaction_for_new_crypto_asset_not_tracked(self, mock):
+        mock.return_value = False
+        response = self.client.post(
+            reverse("transaction-add-with-custom-asset"),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "currency": "USD",
+                "exchange": "Other / NA",
+                "asset_type": "Crypto",
+                "symbol": "DIS",
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(models.Asset.objects.count(), 2)
+        self.assertFalse(models.Asset.objects.get(symbol="DIS").tracked)
+
+    def test_add_transaction_for_crypto_asset_bad_values(self):
+        response = self.client.post(
+            reverse("transaction-add-with-custom-asset"),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "currency": "GBP",
+                "exchange": "USA stocks",
+                "asset_type": "Crypto",
+                "symbol": "ETH",
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+
+    @patch("finance.prices.collect_prices")
+    def test_add_transaction_for_known_crypto_asset(self, _):
+        symbol = "ETH"
+        na_exchange = stock_exchanges.ExchangeRepository().get_by_name(
+            stock_exchanges.OTHER_OR_NA_EXCHANGE_NAME
+        )
+        asset_repository = assets.AssetRepository(exchange=na_exchange)
+
+        asset = asset_repository.add_crypto(
+            symbol=symbol,
+        )
+
+        response = self.client.post(
+            reverse(self.VIEW_NAME),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "asset": asset.pk,
+                "quantity": 10,
+                "price": 3.15,
+                "transaction_costs": 0,
+                "local_value": 123.56,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
                 "currency": "EUR",
             },
         )
@@ -515,7 +609,6 @@ class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
                 "local_value": 123.56,
                 "value_in_account_currency": 123.33,
                 "total_in_account_currency": 123.33,
-                "currency": "EUR",
             },
         )
         self.assertEqual(response.status_code, 201)
@@ -536,7 +629,6 @@ class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
                 "local_value": 123.56,
                 "value_in_account_currency": 123.33,
                 "total_in_account_currency": 123.33,
-                "currency": "EUR",
             },
         )
         self.assertEqual(response.status_code, 400)
@@ -762,7 +854,10 @@ class TestTransactionDetailView(testing_utils.ViewTestBase, TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
-            response.json(), ["Can't delete a transaction associated with an event, without deleting the event first."]
+            response.json(),
+            [
+                "Can't delete a transaction associated with an event, without deleting the event first."
+            ],
         )
         self.assertEqual(models.Transaction.objects.count(), 9)
 
@@ -884,6 +979,42 @@ class TestAccountEventListView(testing_utils.ViewTestBase, TestCase):
         self.account.refresh_from_db()
         self.assertEqual(self.account.balance, 345.5)
 
+    def test_add_crypto_event_blocked(self):
+        # Test for position being set correctly.
+        self.account.refresh_from_db()
+        for transaction in _FAKE_TRANSACTIONS:
+            _add_transaction(
+                self.account,
+                self.isin,
+                self.exchange,
+                transaction[0],
+                transaction[1],
+                transaction[2],
+            )
+
+        self.assertEqual(self.account.balance, 354)
+
+        # If dividend was paid in a different currency than the account currency
+        # we will need to convert currencies and for that we need to have some exchange
+        # rates.
+        models.CurrencyExchangeRate.objects.create(
+            from_currency=models.Currency.USD,
+            to_currency=models.Currency.EUR,
+            date=datetime.date.fromisoformat("2021-05-03"),
+            value=0.84,
+        )
+        position = models.Position.objects.first()
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "amount": 4.5,
+            "event_type": "STAKING_INTERST",
+            "account": self.account.pk,
+            "position": position.pk,
+            "withheld_taxes": 0.2,
+        }
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 400)
+
     def test_add_dividend(self):
         # Test for position being set correctly.
         self.account.refresh_from_db()
@@ -958,6 +1089,57 @@ class TestAccountEventListView(testing_utils.ViewTestBase, TestCase):
         response = self.client.post(self.get_url(), data)
         self.assertEqual(response.status_code, 400)
         self.assertTrue("amount" in response.json())
+
+    @patch("finance.prices.collect_prices")
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_add_crypto_income(self, mock, _):
+        mock.return_value = True
+        self.account.refresh_from_db()
+        url = reverse("account-event-add-crypto-income")
+        self.assertEqual(self.account.balance, decimal.Decimal("350"))
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "event_type": "STAKING_INTEREST",
+            "account": self.account.pk,
+            "quantity": "20",
+            "price": "0.23483",
+            "local_value": "4.5656",
+            "value_in_account_currency": "4.5381",
+            "symbol": "DOGE",
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+
+        self.account.refresh_from_db()
+        # Staking shouldn't change account balance to change at all.
+        self.assertEqual(self.account.balance, decimal.Decimal("350"))
+        # But now we should get a new asset and a new transaction.
+        self.assertEqual(models.Asset.objects.filter(symbol="DOGE").count(), 1)
+        self.assertEqual(models.Transaction.objects.count(), 1)
+
+        data["quantity"] = "12"
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(models.Asset.objects.filter(symbol="DOGE").count(), 1)
+        self.assertEqual(models.Transaction.objects.count(), 2)
+
+        self.account.refresh_from_db()
+        # Staking shouldn't change account balance to change at all.
+        self.assertEqual(self.account.balance, decimal.Decimal("350"))
+        # Now let's test for some invalid inputs.
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "event_type": "STAKING_INTEREST",
+            "account": self.account.pk,
+            "quantity": "20",
+            "price": "-0.23483",
+            "local_value": "4.5656",
+            "value_in_account_currency": "4.5381",
+            "symbol": "DOGE",
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue("price" in response.json())
 
 
 class TestAccountEventDetailView(testing_utils.ViewTestBase, TestCase):

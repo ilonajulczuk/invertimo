@@ -63,14 +63,17 @@ export default function SplitButtonNav({ options, color }) {
                 role={undefined}
                 transition
                 disablePortal
-                placement="bottom-start"
+                placement="bottom-end"
+                style={{
+                    zIndex: 100,
+                }}
             >
                 {({ TransitionProps, placement }) => (
                     <Grow
                         {...TransitionProps}
                         style={{
                             transformOrigin:
-                                placement === 'bottom' ? 'left top' : 'left bottom',
+                                placement === 'bottom-end' ? 'right top' : 'right bottom',
                         }}
                     >
                         <Paper sx={{

@@ -137,13 +137,8 @@ class Asset(models.Model):
         related_name="custom_assets",
     )
 
-    # TODO:
-    # Add constraint that ISIN / NAME and exchange are unique for given added_by.
-    # Multiple users can add an asset "My house" for no exchange. Or "AAAPL" on USA stocks
-    # and its fine.
-    # Used to be:
-    # class Meta:
-    #     unique_together = [["isin", "exchange"]]
+    class Meta:
+        unique_together = [["isin", "symbol", "exchange", "added_by"]]
 
     def __str__(self):
         exchange_name = self.exchange.name if self.exchange else "Other / NA"
@@ -401,8 +396,16 @@ class EventType(models.IntegerChoices):
     # Another could be split or merge.
 
 
-_POSITION_REQUIRED_EVENT_TYPES = (EventType.DIVIDEND,)
+EVENT_TYPES_WITH_POSITION = (
+    EventType.DIVIDEND,
+    EventType.STAKING_INTEREST,
+    EventType.SAVINGS_INTEREST,
+)
 
+EVENT_TYPES_FOR_CRYPTO_INCOME = (
+    EventType.STAKING_INTEREST,
+    EventType.SAVINGS_INTEREST,
+)
 
 def event_type_enum_from_string(event_type: str) -> EventType:
     try:
@@ -447,7 +450,7 @@ class AccountEvent(models.Model):
     withheld_taxes = models.DecimalField(max_digits=20, decimal_places=10, default=0)
 
     def clean(self):
-        if self.event_type in _POSITION_REQUIRED_EVENT_TYPES:
+        if self.event_type in EVENT_TYPES_WITH_POSITION:
             if not self.position:
                 raise ValidationError(f"Position is required for: {self.event_type}")
         else:

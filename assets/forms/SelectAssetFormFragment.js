@@ -37,7 +37,7 @@ export function SelectAssetFormFragment(props) {
   const [loading, setLoading] = React.useState(true);
   const [options, setOptions] = React.useState(props.defaultAssetOptions);
 
-  const smallScreen  = useMediaQuery('(max-width:500px)');
+  const smallScreen = useMediaQuery('(max-width:500px)');
   useEffect(() => {
     let mounted = true;
     getAssets().then(assets => {
@@ -84,6 +84,10 @@ export function SelectAssetFormFragment(props) {
       value: "Fund",
       label: "Fund",
     },
+    {
+      value: "Crypto",
+      label: "Crypto",
+    },
   ];
 
   const exchangeOptions = ["USA Stocks", "XETRA Exchange", "London Exchange", "Borsa Italiana", "Other / NA"].map(name => ({
@@ -108,6 +112,11 @@ export function SelectAssetFormFragment(props) {
       label: "GBX",
     },
   ];
+
+  const cryptoDisclaimer = <div style={{
+    marginTop: "14px",
+    marginBottom: "8px",
+  }}>⚠️ Crypto assets have a default USD currency and are not tied to any exchange.</div >;
 
   return (
     <>
@@ -193,8 +202,17 @@ export function SelectAssetFormFragment(props) {
           options={assetTypeOptions}
           className={classes.mediumInput}
           disabled={otherFieldsDisabled}
+          onChange={(event) => {
+            const newValue = event.target.value;
+            formik.setFieldValue("assetType", newValue);
+            if (newValue == "Crypto") {
+              formik.setFieldValue("exchange", "Other / NA");
+              formik.setFieldValue("currency", "USD");
+            }
+          }}
         />
       </div>
+      {formik.values.assetType === "Crypto" ? cryptoDisclaimer : null}
 
       <div className={classes.inputs}>
         <FormikSelectField
@@ -204,7 +222,7 @@ export function SelectAssetFormFragment(props) {
           labelId="exchange-label"
           options={exchangeOptions}
           className={classes.mediumInput}
-          disabled={otherFieldsDisabled}
+          disabled={otherFieldsDisabled || formik.values.assetType == "Crypto"}
         />
 
         <FormikSelectField
@@ -215,7 +233,7 @@ export function SelectAssetFormFragment(props) {
           data-testid="currency"
           options={currencyOptions}
           className={classes.mediumInput}
-          disabled={otherFieldsDisabled}
+          disabled={otherFieldsDisabled || formik.values.assetType == "Crypto"}
         />
       </div>
 

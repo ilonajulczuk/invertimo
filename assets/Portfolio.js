@@ -125,11 +125,12 @@ export function PortfolioOverview(props) {
         );
     });
 
-
     const recordOptions = [
         { label: <IconWithText icon="create" text="Record transaction"/>, link: "/transactions/record" },
         { label: <IconWithText icon="paid" text="Record dividend"/>, link: "/events/record_dividend" },
-        { label: <IconWithText icon="sync_alt" text="Record transfer"/>, link: "/events/record_transfer" }
+        { label: <IconWithText icon="sync_alt" text="Record transfer"/>, link: "/events/record_transfer" },
+        { label: <IconWithText icon="savings" text="Record crypto income"/>, link: "/events/record_crypto_income" },
+
     ];
     const importOptions = [
         { label: <IconWithText icon="sync" text="Import from degiro"/>, link: "/transactions/import/degiro" },
@@ -198,6 +199,7 @@ export default class Portfolio extends React.Component {
         this.handleDeleteTransaction = this.handleDeleteTransaction.bind(this);
         this.handleCorrectTransaction = this.handleCorrectTransaction.bind(this);
         this.handleAddEvent = this.handleAddEvent.bind(this);
+        this.handleAddCryptoIncomeEvent = this.handleAddCryptoIncomeEvent.bind(this);
         this.handleDeleteEvent = this.handleDeleteEvent.bind(this);
         this.handleDeleteAccount = this.handleDeleteAccount.bind(this);
         this.handleUploadDegiroTransactions = this.handleUploadDegiroTransactions.bind(this);
@@ -289,11 +291,18 @@ export default class Portfolio extends React.Component {
             alert(error);
             return null;
         }
-
     }
 
     async handleAddEvent(data) {
         let result = await this.apiClient.addEvent(data);
+        if (result.ok) {
+            this.refreshFromServer();
+        }
+        return result;
+    }
+
+    async handleAddCryptoIncomeEvent(data) {
+        let result = await this.apiClient.addCryptoIncomeEvent(data);
         if (result.ok) {
             this.refreshFromServer();
         }
@@ -454,6 +463,7 @@ export default class Portfolio extends React.Component {
                 accounts={this.state.accounts}
                 events={this.state.events} positions={this.state.positions}
                 handleAddEvent={this.handleAddEvent}
+                handleAddCryptoIncomeEvent={this.handleAddCryptoIncomeEvent}
                 handleDeleteEvent={this.handleDeleteEvent}
             />
             );

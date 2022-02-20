@@ -174,6 +174,8 @@ export function TransactionDetail(props) {
                     <a href={`#accounts/${account.id}`}> {account.nickname}</a>
 
                     {transaction.order_id ? ` with order id: #${transaction.order_id}` : ""}
+                    {transaction.events.length ? <a href={"#/events/" + transaction.events[0]}> (related event)</a> : null}
+
                 </p>
                 {transaction.records.length ? <h3>Transaction import records</h3> : ""}
                 {importRecords}
@@ -234,6 +236,7 @@ TransactionDetail.propTypes = {
         transaction_costs: PropTypes.string,
         executed_at: PropTypes.string.isRequired,
         position: PropTypes.object.isRequired,
+        events: PropTypes.array.isRequired,
     })).isRequired,
     handleDeleteTransaction: PropTypes.func.isRequired,
     handleCorrectTransaction: PropTypes.func.isRequired,
