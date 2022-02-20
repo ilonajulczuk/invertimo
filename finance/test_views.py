@@ -854,7 +854,10 @@ class TestTransactionDetailView(testing_utils.ViewTestBase, TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
-            response.json(), ["Can't delete a transaction associated with an event, without deleting the event first."]
+            response.json(),
+            [
+                "Can't delete a transaction associated with an event, without deleting the event first."
+            ],
         )
         self.assertEqual(models.Transaction.objects.count(), 9)
 
@@ -1012,7 +1015,6 @@ class TestAccountEventListView(testing_utils.ViewTestBase, TestCase):
         response = self.client.post(self.get_url(), data)
         self.assertEqual(response.status_code, 400)
 
-
     def test_add_dividend(self):
         # Test for position being set correctly.
         self.account.refresh_from_db()
@@ -1087,6 +1089,57 @@ class TestAccountEventListView(testing_utils.ViewTestBase, TestCase):
         response = self.client.post(self.get_url(), data)
         self.assertEqual(response.status_code, 400)
         self.assertTrue("amount" in response.json())
+
+    @patch("finance.prices.collect_prices")
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_add_crypto_income(self, mock, _):
+        mock.return_value = True
+        self.account.refresh_from_db()
+        url = reverse("account-event-add-crypto-income")
+        self.assertEqual(self.account.balance, decimal.Decimal("350"))
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "event_type": "STAKING_INTEREST",
+            "account": self.account.pk,
+            "quantity": "20",
+            "price": "0.23483",
+            "local_value": "4.5656",
+            "value_in_account_currency": "4.5381",
+            "symbol": "DOGE",
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+
+        self.account.refresh_from_db()
+        # Staking shouldn't change account balance to change at all.
+        self.assertEqual(self.account.balance, decimal.Decimal("350"))
+        # But now we should get a new asset and a new transaction.
+        self.assertEqual(models.Asset.objects.filter(symbol="DOGE").count(), 1)
+        self.assertEqual(models.Transaction.objects.count(), 1)
+
+        data["quantity"] = "12"
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(models.Asset.objects.filter(symbol="DOGE").count(), 1)
+        self.assertEqual(models.Transaction.objects.count(), 2)
+
+        self.account.refresh_from_db()
+        # Staking shouldn't change account balance to change at all.
+        self.assertEqual(self.account.balance, decimal.Decimal("350"))
+        # Now let's test for some invalid inputs.
+        data = {
+            "executed_at": "2021-03-04T00:00:00Z",
+            "event_type": "STAKING_INTEREST",
+            "account": self.account.pk,
+            "quantity": "20",
+            "price": "-0.23483",
+            "local_value": "4.5656",
+            "value_in_account_currency": "4.5381",
+            "symbol": "DOGE",
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue("price" in response.json())
 
 
 class TestAccountEventDetailView(testing_utils.ViewTestBase, TestCase):

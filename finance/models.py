@@ -137,13 +137,8 @@ class Asset(models.Model):
         related_name="custom_assets",
     )
 
-    # TODO:
-    # Add constraint that ISIN / NAME and exchange are unique for given added_by.
-    # Multiple users can add an asset "My house" for no exchange. Or "AAAPL" on USA stocks
-    # and its fine.
-    # Used to be:
-    # class Meta:
-    #     unique_together = [["isin", "exchange"]]
+    class Meta:
+        unique_together = [["isin", "symbol", "exchange", "added_by"]]
 
     def __str__(self):
         exchange_name = self.exchange.name if self.exchange else "Other / NA"
