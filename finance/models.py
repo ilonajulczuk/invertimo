@@ -401,8 +401,16 @@ class EventType(models.IntegerChoices):
     # Another could be split or merge.
 
 
-_POSITION_REQUIRED_EVENT_TYPES = (EventType.DIVIDEND,)
+EVENT_TYPES_WITH_POSITION = (
+    EventType.DIVIDEND,
+    EventType.STAKING_INTEREST,
+    EventType.SAVINGS_INTEREST,
+)
 
+EVENT_TYPES_FOR_CRYPTO_INCOME = (
+    EventType.STAKING_INTEREST,
+    EventType.SAVINGS_INTEREST,
+)
 
 def event_type_enum_from_string(event_type: str) -> EventType:
     try:
@@ -447,7 +455,7 @@ class AccountEvent(models.Model):
     withheld_taxes = models.DecimalField(max_digits=20, decimal_places=10, default=0)
 
     def clean(self):
-        if self.event_type in _POSITION_REQUIRED_EVENT_TYPES:
+        if self.event_type in EVENT_TYPES_WITH_POSITION:
             if not self.position:
                 raise ValidationError(f"Position is required for: {self.event_type}")
         else:
