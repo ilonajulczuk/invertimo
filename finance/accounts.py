@@ -269,7 +269,7 @@ class AccountRepository:
             value_in_account_currency,
             total_in_account_currency,
             order_id,
-            custom_asset=True,
+            custom_asset=not asset.tracked,
         )
 
     @transaction.atomic

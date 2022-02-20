@@ -476,7 +476,7 @@ class AssetViewSet(
     def get_queryset(self) -> QuerySet[Asset]:
         assert isinstance(self.request.user, User)
         user = self.request.user
-        return Asset.objects.filter(Q(added_by=None) | Q(added_by=user)).select_related(
+        return Asset.objects.filter(Q(added_by=None, tracked=True) | Q(added_by=user)).select_related(
             "exchange"
         )
 
