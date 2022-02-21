@@ -99,7 +99,7 @@ export function RecordCryptoIncomeForm(props) {
     });
 
     const initialValues = {
-        executed_at: new Date(),
+        executed_at: props.executedAtDate || new Date(),
         account: props.accounts[0].id,
         price: "",
         quantity: "",
@@ -319,4 +319,5 @@ RecordCryptoIncomeForm.propTypes = {
         })
     ).isRequired,
     defaultAssetOptions: PropTypes.array.isRequired,
+    executedAtDate: PropTypes.instanceOf(Date),
 };
