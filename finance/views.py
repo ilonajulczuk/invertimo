@@ -434,10 +434,12 @@ class AccountEventViewSet(
                     "event_type": "Crypto income events not supported in this API endpoint, '/add_crypto_event' instead"
                 }
             )
-        account_repository.add_event(**arguments)
+        event, _ = account_repository.add_event(**arguments)
         headers = self.get_success_headers(serializer.data)
+        data = serializer.data
+        data["id"] = event.id
         return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+            data, status=status.HTTP_201_CREATED, headers=headers
         )
 
     @action(detail=False, methods=["post"])
@@ -451,11 +453,12 @@ class AccountEventViewSet(
         arguments = serializer.validated_data.copy()
         arguments["local_value"] = -arguments["local_value"]
         arguments["value_in_account_currency"] = -arguments["value_in_account_currency"]
-        account_repository.add_crypto_income_event(**arguments)
-
+        event, _ = account_repository.add_crypto_income_event(**arguments)
         headers = self.get_success_headers(serializer.data)
+        data = serializer.data
+        data["id"] = event.id
         return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+            data, status=status.HTTP_201_CREATED, headers=headers
         )
 
     def perform_destroy(self, instance):

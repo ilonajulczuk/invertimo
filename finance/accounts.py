@@ -349,13 +349,15 @@ class AccountRepository:
                         f"{position_currency} and {account_currency}"
                     )
                 balance_change *= exchange_rate.value
-        elif event.event_type in (models.EventType.STAKING_INTEREST, models.EventType.SAVINGS_INTEREST):
-            self.delete_transaction(event.transaction)
-
         account.balance -= balance_change
 
         account.save()
+        transaction = event.transaction
+
         event.delete()
+
+        if transaction:
+            self.delete_transaction(transaction)
 
     def _get_or_create_position(
         self,
