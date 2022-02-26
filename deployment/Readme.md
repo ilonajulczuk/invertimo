@@ -17,7 +17,7 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --force-recrea
 
 This needs to be run to initialize db:
 
-```
+```shell
 docker exec invertimo_web_1 sh -c "/usr/src/venv/bin/python3.8 manage.py migrate"
 
 docker exec invertimo_web_1 sh -c "/usr/src/venv/bin/python3.8 manage.py loaddata finance/fixtures/exchanges.json"
@@ -27,6 +27,11 @@ docker exec staginginvertimocom_web_1 sh -c "/usr/src/venv/bin/python3.8 manage.
 docker exec staginginvertimocom_web_1 sh -c p
 ```
 
+Run tests within container:
+
+```shell
+docker exec -i invertimo_web_1  sh -c "/usr/src/venv/bin/python3.8 manage.py test"
+```
 
 ## Secrets (passwords, API keys, etc)
 

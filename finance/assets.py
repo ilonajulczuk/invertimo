@@ -1,4 +1,4 @@
-from finance import models, prices
+from finance import models, prices, tasks
 from django.contrib.auth.models import User
 
 
@@ -42,7 +42,7 @@ class AssetRepository:
         )
         asset.full_clean()
         if tracked and created:
-            prices.collect_prices(asset)
+            tasks.collect_prices.delay(asset.pk)
         return asset
 
     def get_crypto(self, symbol):

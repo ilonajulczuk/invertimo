@@ -211,3 +211,8 @@ CORS_ALLOWED_ORIGINS = [
 
 # https://eodhistoricaldata.com/ API KEY.
 EOD_APIKEY = os.environ.get("EOD_APIKEY", None)
+
+
+# Asynchronous tasks config.
+CELERY_BROKER_URL = "redis://redis:6379"
+CELERY_RESULT_BACKEND = "redis://redis:6379"

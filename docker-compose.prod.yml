@@ -8,6 +8,10 @@ services:
     env_file:
       - deployment/secrets/postgres.prod.env
 
+  redis:
+    volumes:
+      - ./data/redis_prod:/data
+
   web:
     env_file:
       - deployment/secrets/invertimo.prod.env
@@ -17,3 +21,14 @@ services:
       - "8000:8000"
     depends_on:
       - db
+
+  celery:
+    env_file:
+      - deployment/secrets/invertimo.prod.env
+    volumes:
+      - .:/usr/src/app
+  celery-beat:
+    env_file:
+      - deployment/secrets/invertimo.prod.env
+    volumes:
+      - .:/usr/src/app

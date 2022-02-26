@@ -64,3 +64,21 @@ npx webpack-bundle-analyzer stats.json static
 ## Running locally with docker
 
 See deployment/Readme.md for more info.
+
+
+## Updating python dependencies
+
+This project uses [pip-compile](https://github.com/jazzband/pip-tools#example-usage-for-pip-compile). Example workflow, e.g. adding a new package `celery`.
+
+```shell
+$ pip install celery
+...
+$ pip freeze | grep celery
+celery==5.2.3
+```
+
+Add the celery to the `requirements.in` and then recompile `requirements.txt`.
+
+```shell
+$ pip-compile > requirements.txt
+```

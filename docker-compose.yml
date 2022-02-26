@@ -10,3 +10,20 @@ services:
       - "8000:8000"
     depends_on:
       - db
+      - redis
+  redis:
+    image: redis:alpine
+
+  celery:
+    build: .
+    command: /usr/src/venv/bin/celery -A invertimo worker -l info
+    depends_on:
+      - db
+      - redis
+
+  celery-beat:
+    build: .
+    command: /usr/src/venv/bin/celery -A invertimo beat -l info
+    depends_on:
+      - db
+      - redis

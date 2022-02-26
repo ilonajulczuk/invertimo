@@ -8,6 +8,10 @@ services:
     env_file:
       - deployment/secrets/postgres.dev.env
 
+  redis:
+    volumes:
+      - ./data/redis:/data
+
   web:
     build: .
     command: /usr/src/app/deployment/app/docker_entrypoint.dev.sh
@@ -19,3 +23,13 @@ services:
       - "8000:8000"
     depends_on:
       - db
+  celery:
+    env_file:
+      - deployment/secrets/invertimo.dev.env
+    volumes:
+      - .:/usr/src/app
+  celery-beat:
+    env_file:
+      - deployment/secrets/invertimo.dev.env
+    volumes:
+      - .:/usr/src/app
