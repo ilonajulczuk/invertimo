@@ -3,6 +3,7 @@ import { VictoryStack, VictoryLine, VictoryGroup, VictoryScatter, VictoryChart, 
 import { findClosestValue } from '../timeseries_utils.js';
 import PropTypes from 'prop-types';
 import { generateColors } from '../colors.js';
+import { to2DecimalPlacesOr4SignificantDigits } from '../forms/utils.js';
 
 
 export class AreaChartWithCursor extends React.Component {
@@ -20,7 +21,7 @@ export class AreaChartWithCursor extends React.Component {
                     cursorLabel={({ datum }) => {
                         let y = findClosestValue(datum.x, this.props.dataset);
                         let labelSuffix = this.props.labelSuffix ? this.props.labelSuffix : '';
-                        return `${datum.x.toLocaleDateString()}, ${Math.round(y)}${labelSuffix}`;
+                        return `${datum.x.toLocaleDateString()}, ${to2DecimalPlacesOr4SignificantDigits(y)}${labelSuffix}`;
                     }}
                     stanadlone={true}
                     cursorDimension="x"
@@ -144,7 +145,7 @@ export class LineChartWithCursor extends React.Component {
                     cursorLabel={({ datum }) => {
                         let y = findClosestValue(datum.x, this.props.dataset);
                         let labelSuffix = this.props.labelSuffix ? this.props.labelSuffix : '';
-                        return `${datum.x.toLocaleDateString()}, ${Math.round(y)}${labelSuffix}`;
+                        return `${datum.x.toLocaleDateString()}, ${to2DecimalPlacesOr4SignificantDigits(y)}${labelSuffix}`;
                     }}
                     stanadlone={true}
                     cursorDimension="x"

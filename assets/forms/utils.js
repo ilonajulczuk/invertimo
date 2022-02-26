@@ -29,3 +29,17 @@ export function roundDecimal(num) {
 export function sumAsDecimals(arrayOfStrings) {
     return reduce(arrayOfStrings, (sum, val) => sum.plus(new Decimal(val)), new Decimal('0'));
 }
+
+export function to2DecimalPlacesOr4SignificantDigits(number) {
+    let value = new Decimal(number);
+    if (value.abs().comparedTo(new Decimal(1)) < 0) {
+        Decimal.set({
+            toExpNeg: -8,
+        });
+        return value.toSignificantDigits(4).toString();
+    } else {
+        value = value.mul(100).round().div(100);
+        return value.toString();
+    }
+
+}
