@@ -41,8 +41,6 @@ class AssetRepository:
             added_by=user if not tracked else None,
         )
         asset.full_clean()
-        if tracked and created:
-            tasks.collect_prices.delay(asset.pk)
         return asset
 
     def get_crypto(self, symbol):

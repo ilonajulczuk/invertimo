@@ -150,7 +150,9 @@ class Asset(models.Model):
 
     def clean(self):
         if not self.tracked and self.added_by is None:
-            raise ValidationError("Non tracked assets need to be associated with some user.")
+            raise ValidationError(
+                "Non tracked assets need to be associated with some user."
+            )
 
     class Meta:
         ordering = ["-id", "symbol"]
@@ -410,6 +412,7 @@ EVENT_TYPES_FOR_CRYPTO_INCOME = (
     EventType.STAKING_INTEREST,
     EventType.SAVINGS_INTEREST,
 )
+
 
 def event_type_enum_from_string(event_type: str) -> EventType:
     try:

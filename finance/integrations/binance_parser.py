@@ -9,7 +9,7 @@ from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 from collections import defaultdict
 
-from finance import accounts, models
+from finance import accounts, tasks, models
 from finance.gains import SoldBeforeBought
 from finance.integrations.degiro_parser import CurrencyMismatch
 from finance import prices
@@ -61,7 +61,10 @@ SUPPORTED_FIAT = (
 # TODO: consider renaming to import history?
 def import_transactions_from_file(account, filename_or_file):
     try:
-        return _import_history_from_file(account, filename_or_file)
+        transaction_import, assets = _import_history_from_file(account, filename_or_file)
+        for asset in assets:
+            tasks.collect_prices.delay(asset.pk)
+        return transaction_import
     except Exception as e:
         models.TransactionImport.objects.create(
             integration=models.IntegrationType.BINANCE_CSV,
@@ -155,6 +158,7 @@ def _import_history_from_file(account, filename_or_file):
         status=status,
         account=account,
     )
+    assets = []
     for entry in failed_records:
         models.TransactionImportRecord.objects.create(
             transaction_import=transaction_import,
@@ -181,6 +185,7 @@ def _import_history_from_file(account, filename_or_file):
             transaction=entry["transaction"],
             created_new=entry["created"],
         )
+        assets.append(entry["transaction"].position.asset)
 
     for entry in transfers_successful_records:
         models.EventImportRecord.objects.create(
@@ -200,8 +205,9 @@ def _import_history_from_file(account, filename_or_file):
             event=entry["event"],
             created_new=entry["created"],
         )
+        assets.append(entry["transaction"].position.asset)
 
-    return transaction_import
+    return transaction_import, assets
 
 
 def to_decimal(pd_f, precision=10) -> decimal.Decimal:
