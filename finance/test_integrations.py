@@ -532,10 +532,11 @@ class TestBinanceParser(TestCase):
         transaction_import = models.TransactionImport.objects.last()
         self.assertEqual(transaction_import.event_records.count(), 9)
 
+    @patch("finance.prices.collect_prices")
     @patch("finance.prices.get_crypto_usd_price_at_date")
     @patch("finance.prices.are_crypto_prices_available")
-    def test_importing_binance_data_usd_transacions(self, mock, crypto_price_mock):
-        mock.return_value = False
+    def test_importing_binance_data_usd_transacions(self, mock, crypto_price_mock, _):
+        mock.return_value = True
         crypto_price_mock.return_value = decimal.Decimal("100")
 
         account_balance = decimal.Decimal("-392.64000")
@@ -560,6 +561,15 @@ class TestBinanceParser(TestCase):
 
         # 2 in the new account, 30 from the old fixture.
         self.assertEqual(models.Position.objects.count(), 32)
+        self.assertEqual(
+            models.Asset.objects.filter(tracked=False, added_by=None).count(), 0
+        )
+        self.assertEqual(
+            models.Asset.objects.filter(
+                asset_type=models.AssetType.CRYPTO, tracked=True, added_by=None
+            ).count(),
+            2,
+        )
 
         eth = models.Asset.objects.get(name="ETH")
         self.assertEqual(eth.exchange.name, "Other / NA")
@@ -614,7 +624,15 @@ class TestBinanceParser(TestCase):
         failed_records = transaction_import.records.filter(successful=False)
         self.assertEqual(failed_records.count(), 0)
         self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
-
+        self.assertEqual(
+            models.Asset.objects.filter(tracked=False, added_by=None).count(), 0
+        )
+        self.assertEqual(
+            models.Asset.objects.filter(
+                tracked=False, added_by=User.objects.all()[0]
+            ).count(),
+            2,
+        )
         failed_event_records = transaction_import.event_records.filter(successful=False)
         self.assertEqual(failed_event_records.count(), 5)
         self.assertEqual(

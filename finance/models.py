@@ -110,7 +110,7 @@ class AssetType(models.IntegerChoices):
 
 
 class Asset(models.Model):
-    isin = models.CharField(max_length=30)
+    isin = models.CharField(max_length=30, blank=True)
     symbol = models.CharField(max_length=30)
     name = models.CharField(max_length=200)
     exchange = models.ForeignKey(
@@ -122,7 +122,7 @@ class Asset(models.Model):
         blank=True,
     )
     currency = models.IntegerField(choices=Currency.choices, null=True)
-    country = models.CharField(max_length=200, null=True)
+    country = models.CharField(max_length=200, null=True, blank=True)
 
     asset_type = models.IntegerField(choices=AssetType.choices, default=AssetType.STOCK)
 
@@ -147,6 +147,10 @@ class Asset(models.Model):
             f"{self.isin}, symbol: {self.symbol}, name: {self.name}, "
             f"currency: {self.get_currency_display()}, country: {self.country}>"
         )
+
+    def clean(self):
+        if not self.tracked and self.added_by is None:
+            raise ValidationError("Non tracked assets need to be associated with some user.")
 
     class Meta:
         ordering = ["-id", "symbol"]

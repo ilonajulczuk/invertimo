@@ -252,9 +252,9 @@ class AccountRepository:
             stock_exchanges.OTHER_OR_NA_EXCHANGE_NAME
         )
         asset_repository = assets.AssetRepository(exchange=na_exchange)
-
+        user = account.user
         asset = asset_repository.add_crypto(
-            symbol=symbol,
+            symbol=symbol, user=user,
         )
         position = self._get_or_create_position_for_asset(account, asset.pk)
 
@@ -373,7 +373,7 @@ class AccountRepository:
         if positions:
             return positions[0]
         asset = stock_exchanges.get_or_create_asset(
-            isin, exchange, asset_defaults, add_untracked_if_not_found=import_all_assets
+            isin, exchange, asset_defaults, add_untracked_if_not_found=import_all_assets, user=account.user,
         )
         if asset:
             return models.Position.objects.create(account=account, asset=asset)

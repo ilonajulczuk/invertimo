@@ -574,6 +574,7 @@ class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
 
         asset = asset_repository.add_crypto(
             symbol=symbol,
+            user=self.user,
         )
 
         response = self.client.post(

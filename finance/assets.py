@@ -1,4 +1,5 @@
 from finance import models, prices
+from django.contrib.auth.models import User
 
 
 class AssetRepository:
@@ -11,8 +12,8 @@ class AssetRepository:
             return assets[0]
 
     def add(
-        self, isin: str, symbol: str, currency: models.Currency, country: str, name: str, tracked: bool
-    ):
+        self, isin: str, symbol: str, currency: models.Currency, country: str, name: str, tracked: bool, user: User
+    ) -> models.Asset:
         asset, _ = models.Asset.objects.get_or_create(
             exchange=self.exchange,
             isin=isin,
@@ -21,10 +22,12 @@ class AssetRepository:
             country=country,
             name=name,
             tracked=tracked,
+            added_by=user,
         )
+        asset.full_clean()
         return asset
 
-    def add_crypto(self, symbol):
+    def add_crypto(self, symbol : str, user: User) -> models.Asset:
         # The exchange here should be Other / NA exchange as crypto assets are not tied to
         # particular exchanges.
         tracked = prices.are_crypto_prices_available(symbol)
@@ -35,7 +38,9 @@ class AssetRepository:
             exchange=self.exchange,
             asset_type=models.AssetType.CRYPTO,
             currency=models.Currency.USD,
+            added_by=user if not tracked else None,
         )
+        asset.full_clean()
         if tracked and created:
             prices.collect_prices(asset)
         return asset

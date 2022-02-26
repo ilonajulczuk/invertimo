@@ -81,7 +81,7 @@ def query_exchanges() -> Any:
     response = requests.get(URL)
     return response.json()
 
-def get_or_create_asset(isin: str, exchange: models.Exchange, asset_defaults, add_untracked_if_not_found=True):
+def get_or_create_asset(isin: str, exchange: models.Exchange, asset_defaults, add_untracked_if_not_found, user):
     repository = AssetRepository(exchange)
     asset = repository.get(isin)
     if asset:
@@ -99,6 +99,7 @@ def get_or_create_asset(isin: str, exchange: models.Exchange, asset_defaults, ad
                 country=record["Country"],
                 name=record["Name"],
                 tracked=True,
+                user=user,
             )
             print("created asset")
             return asset
@@ -114,6 +115,7 @@ def get_or_create_asset(isin: str, exchange: models.Exchange, asset_defaults, ad
                     country=record["Country"],
                     name=record["Name"],
                     tracked=False,
+                    user=user,
                 )
 
                 return asset
@@ -128,6 +130,7 @@ def get_or_create_asset(isin: str, exchange: models.Exchange, asset_defaults, ad
                     country="Unknown",
                     name=asset_defaults["name"],
                     tracked=False,
+                    user=user,
                 )
                 return asset
             print(f"failed to find stock data (there were assets but no exchange match) for isin: {isin}, exchange: {exchange}, exchange_code: {exchange_code}")
