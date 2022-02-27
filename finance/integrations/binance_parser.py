@@ -63,7 +63,8 @@ def import_transactions_from_file(account, filename_or_file):
     try:
         transaction_import, assets = _import_history_from_file(account, filename_or_file)
         for asset in assets:
-            tasks.collect_prices.delay(asset.pk)
+            if asset.tracked:
+                tasks.collect_prices.delay(asset.pk)
         return transaction_import
     except Exception as e:
         models.TransactionImport.objects.create(

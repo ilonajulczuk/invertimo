@@ -456,7 +456,8 @@ class AccountEventViewSet(
         arguments["value_in_account_currency"] = -arguments["value_in_account_currency"]
         event, _ = account_repository.add_crypto_income_event(**arguments)
         asset = event.transaction.position.asset
-        tasks.collect_prices.delay(asset.pk)
+        if asset.tracked:
+            tasks.collect_prices.delay(asset.pk)
         headers = self.get_success_headers(serializer.data)
         data = serializer.data
         data["id"] = event.id
