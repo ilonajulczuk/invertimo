@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from pathlib import Path
 from typing import List
+from celery.schedules import crontab
 
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -220,6 +221,16 @@ EOD_APIKEY = os.environ.get("EOD_APIKEY", None)
 # Asynchronous tasks config.
 CELERY_BROKER_URL = "redis://redis:6379"
 CELERY_RESULT_BACKEND = "redis://redis:6379"
+
+
+CELERY_BEAT_SCHEDULE = {
+    "fetch_prices": {
+        "task": "finance.tasks.fetch_prices",
+        # Execute daily at 6 am.
+        # Reference: https://docs.celeryproject.org/en/stable/userguide/periodic-tasks.html
+        "schedule": crontab(minute="0", hour=6),
+    },
+}
 
 SENTRY_DSN = os.environ.get("SENTRY_DSN", None)
 if SENTRY_DSN:

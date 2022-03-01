@@ -11,6 +11,8 @@ services:
     depends_on:
       - db
       - redis
+    restart: always
+
   redis:
     image: redis:alpine
 
@@ -20,6 +22,7 @@ services:
     depends_on:
       - db
       - redis
+    restart: always
 
   celery-beat:
     build: .
@@ -27,3 +30,4 @@ services:
     depends_on:
       - db
       - redis
+    restart: always

@@ -969,7 +969,7 @@ class TestAccountEventListView(testing_utils.ViewTestBase, TestCase):
         self.assertEqual(self.account.balance, 345.5)
 
     def test_add_crypto_event_blocked(self):
-        # Test for position being set correctly.
+        # This handler shouldn't be used for crypto events.
         self.account.refresh_from_db()
         for transaction in _FAKE_TRANSACTIONS:
             _add_transaction(
@@ -982,16 +982,6 @@ class TestAccountEventListView(testing_utils.ViewTestBase, TestCase):
             )
 
         self.assertEqual(self.account.balance, 354)
-
-        # If dividend was paid in a different currency than the account currency
-        # we will need to convert currencies and for that we need to have some exchange
-        # rates.
-        models.CurrencyExchangeRate.objects.create(
-            from_currency=models.Currency.USD,
-            to_currency=models.Currency.EUR,
-            date=datetime.date.fromisoformat("2021-05-03"),
-            value=0.84,
-        )
         position = models.Position.objects.first()
         data = {
             "executed_at": "2021-03-04T00:00:00Z",
