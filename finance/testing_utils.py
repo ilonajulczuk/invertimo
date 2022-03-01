@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.urls import reverse
+from unittest import mock
 
 
 class ViewTestBase:
@@ -20,6 +21,10 @@ class ViewTestBase:
     def setUp(self):
         self.user = User.objects.create(username="testuser", email="test@example.com")
         self.client.force_login(self.user)
+
+        patcher = mock.patch("finance.tasks.collect_prices")
+        self.addCleanup(patcher.stop)
+        self.collect_prices_mock = patcher.start()
 
     def get_url(self):
         return self.URL

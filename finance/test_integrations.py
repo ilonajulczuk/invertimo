@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.db.models import Sum
 from django.test import TestCase
 
-from finance import models, prices, testing_utils, utils
+from finance import models, prices, testing_utils, utils, tasks
 from finance.integrations import binance_parser, degiro_parser
 
 
@@ -360,6 +360,12 @@ class TestBinanceParser(TestCase):
     # and sets up a single account for testing.
     fixtures = ["exchanges_postgres.json"]
 
+    def setUp(self):
+        patcher = patch("finance.tasks.collect_prices")
+        self.real_collect_prices = tasks.collect_prices
+        self.addCleanup(patcher.stop)
+        self.collect_prices_mock = patcher.start()
+
     @patch("finance.prices.get_crypto_usd_price_at_date")
     @patch("finance.prices.are_crypto_prices_available")
     def test_importing_binance_data(self, mock, crypto_price_mock):
@@ -584,6 +590,9 @@ class TestBinanceParser(TestCase):
             Sum("total_in_account_currency")
         )["total_in_account_currency__sum"]
         self.assertAlmostEqual(total_value, expected_total_value)
+
+        for args in self.collect_prices_mock.delay.call_args_list:
+            self.real_collect_prices.run(*args[0])
 
         # Import the same transactions again and make
         # sure that they aren't double recorded.
