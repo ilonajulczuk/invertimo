@@ -29,11 +29,9 @@ export function SelectAssetFormFragment(props) {
   const formik = props.formik;
   const classes = useStyles();
 
-  // TODO: move up, so that resetting the form (e.g. after submission)
-  // also resets the disabled state.
   const [openFill, toggleOpenFill] = React.useState(false);
   const [otherFieldsDisabled, toggleDisable] = React.useState(props.fixedValue);
-
+  const [diff, setDiff] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [options, setOptions] = React.useState(props.defaultAssetOptions);
 
@@ -50,8 +48,13 @@ export function SelectAssetFormFragment(props) {
     return () => mounted = false;
   }, [props.defaultAssetOptions]);
 
-  const handleFill = () => {
-    const newValue = formik.values.symbol;
+  const handleFill = ({ value }) => {
+    let newValue;
+    if (value) {
+      newValue = value;
+    } else {
+      newValue = formik.values.symbol;
+    }
     formik.setFieldValue('currency', newValue.currency);
     // TODO: support more than one asset type.
     formik.setFieldValue('assetType', newValue.asset_type);
@@ -142,7 +145,37 @@ export function SelectAssetFormFragment(props) {
                   return;
                 }
                 formik.setFieldValue('symbol', newValue);
-                toggleOpenFill(true);
+                const assetFieldsTouched = formik.touched["assetType"] || formik.touched["currency"] || formik.touched["exchange"];
+                if (assetFieldsTouched) {
+                  let newDiff = [];
+                  if (formik.values["assetType"] !== newValue.asset_type) {
+                    newDiff.push({
+                      label: "Asset type",
+                      current: formik.values["assetType"],
+                      "new": newValue.asset_type,
+                    });
+                  }
+                  if (formik.values["currency"] !== newValue.currency) {
+                    newDiff.push({
+                      label: "Currency",
+                      current: formik.values["currency"],
+                      "new": newValue.currency,
+                    });
+                  }
+                  if (formik.values["exchange"] !== newValue.exchange.name) {
+                    newDiff.push({
+                      label: "Exchange",
+                      current: formik.values["exchange"],
+                      "new": newValue.exchange.name,
+                    });
+                  }
+                  if (newDiff.length > 0) {
+                    setDiff(newDiff);
+                    toggleOpenFill(true);
+                    return;
+                  }
+                }
+                handleFill({ value: newValue });
               } else {
                 toggleDisable(false);
                 formik.setFieldValue('symbol', '');
@@ -169,7 +202,7 @@ export function SelectAssetFormFragment(props) {
             if (option.newOption) {
               return option.newOption;
             }
-            return `${option.symbol} - ${option.name} - ${option.isin} (#${option.id})`;
+            return `${option.symbol} ${option.name != option.symbol && option.name ?  "- " +option.name : ""} - ${option.isin || option.asset_type} (#${option.id})`;
           }}
           selectOnFocus
           clearOnBlur
@@ -236,28 +269,7 @@ export function SelectAssetFormFragment(props) {
           disabled={otherFieldsDisabled || formik.values.assetType == "Crypto"}
         />
       </div>
-
-      <Dialog
-        open={openFill}
-        onClose={handleSkip}
-        aria-labelledby="asset-confirmation-dialog-title"
-        aria-describedby="asset-confirmation-dialog-description"
-      >
-        <DialogTitle id="asset-confirmation-dialog-title">{"Fill in other asset fields?"}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="asset-confirmation-dialog-description">
-            The values might be overriden.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleSkip} color="secondary">
-            Skip
-          </Button>
-          <Button onClick={handleFill} color="primary" autoFocus>
-            Fill the fields
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <OverrideFieldsDialog open={openFill} onClose={handleSkip} onAccept={handleFill} diff={diff} />
 
       <Dialog
         open={openNotTracked}
@@ -288,3 +300,52 @@ SelectAssetFormFragment.propTypes = {
   value: PropTypes.object,
 };
 
+
+function OverrideFieldsDialog({ open, onClose, onAccept, diff }) {
+
+  const differences = diff.map(entry => <li key={entry.label}>
+    {entry.label}: {"\"" + entry.current + "\""} ➡️ {"\"" + entry.new + "\""}</li>);
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      aria-labelledby="asset-confirmation-dialog-title"
+      aria-describedby="asset-confirmation-dialog-description"
+    >
+      <DialogTitle id="asset-confirmation-dialog-title">{"Override asset fields?"}</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="asset-confirmation-dialog-description">
+          The following fields will be overridden:
+
+        </DialogContentText>
+        <ul style={{
+          listStyle: "unset",
+          marginLeft: "20px",
+          marginTop: "10px",
+          color: "rgba(0, 0, 0, 0.6)",
+        }}>
+          {differences}
+        </ul>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="secondary">
+          Skip
+        </Button>
+        <Button onClick={onAccept} color="primary" autoFocus>
+          Override
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+OverrideFieldsDialog.propTypes = {
+   open: PropTypes.bool.isRequired,
+   onClose: PropTypes.func.isRequired,
+   onAccept: PropTypes.func.isRequired,
+   diff: PropTypes.arrayOf(PropTypes.shape({
+     label: PropTypes.string.isRequired,
+     current: PropTypes.string.isRequired,
+     new: PropTypes.string.isRequired,
+   })).isRequired,
+};
