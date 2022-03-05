@@ -1,6 +1,10 @@
 import React from 'react';
 
 import Button from '@mui/material/Button';
+
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+
 import PropTypes from 'prop-types';
 import { FormikDateField, FormikTextField, FormikSelectField, FormikRadioField } from './muiformik.js';
 
@@ -100,16 +104,44 @@ function ValueBlock(props) {
     if (props.sameCurrency) {
         return null;
     }
+    let exchangeRateBlock = null;
+    if (props.price && props.quantity && props.exchangeRates) {
+        const rate = props.exchangeRates.get(props.date);
+        if (rate) {
+            const value = Math.round(props.price * props.quantity * rate * 100) / 100;
+            exchangeRateBlock =
+                <Alert severity="info" variant="outlined" style={{
+                    marginBottom: "8px",
+                }}>
+                    <AlertTitle>Currency converted value</AlertTitle>
+                    <p>Based on exchange rate equal to {rate} value would
+                        be {value} {props.formattedAccountCurrency}
+                    </p>
+                    <p>
+                        <Button variant="contained" onClick={() => {
+                            props.setComputedValue(value);
+                        }
+                        }>Use</Button>
+                    </p>
+                    <p>Feel free to use the exact value instead if you have one.</p>
+
+                </Alert>;
+
+
+        }
+    }
     return (
         <>
             <h4>Value</h4>
-            <div className={props.classes.inputs}>
+            <div className={props.classes.inputs} style={{ flexDirection: "column" }}>
+                {exchangeRateBlock}
                 <FormikTextField
                     id="totalValueAccountCurrency"
                     label={`Total value in ${props.formattedAccountCurrency}`}
                     name="totalValueAccountCurrency"
                     type="number"
                     className={props.classes.formControl}
+                    formHelperText={"Price x quantity x currency exchange rate"}
                     InputLabelProps={{
                         shrink: true,
                     }}
@@ -123,6 +155,11 @@ ValueBlock.propTypes = {
     sameCurrency: PropTypes.bool.isRequired,
     classes: PropTypes.object.isRequired,
     formattedAccountCurrency: PropTypes.string.isRequired,
+    date: PropTypes.instanceOf(Date).isRequired,
+    quantity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    price: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    exchangeRates: PropTypes.instanceOf(Map),
+    setComputedValue: PropTypes.func.isRequired,
 };
 
 
@@ -254,7 +291,6 @@ export function RecordTransactionForm(props) {
             }),
         fees: yup
             .number()
-            .positive()
             .required('Fees are required')
             .test('has-2-or-less-places', "Only up to ten decimal places are allowed",
                 matchNumberUpToTenDecimalPlaces),
@@ -331,8 +367,8 @@ export function RecordTransactionForm(props) {
                     <div className={classes.inputs}>
 
                         <FormikRadioField
-                        name="tradeType"
-                        options={tradeTypeOptions}
+                            name="tradeType"
+                            options={tradeTypeOptions}
                         />
 
                     </div>
@@ -376,7 +412,13 @@ export function RecordTransactionForm(props) {
 
                     <ValueBlock classes={classes}
                         formattedAccountCurrency={formattedAccountCurrency(formikProps.values, accountsById)}
-                        sameCurrency={sameCurrency(formikProps.values, accountsById)} />
+                        sameCurrency={sameCurrency(formikProps.values, accountsById)}
+                        quantity={formikProps.values.quantity}
+                        price={formikProps.values.price}
+                        exchangeRates={new Map()}
+                        setComputedValue={(val) => formikProps.setFieldValue("totalValueAccountCurrency", val)}
+                        date={formikProps.values.executedAt}
+                    />
 
                     <TotalCostBlock classes={classes}
                         formikProps={formikProps}

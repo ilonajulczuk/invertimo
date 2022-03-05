@@ -119,7 +119,7 @@ export function SelectAssetFormFragment(props) {
   const cryptoDisclaimer = <div style={{
     marginTop: "14px",
     marginBottom: "8px",
-  }}>⚠️ Crypto assets have a default USD currency and are not tied to any exchange.</div >;
+  }}>ℹ️ Crypto assets have a default USD currency and are not tied to any exchange.</div >;
 
   return (
     <>
