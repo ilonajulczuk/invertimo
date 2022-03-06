@@ -59,7 +59,8 @@ jest.mock("../api_utils", () => {
     // The form will send a request for assets.
     // Let's return it our default asset Options for simplicity.
     return {
-        getAssets: jest.fn(async () => assetOptions)
+        getAssets: jest.fn(async () => assetOptions),
+        getCurrencyExchangeRates: jest.fn(async() => [{value: 0.89}]),
     };
 });
 

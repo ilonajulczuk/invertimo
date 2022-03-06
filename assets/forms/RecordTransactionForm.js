@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import Button from '@mui/material/Button';
 
@@ -16,6 +16,8 @@ import { currencyValues, toSymbol } from '../currencies.js';
 import { SelectAssetFormFragment } from './SelectAssetFormFragment.js';
 import { Snackbar } from '../components/Snackbar.js';
 import { matchNumberUpToTenDecimalPlaces } from './utils.js';
+import { getCurrencyExchangeRates } from '../api_utils.js';
+import isValid from 'date-fns/isValid';
 
 
 function formTransactionToAPITransaction(formData) {
@@ -100,13 +102,32 @@ function apiTransactionResponseToErrors(apiResponse) {
     return response;
 }
 
+
 function ValueBlock(props) {
+    const [rate, setRate] = React.useState(null);
+    useEffect(() => {
+        setRate(null);
+        let mounted = true;
+        if (isValid(new Date(props.date))) {
+            const datestr = props.date.toISOString().slice(0, 10);
+            getCurrencyExchangeRates(props.assetCurrency, props.accountCurrency, datestr, datestr).then(rates => {
+                if (mounted) {
+                    if (rates.length > 0) {
+                        setRate(Number(rates[0].value));
+                    }
+                }
+            });
+        }
+
+        return () => mounted = false;
+    }, [props.accountCurrency, props.assetCurrency, props.date]);
+
     if (props.sameCurrency) {
         return null;
     }
+
     let exchangeRateBlock = null;
-    if (props.price && props.quantity && props.exchangeRates) {
-        const rate = props.exchangeRates.get(props.date);
+    if (props.price && props.quantity && rate) {
         if (rate) {
             const value = Math.round(props.price * props.quantity * rate * 100) / 100;
             exchangeRateBlock =
@@ -126,8 +147,6 @@ function ValueBlock(props) {
                     <p>Feel free to use the exact value instead if you have one.</p>
 
                 </Alert>;
-
-
         }
     }
     return (
@@ -158,8 +177,9 @@ ValueBlock.propTypes = {
     date: PropTypes.instanceOf(Date).isRequired,
     quantity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     price: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    exchangeRates: PropTypes.instanceOf(Map),
     setComputedValue: PropTypes.func.isRequired,
+    assetCurrency: PropTypes.string.isRequired,
+    accountCurrency: PropTypes.string.isRequired,
 };
 
 
@@ -238,6 +258,7 @@ export function RecordTransactionForm(props) {
 
         snackbarSetOpen(false);
     };
+
     const sameCurrency = (values, accountsById) => {
         return accountsById.get(values.account).currency == values.currency;
     };
@@ -312,7 +333,7 @@ export function RecordTransactionForm(props) {
         quantity: "",
         totalCostAccountCurrency: "",
         totalValueAccountCurrency: "",
-        fees: "",
+        fees: 0,
     };
 
     const onSubmit = async (values, { setErrors, resetForm }) => {
@@ -415,9 +436,10 @@ export function RecordTransactionForm(props) {
                         sameCurrency={sameCurrency(formikProps.values, accountsById)}
                         quantity={formikProps.values.quantity}
                         price={formikProps.values.price}
-                        exchangeRates={new Map()}
                         setComputedValue={(val) => formikProps.setFieldValue("totalValueAccountCurrency", val)}
                         date={formikProps.values.executedAt}
+                        accountCurrency={accountsById.get(formikProps.values.account).currency}
+                        assetCurrency={formikProps.values.currency}
                     />
 
                     <TotalCostBlock classes={classes}
