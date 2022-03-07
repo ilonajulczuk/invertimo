@@ -20,9 +20,28 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useStyles } from './styles.js';
 import { getAssets } from '../api_utils.js';
 import PropTypes from 'prop-types';
+import { toSymbol } from '../currencies.js';
 
 
 const filter = createFilterOptions();
+
+
+function formatAssetOption(option) {
+  let description = `${option.symbol} ${option.name != option.symbol && option.name ?  "- " +option.name : ""}`;
+  description += ` - ${option.isin || option.asset_type}`;
+
+  if (option.asset_type !== "Crypto") {
+    description += ` ${toSymbol(option.currency)}`;
+  }
+
+  if (option.exchange.name !== "Other / NA") {
+    description += ` (${option.exchange.name})`;
+  }
+
+  description += ` (#${option.id})`;
+  return description;
+}
+
 
 export function SelectAssetFormFragment(props) {
 
@@ -202,7 +221,7 @@ export function SelectAssetFormFragment(props) {
             if (option.newOption) {
               return option.newOption;
             }
-            return `${option.symbol} ${option.name != option.symbol && option.name ?  "- " +option.name : ""} - ${option.isin || option.asset_type} (#${option.id})`;
+            return formatAssetOption(option);
           }}
           selectOnFocus
           clearOnBlur
