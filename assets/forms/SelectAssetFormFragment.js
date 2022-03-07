@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import TextField from '@mui/material/TextField';
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 
-import { CircularProgress } from '@mui/material';
+import { CircularProgress, LinearProgress } from '@mui/material';
 
 import { FormikSelectField } from './muiformik.js';
 
@@ -25,9 +25,39 @@ import { toSymbol } from '../currencies.js';
 
 const filter = createFilterOptions();
 
+const assetSearchResult = [
+  {
+    "id": 346,
+    "isin": "",
+    "symbol": "BOL",
+    "name": "",
+    "exchange": {
+      "id": 132,
+      "name": "USA Stocks"
+    },
+    "currency": "EUR",
+    "country": null,
+    "asset_type": "Stock",
+    "tracked": false
+  },
+  {
+    "id": 340,
+    "isin": "",
+    "symbol": "BOL",
+    "name": "BOL",
+    "exchange": {
+      "id": 197,
+      "name": "Other / NA"
+    },
+    "currency": "USD",
+    "country": null,
+    "asset_type": "Crypto",
+    "tracked": true
+  },
+];
 
 function formatAssetOption(option) {
-  let description = `${option.symbol} ${option.name != option.symbol && option.name ?  "- " +option.name : ""}`;
+  let description = `${option.symbol} ${option.name != option.symbol && option.name ? " - " + option.name : ""}`;
   description += ` - ${option.isin || option.asset_type}`;
 
   if (option.asset_type !== "Crypto") {
@@ -53,6 +83,7 @@ export function SelectAssetFormFragment(props) {
   const [diff, setDiff] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [options, setOptions] = React.useState(props.defaultAssetOptions);
+  const [newAssetOptions, setNewAssetOptions] = React.useState(null);
 
   const smallScreen = useMediaQuery('(max-width:500px)');
   useEffect(() => {
@@ -94,6 +125,11 @@ export function SelectAssetFormFragment(props) {
 
   const handleCloseNotTracked = () => {
     toggleDisable(false);
+    toggleOpenNotTracked(false);
+  };
+
+  const handleSelectAsset = (asset) => {
+    formik.setFieldValue("symbol", asset);
     toggleOpenNotTracked(false);
   };
 
@@ -159,7 +195,18 @@ export function SelectAssetFormFragment(props) {
               if (newValue != null) {
                 if (newValue.newOption) {
                   formik.setFieldValue('symbol', newValue.inputValue);
-
+                  setNewAssetOptions(null);
+                  setTimeout(() => {
+                    const newOptions = [...options];
+                    for (const asset of assetSearchResult) {
+                      if (!newOptions.includes(asset)) {
+                        newOptions.push(asset);
+                      }
+                    }
+                    setOptions(newOptions);
+                    setNewAssetOptions(assetSearchResult);
+                  }
+                    , 2000);
                   toggleOpenNotTracked(true);
                   return;
                 }
@@ -289,26 +336,15 @@ export function SelectAssetFormFragment(props) {
         />
       </div>
       <OverrideFieldsDialog open={openFill} onClose={handleSkip} onAccept={handleFill} diff={diff} />
-
-      <Dialog
+      <NewAssetDialog
         open={openNotTracked}
         onClose={handleCloseNotTracked}
-        aria-labelledby="asset-confirmation-dialog-title"
-        aria-describedby="asset-confirmation-dialog-description"
-      >
-        <DialogTitle id="asset-confirmation-dialog-title">{"This asset price won't be automatically updated"}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="asset-confirmation-dialog-description">
-            We don&apos;t have this asset in our database and we will not be able to fetch and update its price automatically.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseNotTracked} color="primary" autoFocus>
-            Ok
-          </Button>
-        </DialogActions>
-      </Dialog>
+        symbol={formik.values.symbol}
+        newAssetOptions={newAssetOptions}
+        handleSelectAsset={handleSelectAsset}
+      />
     </>
+
   );
 }
 
@@ -359,12 +395,143 @@ function OverrideFieldsDialog({ open, onClose, onAccept, diff }) {
 }
 
 OverrideFieldsDialog.propTypes = {
-   open: PropTypes.bool.isRequired,
-   onClose: PropTypes.func.isRequired,
-   onAccept: PropTypes.func.isRequired,
-   diff: PropTypes.arrayOf(PropTypes.shape({
-     label: PropTypes.string.isRequired,
-     current: PropTypes.string.isRequired,
-     new: PropTypes.string.isRequired,
-   })).isRequired,
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onAccept: PropTypes.func.isRequired,
+  diff: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    current: PropTypes.string.isRequired,
+    new: PropTypes.string.isRequired,
+  })).isRequired,
+};
+
+
+function NewAssetDialog(props) {
+  const symbol = props.symbol.symbol ? props.symbol.symbol : "'" + props.symbol + "'";
+  if (props.newAssetOptions === null || props.newAssetOptions === undefined) {
+    // Still fetching.
+    return (<Dialog
+      open={props.open}
+      onClose={props.onClose}
+      aria-labelledby="asset-confirmation-dialog-title"
+      aria-describedby="asset-confirmation-dialog-description"
+    >
+      <DialogTitle id="asset-confirmation-dialog-title">
+        Looking up assets with {symbol} in their symbol, name or ISIN</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="asset-confirmation-dialog-description">
+          Hang in for a sec, we are looking up {symbol}.
+        </DialogContentText>
+        <div>
+          <LinearProgress />
+        </div>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={props.onClose} color="primary" autoFocus disabled={true}>
+          Ok
+        </Button>
+      </DialogActions>
+    </Dialog>);
+  } else if (props.newAssetOptions.length == 1) {
+    // One asset simplified version.
+    const asset = props.newAssetOptions[0];
+    return (<Dialog
+      open={props.open}
+      onClose={props.onClose}
+      aria-labelledby="asset-confirmation-dialog-title"
+      aria-describedby="asset-confirmation-dialog-description"
+    >
+      <DialogTitle id="asset-confirmation-dialog-title">
+        Single asset matching {symbol} available</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="asset-confirmation-dialog-description">
+          We found {props.newAssetOptions.length} assets matching {symbol}:
+        </DialogContentText>
+        <ul style={{
+          listStyle: "unset",
+          marginLeft: "20px",
+          marginTop: "10px",
+          color: "rgba(0, 0, 0, 0.6)",
+        }}>
+          <li>{formatAssetOption(asset)}<Button onClick={() => props.handleSelectAsset(asset)}>Use</Button></li>
+        </ul>
+        <DialogContentText id="asset-confirmation-dialog-description">
+          If this is not the asset you were looking for, you can use `Just use symbol` option and set the rest of the fields manually.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={props.onClose} color="primary" autoFocus>
+          Just use symbol
+        </Button>
+        <Button onClick={() => props.handleSelectAsset(asset)}>Use found asset</Button>
+      </DialogActions>
+    </Dialog>);
+  } else if (props.newAssetOptions.length > 1) {
+    // Multi option dialog.
+    const assetOptions = props.newAssetOptions.map(
+      asset => <li key={asset.id}>{formatAssetOption(asset)} <Button onClick={() => props.handleSelectAsset(asset)}>Use</Button></li>);
+    return (<Dialog
+      open={props.open}
+      onClose={props.onClose}
+      aria-labelledby="asset-confirmation-dialog-title"
+      aria-describedby="asset-confirmation-dialog-description"
+    >
+      <DialogTitle id="asset-confirmation-dialog-title">
+        Multiple assets matching {symbol} available</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="asset-confirmation-dialog-description">
+          We found {props.newAssetOptions.length} assets matching {symbol}:
+        </DialogContentText>
+        <ul style={{
+          listStyle: "unset",
+          marginLeft: "20px",
+          marginTop: "10px",
+          color: "rgba(0, 0, 0, 0.6)",
+        }}>
+          {assetOptions}
+        </ul>
+        <DialogContentText id="asset-confirmation-dialog-description">
+          If none of the options matches your asset, you can use `Just use symbol` option and set the rest of the fields manually.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={props.onClose} color="primary" autoFocus>
+          Just use symbol
+        </Button>
+      </DialogActions>
+    </Dialog>);
+  } else {
+    // Didn't find anything or error.
+    return (<Dialog
+      open={props.open}
+      onClose={props.onClose}
+      aria-labelledby="asset-confirmation-dialog-title"
+      aria-describedby="asset-confirmation-dialog-description"
+    >
+      <DialogTitle id="asset-confirmation-dialog-title">
+        No assets matching {symbol} available</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="asset-confirmation-dialog-description">
+          We don&apos;t have an asset in our database matching {symbol}.
+        </DialogContentText>
+        <DialogContentText>
+          You can still add transactions for it, but we will not be able to fetch and update its price automatically.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={props.onClose} color="primary" autoFocus>
+          Ok
+        </Button>
+      </DialogActions>
+    </Dialog>);
+  }
+}
+
+
+NewAssetDialog.propTypes = {
+  symbol: PropTypes.any.isRequired,
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  newAssetOptions: PropTypes.array,
+  handleSelectAsset: PropTypes.func.isRequired,
 };
