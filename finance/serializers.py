@@ -867,3 +867,7 @@ class DegiroUploadSerializer(serializers.Serializer[Any]):
 class BinanceUploadSerializer(serializers.Serializer[Any]):
     account = serializers.IntegerField()
     transaction_file = serializers.FileField()
+
+
+class AssetSearchSerializer(serializers.Serializer[Any]):
+    identifier = serializers.CharField(required=True)

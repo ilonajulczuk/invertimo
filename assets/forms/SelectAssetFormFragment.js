@@ -18,43 +18,12 @@ import Button from '@mui/material/Button';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { useStyles } from './styles.js';
-import { getAssets } from '../api_utils.js';
+import { getAssets, searchAssets } from '../api_utils.js';
 import PropTypes from 'prop-types';
 import { toSymbol } from '../currencies.js';
 
 
 const filter = createFilterOptions();
-
-const assetSearchResult = [
-  {
-    "id": 346,
-    "isin": "",
-    "symbol": "BOL",
-    "name": "",
-    "exchange": {
-      "id": 132,
-      "name": "USA Stocks"
-    },
-    "currency": "EUR",
-    "country": null,
-    "asset_type": "Stock",
-    "tracked": false
-  },
-  {
-    "id": 340,
-    "isin": "",
-    "symbol": "BOL",
-    "name": "BOL",
-    "exchange": {
-      "id": 197,
-      "name": "Other / NA"
-    },
-    "currency": "USD",
-    "country": null,
-    "asset_type": "Crypto",
-    "tracked": true
-  },
-];
 
 function formatAssetOption(option) {
   let description = `${option.symbol} ${option.name != option.symbol && option.name ? " - " + option.name : ""}`;
@@ -106,7 +75,6 @@ export function SelectAssetFormFragment(props) {
       newValue = formik.values.symbol;
     }
     formik.setFieldValue('currency', newValue.currency);
-    // TODO: support more than one asset type.
     formik.setFieldValue('assetType', newValue.asset_type);
     formik.setFieldValue('exchange', newValue.exchange.name);
     toggleDisable(true);
@@ -130,6 +98,10 @@ export function SelectAssetFormFragment(props) {
 
   const handleSelectAsset = (asset) => {
     formik.setFieldValue("symbol", asset);
+    formik.setFieldValue('currency', asset.currency);
+    formik.setFieldValue('assetType', asset.asset_type);
+    formik.setFieldValue('exchange', asset.exchange.name);
+    toggleDisable(true);
     toggleOpenNotTracked(false);
   };
 
@@ -196,7 +168,7 @@ export function SelectAssetFormFragment(props) {
                 if (newValue.newOption) {
                   formik.setFieldValue('symbol', newValue.inputValue);
                   setNewAssetOptions(null);
-                  setTimeout(() => {
+                  searchAssets(newValue.inputValue).then((assetSearchResult) => {
                     const newOptions = [...options];
                     for (const asset of assetSearchResult) {
                       if (!newOptions.includes(asset)) {
@@ -205,8 +177,10 @@ export function SelectAssetFormFragment(props) {
                     }
                     setOptions(newOptions);
                     setNewAssetOptions(assetSearchResult);
-                  }
-                    , 2000);
+                  }).catch((error) => {
+                    console.error(error);
+                    setNewAssetOptions([]);
+                  });
                   toggleOpenNotTracked(true);
                   return;
                 }

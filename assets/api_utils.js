@@ -293,3 +293,8 @@ export function getCurrencyExchangeRates(fromCurrency, toCurrency, fromDate, toD
     }
     return fetchAllResults(url);
 }
+
+export function searchAssets(identifier) {
+    let url = baseUrl + `/assets/search/?identifier=${identifier}&limit=50`;
+    return fetchAllResults(url);
+}

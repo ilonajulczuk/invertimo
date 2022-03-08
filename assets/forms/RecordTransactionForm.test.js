@@ -60,6 +60,7 @@ jest.mock("../api_utils", () => {
     // Let's return it our default asset Options for simplicity.
     return {
         getAssets: jest.fn(async () => assetOptions),
+        searchAssets: jest.fn(async() => []),
         getCurrencyExchangeRates: jest.fn(async() => [{value: 0.89}]),
     };
 });
