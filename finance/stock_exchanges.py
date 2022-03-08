@@ -107,7 +107,7 @@ def get_or_create_asset(
     asset_records = query_asset(isin)
     for record in asset_records:
         if record["Exchange"] == exchange_code:
-
+            asset_type_raw = record["Type"]
             currency = models.currency_enum_from_string(record["Currency"])
             asset = repository.add(
                 isin=isin,
@@ -117,12 +117,14 @@ def get_or_create_asset(
                 name=record["Name"],
                 tracked=True,
                 user=user,
+                asset_type=_to_asset_type(asset_type_raw),
             )
             print("created asset")
             return asset
     else:
         if len(asset_records):
             record = asset_records[0]
+            asset_type_raw = record["Type"]
             currency = models.currency_enum_from_string(record["Currency"])
             if add_untracked_if_not_found:
                 asset = repository.add(
@@ -133,6 +135,7 @@ def get_or_create_asset(
                     name=record["Name"],
                     tracked=False,
                     user=user,
+                    asset_type=_to_asset_type(asset_type_raw)
                 )
 
                 return asset
@@ -152,6 +155,7 @@ def get_or_create_asset(
                     name=asset_defaults["name"],
                     tracked=False,
                     user=user,
+                    asset_type=models.AssetType.STOCK,
                 )
                 return asset
             print(
@@ -233,6 +237,7 @@ def search_and_create_assets(
                     currency=currency,
                     country=country,
                     name=name,
+                    asset_type=asset_type,
                     tracked=True,
                     user=None,
                 )

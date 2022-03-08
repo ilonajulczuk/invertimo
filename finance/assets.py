@@ -12,7 +12,7 @@ class AssetRepository:
             return assets[0]
 
     def add(
-        self, isin: str, symbol: str, currency: models.Currency, country: str, name: str, tracked: bool, user: User
+        self, isin: str, symbol: str, currency: models.Currency, country: str, name: str, tracked: bool, user: User, asset_type : models.AssetType
     ) -> models.Asset:
         asset, _ = models.Asset.objects.get_or_create(
             exchange=self.exchange,
@@ -23,6 +23,7 @@ class AssetRepository:
             name=name,
             tracked=tracked,
             added_by=user,
+            asset_type=asset_type,
         )
         asset.full_clean()
         return asset

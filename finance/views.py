@@ -329,7 +329,10 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         asset_id = arguments.pop("asset")
         arguments["asset_id"] = asset_id
         try:
-            account_repository.add_transaction_known_asset(account, **arguments)
+            transaction = account_repository.add_transaction_known_asset(account, **arguments)
+            asset = transaction.position.asset
+            if asset.tracked:
+                tasks.collect_prices.delay(asset.pk)
         except gains.SoldBeforeBought:
             raise serializers.ValidationError(
                 {

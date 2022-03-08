@@ -715,9 +715,7 @@ class TestAssetSearch(TestCase):
     @patch("finance.stock_exchanges.query_asset")
     def test_searching_crypto_assets(self, mock):
         mock.return_value = BTC_ASSET_SEARCH_RESULT
-
         assets = stock_exchanges.search_and_create_assets("btc")
-        print(assets)
         self.assertTrue(
             models.Asset.objects.filter(
                 symbol="BTC",
@@ -730,7 +728,6 @@ class TestAssetSearch(TestCase):
     @patch("finance.stock_exchanges.query_asset")
     def test_searching_stock_assets(self, mock):
         mock.return_value = KO_ASSET_SEARCH_RESULT
-
         assets = stock_exchanges.search_and_create_assets("ko")
         self.assertEqual(len(assets), 1)
 
@@ -748,3 +745,4 @@ class TestAssetSearch(TestCase):
         self.assertEqual(len(assets), 4)
         for asset in assets:
             self.assertEqual(asset.isin, "IE00BK5BQT80")
+            self.assertEqual(asset.asset_type, models.AssetType.FUND)
