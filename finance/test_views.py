@@ -1195,12 +1195,42 @@ class TestAccountEventDetailView(testing_utils.ViewTestBase, TestCase):
         )
 
 
+ISIN_SEARCH_RESULTS = [
+    {
+        "Code": "aMOONIES2",
+        "Exchange": "US",
+        "Name": "Best name",
+        "Type": "FUND",
+        "Country": "USA",
+        "Currency": "USD",
+        "ISIN": "USA234",
+        "previousClose": 102.85,
+        "previousCloseDate": "2022-03-07",
+    },
+    {
+        "Code": "MOONIES2",
+        "Exchange": "US",
+        "Name": "Best name 2",
+        "Type": "FUND",
+        "Country": "USA",
+        "Currency": "USD",
+        "ISIN": "USA234",
+        "previousClose": 102.85,
+        "previousCloseDate": "2022-03-07",
+    },
+]
+
+
 class TestAssetListView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/assets/"
     VIEW_NAME = "asset-list"
     DETAIL_VIEW = False
     QUERY_PARAMS = "?"
     UNAUTHENTICATED_CODE = 403
+
+    # This fixture provides data about 65 different exchanges,
+    # and sets up a single account for testing.
+    fixtures = ["exchanges_postgres.json"]
 
     def setUp(self):
         super().setUp()
@@ -1250,12 +1280,32 @@ class TestAssetListView(testing_utils.ViewTestBase, TestCase):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(len(data), 3)
+        # 30 assets from the fixture and 3 additional ones.
+        self.assertEqual(len(data), 33)
         ids = [entry["id"] for entry in data]
         self.assertTrue(self.asset.id in ids)
         self.assertTrue(self.custom_asset.id in ids)
         self.assertTrue(self.another_asset.id in ids)
         self.assertFalse(self.custom_asset_of_another_user.id in ids)
+
+    @patch("finance.stock_exchanges.query_asset")
+    def test_asset_search(self, mock):
+        mock.return_value = ISIN_SEARCH_RESULTS
+        response = self.client.get("/api/assets/search/?identifier=USA234&limit=50")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data["results"]), 3)
+        ids = [entry["id"] for entry in data["results"]]
+        self.assertTrue(self.asset.id not in ids)
+        self.assertTrue(self.custom_asset.id not in ids)
+        self.assertTrue(self.another_asset.id in ids)
+        self.assertFalse(self.custom_asset_of_another_user.id in ids)
+
+        # Searching twice doesn't create additional assets.
+        response = self.client.get("/api/assets/search/?identifier=USA234&limit=50")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data["results"]), 3)
 
 
 class TestLotListView(testing_utils.ViewTestBase, TestCase):
