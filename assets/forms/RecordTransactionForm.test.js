@@ -87,6 +87,10 @@ describe('form for recording transactions', () => {
         let submittedValues = null;
         const handleSubmit = (values) => {
             submittedValues = values;
+            return {
+                ok: true,
+                data: {"id": 123},
+            };
         };
 
         act(() => {
@@ -135,7 +139,7 @@ describe('form for recording transactions', () => {
             },
         ];
 
-        const handleSubmit = jest.fn().mockReturnValue({ ok: true });
+        const handleSubmit = jest.fn().mockReturnValue({ ok: true, data: {"id": 1} });
 
         act(() => {
             testingRender(
@@ -231,7 +235,7 @@ describe('form for recording transactions', () => {
             },
         ];
 
-        const handleSubmit = jest.fn().mockReturnValue({ ok: true });
+        const handleSubmit = jest.fn().mockReturnValue({ ok: true, data: {"id": 1} });
 
         act(() => {
             testingRender(
@@ -326,7 +330,7 @@ describe('form for recording transactions', () => {
             },
         ];
 
-        const handleSubmit = jest.fn().mockReturnValue({ ok: true });
+        const handleSubmit = jest.fn().mockReturnValue({ ok: true, data: {"id": 1} });
 
         act(() => {
             testingRender(
@@ -440,7 +444,7 @@ describe('form for recording transactions', () => {
             },
         ];
 
-        const handleSubmit = jest.fn().mockReturnValue({ ok: true });
+        const handleSubmit = jest.fn().mockReturnValue({ ok: true, data: {"id": 1} });
 
         act(() => {
             testingRender(
@@ -538,7 +542,7 @@ describe('form for recording transactions', () => {
             },
         ];
 
-        const handleSubmit = jest.fn().mockReturnValue({ ok: true });
+        const handleSubmit = jest.fn().mockReturnValue({ ok: true, data: {"id": 1} });
 
         act(() => {
             testingRender(
@@ -641,7 +645,7 @@ describe('form for recording transactions', () => {
             },
         ];
 
-        const handleSubmit = jest.fn().mockReturnValue({ ok: true });
+        const handleSubmit = jest.fn().mockReturnValue({ ok: true, data: {"id": 1} });
 
         act(() => {
             testingRender(

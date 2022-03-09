@@ -250,6 +250,7 @@ export function RecordTransactionForm(props) {
 
     const classes = useStyles();
     const [snackbarOpen, snackbarSetOpen] = React.useState(false);
+    const [lastTransactionId, setLastTransactionId] = React.useState(null);
 
     const snackbarHandleClose = (event, reason) => {
         if (reason === 'clickaway') {
@@ -340,15 +341,16 @@ export function RecordTransactionForm(props) {
         try {
             const cleanValues = formTransactionToAPITransaction(values);
             let result = await props.handleSubmit(cleanValues);
-            result = apiTransactionResponseToErrors(result);
-            if (result.ok) {
+            let transformedResult = apiTransactionResponseToErrors(result);
+            if (transformedResult.ok) {
                 resetForm();
                 snackbarSetOpen(true);
+                setLastTransactionId(result.data.id);
             } else {
-                if (result.errors) {
-                    setErrors(result.errors);
-                } else if (result.message) {
-                    alert(result.message);
+                if (transformedResult.errors) {
+                    setErrors(transformedResult.errors);
+                } else if (transformedResult.message) {
+                    alert(transformedResult.message);
                 }
             }
         } catch (e) {
@@ -357,7 +359,7 @@ export function RecordTransactionForm(props) {
     };
 
     let accountOptions = props.accounts.map(account => ({ value: account.id, label: account.nickname }));
-    const submitButtonText = props.hasTransactions ? "Record another transaction" : "Record transaction";
+    const submitButtonText = lastTransactionId ? "Record another transaction" : "Record transaction";
     const defaultAssetOptions = props.defaultAssetOptions;
 
     const tradeTypeOptions = [
@@ -447,7 +449,16 @@ export function RecordTransactionForm(props) {
                         formattedAccountCurrency={formattedAccountCurrency(formikProps.values, accountsById)}
                         sameCurrency={sameCurrency(formikProps.values, accountsById)} />
 
+
+
                     <div>
+                        {lastTransactionId ?
+
+                            <Button href={`#/transactions/${lastTransactionId}`} sx={{ marginRight: "5px" }}>
+                                Go to recorded transaction
+                            </Button>
+                            : null}
+
                         <Button
                             type="submit"
                             variant="contained"
@@ -466,8 +477,9 @@ export function RecordTransactionForm(props) {
                         message="Transaction recorded successfully!"
                     />
                 </Form>
-            )}
-        </Formik>
+            )
+            }
+        </Formik >
     );
 }
 
@@ -478,7 +490,6 @@ RecordTransactionForm.propTypes = {
         currency: PropTypes.oneOf(['EUR', 'GBP', 'USD']),
     })),
     defaultAssetOptions: PropTypes.array.isRequired,
-    hasTransactions: PropTypes.bool.isRequired,
     handleSubmit: PropTypes.func.isRequired,
     executedAtDate: PropTypes.instanceOf(Date),
     initialAsset: PropTypes.object,
