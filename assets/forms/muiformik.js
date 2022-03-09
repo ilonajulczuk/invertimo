@@ -34,9 +34,9 @@ export const FormikTextField = ({ name, formHelperText, ...props }) => {
                     }
                     {...field}
                     helperText={
-                        form.errors[name] &&
+                        (form.errors[name] &&
                         form.touched[name] &&
-                        String(form.errors[name] || formHelperText)
+                        String(form.errors[name] || formHelperText) || formHelperText)
                     }
                     value={form.values[name]}
                     {...props}

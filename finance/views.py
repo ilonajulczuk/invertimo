@@ -4,34 +4,56 @@ from typing import Any, Dict, Type, Union
 from django.contrib.auth.models import User
 from django.db.models import Count, F, OuterRef, Q, QuerySet, Subquery
 from django.shortcuts import get_object_or_404
-from rest_framework import (exceptions, generics, mixins, permissions,
-                            serializers, status, viewsets)
+from rest_framework import (
+    exceptions,
+    generics,
+    mixins,
+    permissions,
+    serializers,
+    status,
+    viewsets,
+)
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 
 
-from finance import accounts, gains, models, tasks
+from finance import accounts, gains, models, stock_exchanges, tasks
 from finance.integrations import binance_parser, degiro_parser
-from finance.models import (AccountEvent, Asset, CurrencyExchangeRate,
-                            IntegrationType, Lot, Position, PriceHistory,
-                            Transaction, TransactionImport)
-from finance.serializers import (AccountEditSerializer, AccountEventSerializer,
-                                 AccountSerializer,
-                                 AccountWithValuesSerializer,
-                                 AddCryptoIncomeEventSerializer,
-                                 AddTransactionKnownAssetSerializer,
-                                 AddTransactionNewAssetSerializer,
-                                 AssetPriceHistorySerializer, AssetSerializer,
-                                 BinanceUploadSerializer,
-                                 CorrectTransactionSerializer,
-                                 CurrencyExchangeRateSerializer,
-                                 CurrencyQuerySerializer,
-                                 DegiroUploadSerializer, FromToDatesSerializer,
-                                 LotSerializer, PositionSerializer,
-                                 PositionWithQuantitiesSerializer,
-                                 TransactionImportSerializer,
-                                 TransactionSerializer)
+from finance.models import (
+    AccountEvent,
+    Asset,
+    CurrencyExchangeRate,
+    IntegrationType,
+    Lot,
+    Position,
+    PriceHistory,
+    Transaction,
+    TransactionImport,
+)
+from finance.serializers import (
+    AccountEditSerializer,
+    AccountEventSerializer,
+    AccountSerializer,
+    AccountWithValuesSerializer,
+    AddCryptoIncomeEventSerializer,
+    AddTransactionKnownAssetSerializer,
+    AddTransactionNewAssetSerializer,
+    AssetPriceHistorySerializer,
+    AssetSerializer,
+    BinanceUploadSerializer,
+    CorrectTransactionSerializer,
+    CurrencyExchangeRateSerializer,
+    CurrencyQuerySerializer,
+    DegiroUploadSerializer,
+    FromToDatesSerializer,
+    LotSerializer,
+    PositionSerializer,
+    PositionWithQuantitiesSerializer,
+    TransactionImportSerializer,
+    AssetSearchSerializer,
+    TransactionSerializer,
+)
 
 
 class AccountsViewSet(viewsets.ModelViewSet):
@@ -307,7 +329,10 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         asset_id = arguments.pop("asset")
         arguments["asset_id"] = asset_id
         try:
-            account_repository.add_transaction_known_asset(account, **arguments)
+            transaction = account_repository.add_transaction_known_asset(account, **arguments)
+            asset = transaction.position.asset
+            if asset.tracked:
+                tasks.collect_prices.delay(asset.pk)
         except gains.SoldBeforeBought:
             raise serializers.ValidationError(
                 {
@@ -315,8 +340,10 @@ class TransactionsViewSet(viewsets.ModelViewSet):
                 }
             )
         headers = self.get_success_headers(serializer.data)
+        data = serializer.data
+        data["id"] = transaction.pk
         return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+            data, status=status.HTTP_201_CREATED, headers=headers
         )
 
     @action(detail=False, methods=["post"])
@@ -406,12 +433,7 @@ class AccountEventViewSet(
 
     def get_serializer_class(
         self,
-    ) -> Type[
-        Union[
-            AccountEventSerializer,
-            AddCryptoIncomeEventSerializer
-        ]
-    ]:
+    ) -> Type[Union[AccountEventSerializer, AddCryptoIncomeEventSerializer]]:
         if self.action == "add_crypto_income":
             return AddCryptoIncomeEventSerializer
         return AccountEventSerializer
@@ -439,9 +461,7 @@ class AccountEventViewSet(
         headers = self.get_success_headers(serializer.data)
         data = serializer.data
         data["id"] = event.id
-        return Response(
-            data, status=status.HTTP_201_CREATED, headers=headers
-        )
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(detail=False, methods=["post"])
     def add_crypto_income(self, request):
@@ -461,9 +481,7 @@ class AccountEventViewSet(
         headers = self.get_success_headers(serializer.data)
         data = serializer.data
         data["id"] = event.id
-        return Response(
-            data, status=status.HTTP_201_CREATED, headers=headers
-        )
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_destroy(self, instance):
         account_repository = accounts.AccountRepository()
@@ -483,9 +501,38 @@ class AssetViewSet(
     def get_queryset(self) -> QuerySet[Asset]:
         assert isinstance(self.request.user, User)
         user = self.request.user
-        return Asset.objects.filter(Q(added_by=None, tracked=True) | Q(added_by=user)).select_related(
-            "exchange"
+        return Asset.objects.filter(
+            Q(added_by=None, tracked=True) | Q(added_by=user)
+        ).select_related("exchange")
+
+    @action(detail=False, methods=["get"])
+    def search(self, request):
+        serializer = AssetSearchSerializer(
+            data=request.query_params, context=self.get_serializer_context()
         )
+        serializer.is_valid(raise_exception=True)
+        identifier = serializer.validated_data["identifier"]
+
+        # Look for new querysets.
+        stock_exchanges.search_and_create_assets(identifier)
+
+        # Alternative form because e.g. brk.b is stored as brk-b in eod.
+        alternative_identifier = identifier.replace(".", "-")
+        stock_exchanges.search_and_create_assets(alternative_identifier)
+        queryset = self.get_queryset().filter(
+            Q(isin__iexact=identifier)
+            | Q(name__icontains=identifier)
+            | Q(symbol__iexact=identifier)
+            | Q(symbol__iexact=alternative_identifier)
+        )
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class LotViewSet(

@@ -283,3 +283,18 @@ export function getTransactionImportResult(importId) {
     return fetchDetailResult(url);
 }
 
+export function getCurrencyExchangeRates(fromCurrency, toCurrency, fromDate, toDate) {
+    let url = baseUrl + `/currencies/?from_currency=${fromCurrency}&to_currency=${toCurrency}&limit=50`;
+    if (fromDate) {
+        url += `&from_date=${fromDate}`;
+    }
+    if (toDate) {
+        url += `&to_date=${toDate}`;
+    }
+    return fetchAllResults(url);
+}
+
+export function searchAssets(identifier) {
+    let url = baseUrl + `/assets/search/?identifier=${identifier}&limit=50`;
+    return fetchAllResults(url);
+}

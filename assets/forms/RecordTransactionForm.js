@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import Button from '@mui/material/Button';
+
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+
 import PropTypes from 'prop-types';
 import { FormikDateField, FormikTextField, FormikSelectField, FormikRadioField } from './muiformik.js';
 
@@ -12,6 +16,8 @@ import { currencyValues, toSymbol } from '../currencies.js';
 import { SelectAssetFormFragment } from './SelectAssetFormFragment.js';
 import { Snackbar } from '../components/Snackbar.js';
 import { matchNumberUpToTenDecimalPlaces } from './utils.js';
+import { getCurrencyExchangeRates } from '../api_utils.js';
+import isValid from 'date-fns/isValid';
 
 
 function formTransactionToAPITransaction(formData) {
@@ -96,20 +102,65 @@ function apiTransactionResponseToErrors(apiResponse) {
     return response;
 }
 
+
 function ValueBlock(props) {
+    const [rate, setRate] = React.useState(null);
+    useEffect(() => {
+        setRate(null);
+        let mounted = true;
+        if (isValid(new Date(props.date))) {
+            const datestr = props.date.toISOString().slice(0, 10);
+            getCurrencyExchangeRates(props.assetCurrency, props.accountCurrency, datestr, datestr).then(rates => {
+                if (mounted) {
+                    if (rates.length > 0) {
+                        setRate(Number(rates[0].value));
+                    }
+                }
+            });
+        }
+
+        return () => mounted = false;
+    }, [props.accountCurrency, props.assetCurrency, props.date]);
+
     if (props.sameCurrency) {
         return null;
+    }
+
+    let exchangeRateBlock = null;
+    if (props.price && props.quantity && rate) {
+        if (rate) {
+            const value = Math.round(props.price * props.quantity * rate * 100) / 100;
+            exchangeRateBlock =
+                <Alert severity="info" variant="outlined" style={{
+                    marginBottom: "8px",
+                }}>
+                    <AlertTitle>Currency converted value</AlertTitle>
+                    <p>Based on exchange rate equal to {rate} value would
+                        be {value} {props.formattedAccountCurrency}
+                    </p>
+                    <p>
+                        <Button variant="contained" onClick={() => {
+                            props.setComputedValue(value);
+                        }
+                        }>Use</Button>
+                    </p>
+                    <p>Feel free to use the exact value instead if you have one.</p>
+
+                </Alert>;
+        }
     }
     return (
         <>
             <h4>Value</h4>
-            <div className={props.classes.inputs}>
+            <div className={props.classes.inputs} style={{ flexDirection: "column" }}>
+                {exchangeRateBlock}
                 <FormikTextField
                     id="totalValueAccountCurrency"
                     label={`Total value in ${props.formattedAccountCurrency}`}
                     name="totalValueAccountCurrency"
                     type="number"
                     className={props.classes.formControl}
+                    formHelperText={"Price x quantity x currency exchange rate"}
                     InputLabelProps={{
                         shrink: true,
                     }}
@@ -123,6 +174,12 @@ ValueBlock.propTypes = {
     sameCurrency: PropTypes.bool.isRequired,
     classes: PropTypes.object.isRequired,
     formattedAccountCurrency: PropTypes.string.isRequired,
+    date: PropTypes.instanceOf(Date).isRequired,
+    quantity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    price: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    setComputedValue: PropTypes.func.isRequired,
+    assetCurrency: PropTypes.string.isRequired,
+    accountCurrency: PropTypes.string.isRequired,
 };
 
 
@@ -193,6 +250,7 @@ export function RecordTransactionForm(props) {
 
     const classes = useStyles();
     const [snackbarOpen, snackbarSetOpen] = React.useState(false);
+    const [lastTransactionId, setLastTransactionId] = React.useState(null);
 
     const snackbarHandleClose = (event, reason) => {
         if (reason === 'clickaway') {
@@ -201,6 +259,7 @@ export function RecordTransactionForm(props) {
 
         snackbarSetOpen(false);
     };
+
     const sameCurrency = (values, accountsById) => {
         return accountsById.get(values.account).currency == values.currency;
     };
@@ -254,7 +313,6 @@ export function RecordTransactionForm(props) {
             }),
         fees: yup
             .number()
-            .positive()
             .required('Fees are required')
             .test('has-2-or-less-places', "Only up to ten decimal places are allowed",
                 matchNumberUpToTenDecimalPlaces),
@@ -276,22 +334,23 @@ export function RecordTransactionForm(props) {
         quantity: "",
         totalCostAccountCurrency: "",
         totalValueAccountCurrency: "",
-        fees: "",
+        fees: 0,
     };
 
     const onSubmit = async (values, { setErrors, resetForm }) => {
         try {
             const cleanValues = formTransactionToAPITransaction(values);
             let result = await props.handleSubmit(cleanValues);
-            result = apiTransactionResponseToErrors(result);
-            if (result.ok) {
+            let transformedResult = apiTransactionResponseToErrors(result);
+            if (transformedResult.ok) {
                 resetForm();
                 snackbarSetOpen(true);
+                setLastTransactionId(result.data.id);
             } else {
-                if (result.errors) {
-                    setErrors(result.errors);
-                } else if (result.message) {
-                    alert(result.message);
+                if (transformedResult.errors) {
+                    setErrors(transformedResult.errors);
+                } else if (transformedResult.message) {
+                    alert(transformedResult.message);
                 }
             }
         } catch (e) {
@@ -300,7 +359,7 @@ export function RecordTransactionForm(props) {
     };
 
     let accountOptions = props.accounts.map(account => ({ value: account.id, label: account.nickname }));
-    const submitButtonText = props.hasTransactions ? "Record another transaction" : "Record transaction";
+    const submitButtonText = lastTransactionId ? "Record another transaction" : "Record transaction";
     const defaultAssetOptions = props.defaultAssetOptions;
 
     const tradeTypeOptions = [
@@ -331,8 +390,8 @@ export function RecordTransactionForm(props) {
                     <div className={classes.inputs}>
 
                         <FormikRadioField
-                        name="tradeType"
-                        options={tradeTypeOptions}
+                            name="tradeType"
+                            options={tradeTypeOptions}
                         />
 
                     </div>
@@ -376,14 +435,30 @@ export function RecordTransactionForm(props) {
 
                     <ValueBlock classes={classes}
                         formattedAccountCurrency={formattedAccountCurrency(formikProps.values, accountsById)}
-                        sameCurrency={sameCurrency(formikProps.values, accountsById)} />
+                        sameCurrency={sameCurrency(formikProps.values, accountsById)}
+                        quantity={formikProps.values.quantity}
+                        price={formikProps.values.price}
+                        setComputedValue={(val) => formikProps.setFieldValue("totalValueAccountCurrency", val)}
+                        date={formikProps.values.executedAt}
+                        accountCurrency={accountsById.get(formikProps.values.account).currency}
+                        assetCurrency={formikProps.values.currency}
+                    />
 
                     <TotalCostBlock classes={classes}
                         formikProps={formikProps}
                         formattedAccountCurrency={formattedAccountCurrency(formikProps.values, accountsById)}
                         sameCurrency={sameCurrency(formikProps.values, accountsById)} />
 
+
+
                     <div>
+                        {lastTransactionId ?
+
+                            <Button href={`#/transactions/${lastTransactionId}`} sx={{ marginRight: "5px" }}>
+                                Go to recorded transaction
+                            </Button>
+                            : null}
+
                         <Button
                             type="submit"
                             variant="contained"
@@ -402,8 +477,9 @@ export function RecordTransactionForm(props) {
                         message="Transaction recorded successfully!"
                     />
                 </Form>
-            )}
-        </Formik>
+            )
+            }
+        </Formik >
     );
 }
 
@@ -414,7 +490,6 @@ RecordTransactionForm.propTypes = {
         currency: PropTypes.oneOf(['EUR', 'GBP', 'USD']),
     })),
     defaultAssetOptions: PropTypes.array.isRequired,
-    hasTransactions: PropTypes.bool.isRequired,
     handleSubmit: PropTypes.func.isRequired,
     executedAtDate: PropTypes.instanceOf(Date),
     initialAsset: PropTypes.object,

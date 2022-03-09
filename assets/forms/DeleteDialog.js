@@ -26,12 +26,12 @@ export function DeleteDialog({ open, handleCancel, handleDelete, message, title,
             <DialogActions>
                 <Button onClick={handleCancel} variant="outlined" autoFocus>
                     Cancel
-                            </Button>
+                </Button>
                 <Button onClick={handleDelete}
-                disabled={!canDelete}
-                 color="secondary" variant="contained">
+                    disabled={!canDelete}
+                    color="secondary" variant="contained">
                     Delete
-                            </Button>
+                </Button>
             </DialogActions>
         </Dialog>
     );

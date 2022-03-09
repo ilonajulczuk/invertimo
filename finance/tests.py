@@ -3,8 +3,9 @@ import decimal
 
 from django.contrib.auth.models import User
 from django.test import SimpleTestCase, TestCase
+from unittest.mock import patch
 
-from finance import accounts, models, utils
+from finance import accounts, models, stock_exchanges, utils
 
 DATE_FORMAT = "%Y-%m-%d %H:%M%z"
 
@@ -63,8 +64,6 @@ def _add_transaction(account, isin, exchange, executed_at, quantity, price):
         asset_defaults={"currency": "USD", "name": isin},
         import_all_assets=True,
     )
-
-
 
 
 class TestUtils(SimpleTestCase):
@@ -221,7 +220,10 @@ class TestPosition(TestCase):
         value_history = position.value_history(from_date, to_date)
 
         expected_value_history = [
-            ("2021-05-04", 17.00 * 14.5), # -- price missing, but last transaction price available.
+            (
+                "2021-05-04",
+                17.00 * 14.5,
+            ),  # -- price missing, but last transaction price available.
             ("2021-05-03", 11.00 * 110),
             ("2021-05-02", 8.00 * 120),
             ("2021-05-01", 10.00 * 100),
@@ -269,7 +271,10 @@ class TestPosition(TestCase):
         value_history = position.value_history(from_date, to_date)
 
         expected_value_history = [
-            ("2021-05-04", 17.00 * 14.5), # -- price missing, but last transaction price available.
+            (
+                "2021-05-04",
+                17.00 * 14.5,
+            ),  # -- price missing, but last transaction price available.
             ("2021-05-03", 11.00 * 110),
             ("2021-05-02", 8.00 * 120),
             ("2021-05-01", 10.00 * 100),
@@ -292,12 +297,12 @@ class TestPosition(TestCase):
         self.assertEqual(value_history, expected_value_history)
 
     def test_lots_based_on_transactions(self):
-        transaction_costs = decimal.Decimal('-0.5')
-        local_value = decimal.Decimal('-12.2')
-        value_in_account_currency = decimal.Decimal('-10.5')
+        transaction_costs = decimal.Decimal("-0.5")
+        local_value = decimal.Decimal("-12.2")
+        value_in_account_currency = decimal.Decimal("-10.5")
         total_in_account_currency = decimal.Decimal(-11)
         quantity = 10
-        price = decimal.Decimal('1.22')
+        price = decimal.Decimal("1.22")
         order_id = "123"
         executed_at = "2021-04-27 10:00Z"
         account_repository = accounts.AccountRepository()
@@ -331,36 +336,413 @@ class TestPosition(TestCase):
             self.exchange,
             executed_at,
             -7,
-            decimal.Decimal('3.22'),
+            decimal.Decimal("3.22"),
             transaction_costs,
-            decimal.Decimal('22.54'),
-            decimal.Decimal('20.54'),
-            decimal.Decimal('20.04'),
+            decimal.Decimal("22.54"),
+            decimal.Decimal("20.54"),
+            decimal.Decimal("20.04"),
             order_id,
             asset_defaults={},
             import_all_assets=False,
         )
 
         self.assertEqual(models.Lot.objects.count(), 2)
-        lots = models.Lot.objects.order_by('id').all()
+        lots = models.Lot.objects.order_by("id").all()
 
         self.assertEqual(lots[0].quantity, 7)
         self.assertEqual(lots[1].quantity, 3)
 
         # -11 * 0.7 + 20.04 = 12.34
-        self.assertEqual(lots[0].realized_gain_account_currency, decimal.Decimal('12.34'))
+        self.assertEqual(
+            lots[0].realized_gain_account_currency, decimal.Decimal("12.34")
+        )
 
         account_repository.correct_transaction(transaction, {"quantity": -5})
 
         self.assertEqual(models.Lot.objects.count(), 2)
-        lots = models.Lot.objects.order_by('id').all()
+        lots = models.Lot.objects.order_by("id").all()
 
         self.assertEqual(lots[0].quantity, 5)
         self.assertEqual(lots[1].quantity, 5)
 
         account_repository.delete_transaction(transaction)
         self.assertEqual(models.Lot.objects.count(), 1)
-        lots = models.Lot.objects.order_by('id').all()
+        lots = models.Lot.objects.order_by("id").all()
 
         self.assertEqual(lots[0].quantity, 10)
         self.assertEqual(lots[0].realized_gain_account_currency, None)
+
+
+BTC_ASSET_SEARCH_RESULT = [
+    {
+        "Code": "BTC",
+        "Exchange": "COMM",
+        "Name": "Bitcoin Futures CME",
+        "Type": "Futures",
+        "Country": "USA",
+        "Currency": "USD",
+        "ISIN": None,
+        "previousClose": 39545,
+        "previousCloseDate": "2022-03-04",
+    },
+    {
+        "Code": "BTC",
+        "Exchange": "US",
+        "Name": "ClearShares Piton Intermediate Fixed Income ETF",
+        "Type": "ETF",
+        "Country": "USA",
+        "Currency": "USD",
+        "ISIN": None,
+        "previousClose": 96.7938,
+        "previousCloseDate": "2022-03-03",
+    },
+    {
+        "Code": "BTC",
+        "Exchange": "CN",
+        "Name": "Bluesky Digital Assets Corp",
+        "Type": "Common Stock",
+        "Country": "Canada",
+        "Currency": "CAD",
+        "ISIN": None,
+        "previousClose": 0.175,
+        "previousCloseDate": "2022-03-04",
+    },
+    {
+        "Code": "BTC",
+        "Exchange": "AU",
+        "Name": "BTC Health Limited",
+        "Type": "Common Stock",
+        "Country": "Australia",
+        "Currency": "AUD",
+        "ISIN": "AU000000BTC7",
+        "previousClose": 0.065,
+        "previousCloseDate": "2022-03-03",
+    },
+    {
+        "Code": "BTC",
+        "Exchange": "PA",
+        "Name": "Mélanion BTC Equities Universe UCITS ETF EUR",
+        "Type": "ETF",
+        "Country": "France",
+        "Currency": "EUR",
+        "ISIN": "FR0014002IH8",
+        "previousClose": 16.11,
+        "previousCloseDate": "2022-03-04",
+    },
+    {
+        "Code": "BTC-USD",
+        "Exchange": "CC",
+        "Name": "Bitcoin",
+        "Type": "Currency",
+        "Country": "Unknown",
+        "Currency": "USD",
+        "ISIN": None,
+        "previousClose": 39547.061,
+        "previousCloseDate": "2022-03-06",
+    },
+    {
+        "Code": "BTCB-USD",
+        "Exchange": "CC",
+        "Name": "Bitcoin BEP2",
+        "Type": "Currency",
+        "Country": "Unknown",
+        "Currency": "USD",
+        "ISIN": None,
+        "previousClose": 39605.1059,
+        "previousCloseDate": "2022-03-06",
+    },
+    {
+        "Code": "BTCST-USD",
+        "Exchange": "CC",
+        "Name": "Bitcoin Standard Hashrate Token",
+        "Type": "Currency",
+        "Country": "Unknown",
+        "Currency": "USD",
+        "ISIN": None,
+        "previousClose": 17.1432,
+        "previousCloseDate": "2022-03-05",
+    },
+    {
+        "Code": "BTCUP-USD",
+        "Exchange": "CC",
+        "Name": "BTCUP",
+        "Type": "Currency",
+        "Country": "Unknown",
+        "Currency": "USD",
+        "ISIN": None,
+        "previousClose": 36.4508,
+        "previousCloseDate": "2022-03-05",
+    },
+    {
+        "Code": "BTCE",
+        "Exchange": "XETRA",
+        "Name": "BTCetc - Bitcoin Exchange Traded Crypto",
+        "Type": "ETF",
+        "Country": "Germany",
+        "Currency": "EUR",
+        "ISIN": "DE000A27Z304",
+        "previousClose": 35.96,
+        "previousCloseDate": "2022-03-04",
+    },
+    {
+        "Code": "BTCM",
+        "Exchange": "US",
+        "Name": "BIT Mining Limited",
+        "Type": "Common Stock",
+        "Country": "USA",
+        "Currency": "USD",
+        "ISIN": "US0554741001",
+        "previousClose": 2.71,
+        "previousCloseDate": "2022-03-04",
+    },
+]
+
+KO_ASSET_SEARCH_RESULT = [
+    {
+        "Code": "KO",
+        "Exchange": "US",
+        "Name": "The Coca-Cola Company",
+        "Type": "Common Stock",
+        "Country": "USA",
+        "Currency": "USD",
+        "ISIN": "US1912161007",
+        "previousClose": 62.57,
+        "previousCloseDate": "2022-03-04",
+    },
+    {
+        "Code": "KO",
+        "Exchange": "MX",
+        "Name": "The Coca-Cola Company",
+        "Type": "Common Stock",
+        "Country": "Mexico",
+        "Currency": "MXN",
+        "ISIN": None,
+        "previousClose": 1307,
+        "previousCloseDate": "2022-03-04",
+    },
+    {
+        "Code": "KO",
+        "Exchange": "V",
+        "Name": "Kiaro Holdings Corp",
+        "Type": "Common Stock",
+        "Country": "Canada",
+        "Currency": "CAD",
+        "ISIN": "CA49374K1003",
+        "previousClose": 0.06,
+        "previousCloseDate": "2022-03-04",
+    },
+    {
+        "Code": "KOS",
+        "Exchange": "VN",
+        "Name": "KOS",
+        "Type": "Common Stock",
+        "Country": "Vietnam",
+        "Currency": "VND",
+        "ISIN": "VN000000KOS6",
+        "previousClose": 33750,
+        "previousCloseDate": "2022-03-02",
+    },
+    {
+        "Code": "KOSDAQ",
+        "Exchange": "INDX",
+        "Name": "Kosdaq Composite Index",
+        "Type": "INDEX",
+        "Country": "Korea",
+        "Currency": "KRW",
+        "ISIN": None,
+        "previousClose": 900.96,
+        "previousCloseDate": "2022-03-04",
+    },
+    {
+        "Code": "KOLD",
+        "Exchange": "US",
+        "Name": "ProShares UltraShort Bloomberg Natural Gas ",
+        "Type": "ETF",
+        "Country": "USA",
+        "Currency": "USD",
+        "ISIN": "US74347W3878",
+        "previousClose": 22.45,
+        "previousCloseDate": "2022-03-04",
+    },
+    {
+        "Code": "KOTAKBANK",
+        "Exchange": "NSE",
+        "Name": "Kotak Mahindra Bank Limited",
+        "Type": "Common Stock",
+        "Country": "India",
+        "Currency": "INR",
+        "ISIN": "INE237A01028",
+        "previousClose": 1752.15,
+        "previousCloseDate": "2022-03-04",
+    },
+    {
+        "Code": "KOZAL",
+        "Exchange": "IS",
+        "Name": "Koza Altin Isletmeleri A.S",
+        "Type": "Common Stock",
+        "Country": "Turkey",
+        "Currency": "TRY",
+        "ISIN": "TREKOAL00014",
+        "previousClose": 128.7,
+        "previousCloseDate": "2022-03-04",
+    },
+]
+
+VTSAX_SEARCH_RESULTS = [
+    {
+        "Code": "VTSAX",
+        "Exchange": "US",
+        "Name": "VANGUARD TOTAL STOCK MARKET INDEX FUND ADMIRAL SHARES",
+        "Type": "FUND",
+        "Country": "USA",
+        "Currency": "USD",
+        "ISIN": "US9229087286",
+        "previousClose": 102.85,
+        "previousCloseDate": "2022-03-07",
+    }
+]
+
+VWCE_SEARCH_RESULTS = [
+    {
+        "Code": "VWCE",
+        "Exchange": "XETRA",
+        "Name": "Vanguard FTSE All-World UCITS ETF USD Accumulation",
+        "Type": "ETF",
+        "Country": "Germany",
+        "Currency": "EUR",
+        "ISIN": "IE00BK5BQT80",
+        "previousClose": 96.89,
+        "previousCloseDate": "2022-03-04",
+    },
+    {
+        "Code": "VWCE",
+        "Exchange": "F",
+        "Name": "Vanguard FTSE All-World UCITS ETF USD Accumulation",
+        "Type": "ETF",
+        "Country": "Germany",
+        "Currency": "EUR",
+        "ISIN": "IE00BK5BQT80",
+        "previousClose": 96.62,
+        "previousCloseDate": "2022-03-07",
+    },
+    {
+        "Code": "VWCE",
+        "Exchange": "MI",
+        "Name": "Vanguard FTSE All-World UCITS ETF USD Accumulation",
+        "Type": "ETF",
+        "Country": "Italy",
+        "Currency": "EUR",
+        "ISIN": "IE00BK5BQT80",
+        "previousClose": 96.5,
+        "previousCloseDate": "2022-03-07",
+    },
+]
+
+VWCE_SEARCH_BY_ISIN_RESULTS = [
+    {
+        "Code": "VWCE",
+        "Exchange": "XETRA",
+        "Name": "Vanguard FTSE All-World UCITS ETF USD Accumulation",
+        "Type": "ETF",
+        "Country": "Germany",
+        "Currency": "EUR",
+        "ISIN": "IE00BK5BQT80",
+        "previousClose": 96.89,
+        "previousCloseDate": "2022-03-04",
+    },
+    {
+        "Code": "VWRA",
+        "Exchange": "LSE",
+        "Name": "Vanguard FTSE All-World UCITS ETF USD Accumulation",
+        "Type": "ETF",
+        "Country": "UK",
+        "Currency": "USD",
+        "ISIN": "IE00BK5BQT80",
+        "previousClose": 104.66,
+        "previousCloseDate": "2022-03-07",
+    },
+    {
+        "Code": "VWRP",
+        "Exchange": "LSE",
+        "Name": "Vanguard Funds Public Limited Company - Vanguard FTSE All-World UCITS ETF",
+        "Type": "ETF",
+        "Country": "UK",
+        "Currency": "GBP",
+        "ISIN": "IE00BK5BQT80",
+        "previousClose": 79.935,
+        "previousCloseDate": "2022-03-07",
+    },
+    {
+        "Code": "VWCE",
+        "Exchange": "F",
+        "Name": "Vanguard FTSE All-World UCITS ETF USD Accumulation",
+        "Type": "ETF",
+        "Country": "Germany",
+        "Currency": "EUR",
+        "ISIN": "IE00BK5BQT80",
+        "previousClose": 96.62,
+        "previousCloseDate": "2022-03-07",
+    },
+    {
+        "Code": "VWCE",
+        "Exchange": "MI",
+        "Name": "Vanguard FTSE All-World UCITS ETF USD Accumulation",
+        "Type": "ETF",
+        "Country": "Italy",
+        "Currency": "EUR",
+        "ISIN": "IE00BK5BQT80",
+        "previousClose": 96.5,
+        "previousCloseDate": "2022-03-07",
+    },
+]
+
+
+class TestAssetSearch(TestCase):
+    # This fixture provides data about 65 different exchanges,
+    # and sets up a single account for testing.
+    fixtures = ["exchanges_postgres.json"]
+
+    def setUp(self):
+        super().setUp()
+        # Create a user and an account.
+        self.user = User.objects.create(username="testuser", email="test@example.com")
+        self.client.force_login(self.user)
+        self.isin = "US1234"
+        self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
+            self.user, isin=self.isin
+        )
+
+    @patch("finance.stock_exchanges.query_asset")
+    def test_searching_crypto_assets(self, mock):
+        mock.return_value = BTC_ASSET_SEARCH_RESULT
+        assets = stock_exchanges.search_and_create_assets("btc")
+        self.assertTrue(
+            models.Asset.objects.filter(
+                symbol="BTC",
+                asset_type=models.AssetType.CRYPTO,
+                currency=models.Currency.USD,
+            ).exists()
+        )
+        self.assertEqual(len(assets), 1)
+
+    @patch("finance.stock_exchanges.query_asset")
+    def test_searching_stock_assets(self, mock):
+        mock.return_value = KO_ASSET_SEARCH_RESULT
+        assets = stock_exchanges.search_and_create_assets("ko")
+        self.assertEqual(len(assets), 1)
+
+    @patch("finance.stock_exchanges.query_asset")
+    def test_searching_fund_assets(self, mock):
+        mock.return_value = VTSAX_SEARCH_RESULTS
+        assets = stock_exchanges.search_and_create_assets("Vtsax")
+        self.assertEqual(len(assets), 1)
+
+
+    @patch("finance.stock_exchanges.query_asset")
+    def test_searching_fund_assets_by_isin(self, mock):
+        mock.return_value = VWCE_SEARCH_BY_ISIN_RESULTS
+        assets = stock_exchanges.search_and_create_assets("IE00BK5BQT80")
+        self.assertEqual(len(assets), 4)
+        for asset in assets:
+            self.assertEqual(asset.isin, "IE00BK5BQT80")
+            self.assertEqual(asset.asset_type, models.AssetType.FUND)
