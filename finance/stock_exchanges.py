@@ -108,6 +108,9 @@ def get_or_create_asset(
     for record in asset_records:
         if record["Exchange"] == exchange_code:
             asset_type_raw = record["Type"]
+            if asset_defaults["local_currency"] != record["Currency"]:
+                # There could be multiple assets registered with the same ISIN, but different currencies.
+                continue
             currency = models.currency_enum_from_string(record["Currency"])
             asset = repository.add(
                 isin=isin,
@@ -125,7 +128,7 @@ def get_or_create_asset(
         if len(asset_records):
             record = asset_records[0]
             asset_type_raw = record["Type"]
-            currency = models.currency_enum_from_string(record["Currency"])
+            currency = models.currency_enum_from_string(asset_defaults["local_currency"])
             if add_untracked_if_not_found:
                 asset = repository.add(
                     isin=isin,

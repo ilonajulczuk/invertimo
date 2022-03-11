@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.db.models import Sum
 from django.test import TestCase
 
-from finance import models, prices, testing_utils, utils, tasks
+from finance import models, prices, testing_utils, utils, tasks, stock_exchanges
 from finance.integrations import binance_parser, degiro_parser
 
 
@@ -22,6 +22,17 @@ asset_response = [
         "Currency": "USD",
         "ISIN": "US6541061031",
         "previousClose": 165.67,
+        "previousCloseDate": "2021-12-23",
+    },
+    {
+        "Code": "NKE",
+        "Exchange": "XETRA",
+        "Name": "NIKE Inc",
+        "Type": "Common Stock",
+        "Country": "Germany",
+        "Currency": "GBP",
+        "ISIN": "US6541061031",
+        "previousClose": 147.26,
         "previousCloseDate": "2021-12-23",
     },
     {
@@ -79,6 +90,65 @@ asset_response = [
         "ISIN": "US6541061031",
         "previousClose": 147.26,
         "previousCloseDate": "2021-12-23",
+    },
+]
+
+
+SAME_ISIN_MULTIPLE_CURRENCIES_RESPONSE = [
+    {
+        "Code": "VWCE",
+        "Exchange": "XETRA",
+        "Name": "Vanguard FTSE All-World UCITS ETF USD Accumulation",
+        "Type": "ETF",
+        "Country": "Germany",
+        "Currency": "EUR",
+        "ISIN": "IE00BK5BQT80",
+        "previousClose": 94.93,
+        "previousCloseDate": "2022-03-10",
+    },
+    {
+        "Code": "VWRA",
+        "Exchange": "LSE",
+        "Name": "Vanguard FTSE All-World UCITS ETF USD Accumulation",
+        "Type": "ETF",
+        "Country": "UK",
+        "Currency": "USD",
+        "ISIN": "IE00BK5BQT80",
+        "previousClose": 104.88,
+        "previousCloseDate": "2022-03-11",
+    },
+    {
+        "Code": "VWRP",
+        "Exchange": "LSE",
+        "Name": "Vanguard Funds Public Limited Company - Vanguard FTSE All-World UCITS ETF",
+        "Type": "ETF",
+        "Country": "UK",
+        "Currency": "GBP",
+        "ISIN": "IE00BK5BQT80",
+        "previousClose": 80.3977,
+        "previousCloseDate": "2022-03-11",
+    },
+    {
+        "Code": "VWCE",
+        "Exchange": "F",
+        "Name": "Vanguard FTSE All-World UCITS ETF USD Accumulation",
+        "Type": "ETF",
+        "Country": "Germany",
+        "Currency": "EUR",
+        "ISIN": "IE00BK5BQT80",
+        "previousClose": 95.92,
+        "previousCloseDate": "2022-03-11",
+    },
+    {
+        "Code": "VWCE",
+        "Exchange": "MI",
+        "Name": "Vanguard FTSE All-World UCITS ETF USD Accumulation",
+        "Type": "ETF",
+        "Country": "Italy",
+        "Currency": "EUR",
+        "ISIN": "IE00BK5BQT80",
+        "previousClose": 94.91,
+        "previousCloseDate": "2022-03-10",
     },
 ]
 
@@ -159,6 +229,29 @@ class TestDegiroParser(TestCase):
         self.assertAlmostEqual(account.balance, account_balance)
         self.assertAlmostEqual(total_value, account_balance)
 
+        fund = models.Asset.objects.get(isin="IE00BF4RFH31")
+        self.assertEqual(
+            fund.currency, models.Currency.EUR
+        )
+        self.assertTrue(fund.tracked)
+        stock = models.Asset.objects.get(isin="US1912161007")
+        self.assertEqual(
+            stock.currency, models.Currency.USD
+        )
+        self.assertTrue(stock.tracked)
+
+    @patch("finance.stock_exchanges.query_asset")
+    def test_assets_with_same_isin_multiple_currencies(self, mock):
+        mock.return_value = SAME_ISIN_MULTIPLE_CURRENCIES_RESPONSE
+
+        asset = stock_exchanges.get_or_create_asset(
+            isin="IE00BK5BQT80",
+            exchange=stock_exchanges.ExchangeRepository().get_by_code("LSE"),
+            asset_defaults={"local_currency": "GBP"},
+            add_untracked_if_not_found=False,
+            user=None,
+        )
+        self.assertEqual(asset.currency, models.Currency.GBP)
 
 class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/integrations/degiro/transactions/"

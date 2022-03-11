@@ -61,7 +61,7 @@ def _add_transaction(account, isin, exchange, executed_at, quantity, price):
         value_in_account_currency,
         total_in_account_currency,
         order_id,
-        asset_defaults={"currency": "USD", "name": isin},
+        asset_defaults={"local_currency": "USD", "name": isin},
         import_all_assets=True,
     )
 
@@ -318,7 +318,7 @@ class TestPosition(TestCase):
             value_in_account_currency,
             total_in_account_currency,
             order_id,
-            asset_defaults={},
+            asset_defaults={"local_currency": "USD"},
             import_all_assets=False,
         )
 
@@ -342,7 +342,7 @@ class TestPosition(TestCase):
             decimal.Decimal("20.54"),
             decimal.Decimal("20.04"),
             order_id,
-            asset_defaults={},
+            asset_defaults={"local_currency": "USD"},
             import_all_assets=False,
         )
 
