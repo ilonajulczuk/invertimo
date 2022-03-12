@@ -18,6 +18,7 @@ import { Snackbar } from '../components/Snackbar.js';
 import { matchNumberUpToTenDecimalPlaces } from './utils.js';
 import { getCurrencyExchangeRates } from '../api_utils.js';
 import isValid from 'date-fns/isValid';
+import Decimal from 'decimal.js';
 
 
 function formTransactionToAPITransaction(formData) {
@@ -50,22 +51,24 @@ function formTransactionToAPITransaction(formData) {
 
     data["transaction_costs"] = -data["fees"];
     delete data.fees;
-    data["local_value"] = -data["price"] * data["quantity"];
+    const price = new Decimal(-data["price"]);
+    const quantity = new Decimal(data["quantity"]);
+    data["local_value"] = price.mul(quantity).mul(10000).round().div(10000).toString();
 
     // This value is empty if the currencies match.
     let value = data["totalValueAccountCurrency"];
     const emptyAccountCurrencyValue = value === "";
     data["value_in_account_currency"] = (
-        emptyAccountCurrencyValue ? data["local_value"] : -value * multiplier);
+        emptyAccountCurrencyValue ? data["local_value"] : String(-value * multiplier));
 
     delete data["totalValueAccountCurrency"];
 
     // User can go with the default value that is precomputed, in that case fill it in.
     let totalInAccountCurrency = data["totalCostAccountCurrency"];
     if (totalInAccountCurrency === "") {
-        data["total_in_account_currency"] = data["value_in_account_currency"] + data["transaction_costs"];
+        data["total_in_account_currency"] = (new Decimal(data["value_in_account_currency"])).add(new Decimal(data["transaction_costs"])).toString();
     } else {
-        data["total_in_account_currency"] = -totalInAccountCurrency * multiplier;
+        data["total_in_account_currency"] = (new Decimal(totalInAccountCurrency)).mul(new Decimal(-multiplier)).toString();
     }
 
     delete data["totalCostAccountCurrency"];
@@ -299,13 +302,14 @@ export function RecordTransactionForm(props) {
             .required('Account needs to be selected'),
         totalCostAccountCurrency: yup
             .number()
+            .positive("Total cost needs to be a positive number.")
             .test('has-10-or-less-places', "Only up to ten decimal places are allowed",
                 matchNumberUpToTenDecimalPlaces),
         // This value is only required if currency of the asset and account don't match.
         totalValueAccountCurrency: yup
             .number().when(['currency', 'account'], {
                 is: (currency, accountId) => accountId ? currency !== accountsById.get(accountId).currency : false,
-                then: yup.number().test('has-10-or-less-places', "Only up to ten decimal places are allowed",
+                then: yup.number().positive("Total value needs to be a positive number.").test('has-10-or-less-places', "Only up to ten decimal places are allowed",
                     matchNumberUpToTenDecimalPlaces).required(
                         'Total value in account currency has to be provided if the' +
                         ' asset currency is different than the account currency.'),
@@ -313,6 +317,7 @@ export function RecordTransactionForm(props) {
             }),
         fees: yup
             .number()
+            .min(0)
             .required('Fees are required')
             .test('has-2-or-less-places', "Only up to ten decimal places are allowed",
                 matchNumberUpToTenDecimalPlaces),
@@ -349,6 +354,11 @@ export function RecordTransactionForm(props) {
             } else {
                 if (transformedResult.errors) {
                     setErrors(transformedResult.errors);
+                    if ("local_value" in transformedResult.errors) {
+                        console.error(transformedResult.errors);
+                        alert("Something went wrong computing price times quantity...");
+                    }
+
                 } else if (transformedResult.message) {
                     alert(transformedResult.message);
                 }

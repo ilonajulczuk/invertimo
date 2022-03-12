@@ -210,9 +210,9 @@ describe('form for recording transactions', () => {
             "transaction_costs": -0.5,
             "price": 1300,
             "quantity": 13,
-            "local_value": -16900,
-            "value_in_account_currency": -16900,
-            "total_in_account_currency": -16901,
+            "local_value": "-16900",
+            "value_in_account_currency": "-16900",
+            "total_in_account_currency": "-16901",
             "order_id": "",
         };
         expect(document.querySelectorAll('[aria-invalid="true"]').length).toEqual(0);
@@ -305,9 +305,9 @@ describe('form for recording transactions', () => {
             "transaction_costs": -0.5,
             "price": 1300,
             "quantity": -13,
-            "local_value": 16900,
-            "value_in_account_currency": 16900,
-            "total_in_account_currency": 16899,
+            "local_value": "16900",
+            "value_in_account_currency": "16900",
+            "total_in_account_currency": "16899",
             "order_id": "",
         };
         expect(document.querySelectorAll('[aria-invalid="true"]').length).toEqual(0);
@@ -419,9 +419,9 @@ describe('form for recording transactions', () => {
             "transaction_costs": -0.5,
             "price": 1300,
             "quantity": -13,
-            "local_value": 16900,
-            "value_in_account_currency": 16900,
-            "total_in_account_currency": 16899,
+            "local_value": "16900",
+            "value_in_account_currency": "16900",
+            "total_in_account_currency": "16899",
             "order_id": "",
         };
         expect(document.querySelectorAll('[aria-invalid="true"]').length).toEqual(0);
@@ -516,9 +516,9 @@ describe('form for recording transactions', () => {
             "transaction_costs": -2,
             "price": 1300,
             "quantity": -13,
-            "local_value": 16900,
-            "value_in_account_currency": 12901,
-            "total_in_account_currency": 12899,
+            "local_value": "16900",
+            "value_in_account_currency": "12901",
+            "total_in_account_currency": "12899",
             "order_id": "",
         };
         expect(document.querySelectorAll('[aria-invalid="true"]').length).toEqual(0);
@@ -620,9 +620,9 @@ describe('form for recording transactions', () => {
             "transaction_costs": -2,
             "price": 1300,
             "quantity": -13,
-            "local_value": 16900,
-            "value_in_account_currency": 12901,
-            "total_in_account_currency": 12899,
+            "local_value": "16900",
+            "value_in_account_currency": "12901",
+            "total_in_account_currency": "12899",
             "order_id": "",
         };
         expect(document.querySelectorAll('[aria-invalid="true"]').length).toEqual(0);
@@ -716,9 +716,9 @@ describe('form for recording transactions', () => {
             "transaction_costs": -2,
             "price": 1300,
             "quantity": 13,
-            "local_value": -16900,
-            "value_in_account_currency": -12901,
-            "total_in_account_currency": -12903,
+            "local_value": "-16900",
+            "value_in_account_currency": "-12901",
+            "total_in_account_currency": "-12903",
             "order_id": "",
         };
         expect(document.querySelectorAll('[aria-invalid="true"]').length).toEqual(0);
