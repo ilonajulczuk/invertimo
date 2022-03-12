@@ -47,9 +47,6 @@ export default function ImportTransactionsFromDegiroForm(props) {
     };
 
     const FILE_SIZE = 160 * 1024;
-    const SUPPORTED_FORMATS = [
-        "text/csv",
-    ];
 
     const validationSchema = yup.object().shape({
         account: yup
@@ -61,11 +58,6 @@ export default function ImportTransactionsFromDegiroForm(props) {
                 "fileSize",
                 "File too large",
                 value => value && value.size <= FILE_SIZE
-            )
-            .test(
-                "fileFormat",
-                "Unsupported Format, please provide 'text/csv' file",
-                value => value && SUPPORTED_FORMATS.includes(value.type)
             )
         ,
         import_all_assets: yup.bool().required(),
@@ -139,6 +131,7 @@ export default function ImportTransactionsFromDegiroForm(props) {
                                     type="file"
                                     id="file"
                                     name="file"
+                                    accept=".csv"
                                     hidden
                                     onChange={e => {
                                         let files = Array.from(e.target.files);

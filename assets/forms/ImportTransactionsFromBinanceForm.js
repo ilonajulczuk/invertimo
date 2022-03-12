@@ -48,9 +48,6 @@ export default function ImportTransactionsFromBinanceForm(props) {
     };
 
     const FILE_SIZE = 160 * 1024;
-    const SUPPORTED_FORMATS = [
-        "text/csv",
-    ];
 
     const validationSchema = yup.object().shape({
         account: yup
@@ -62,13 +59,7 @@ export default function ImportTransactionsFromBinanceForm(props) {
                 "fileSize",
                 "File too large",
                 value => value && value.size <= FILE_SIZE
-            )
-            .test(
-                "fileFormat",
-                "Unsupported Format, please provide 'text/csv' file",
-                value => value && SUPPORTED_FORMATS.includes(value.type)
-            )
-        ,
+            ),
     });
 
     const initialValues = {
@@ -140,6 +131,7 @@ export default function ImportTransactionsFromBinanceForm(props) {
                                     id="file"
                                     name="file"
                                     hidden
+                                    accept=".csv"
                                     onChange={e => {
                                         let files = Array.from(e.target.files);
                                         if (files.length == 1) {

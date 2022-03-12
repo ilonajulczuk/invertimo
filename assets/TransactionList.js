@@ -19,6 +19,7 @@ export function EmbeddedTransactionList(props) {
         { id: 'quantity', label: 'Quantity' },
         { id: 'price', label: 'Price' },
         { id: 'local_value', label: 'Total value' },
+        { id: 'value_in_account_currency', label: 'Total value (account currency)' },
         { id: 'executed_at', label: 'Executed At' },
         { id: 'transaction_costs', label: 'Fees' },
         { id: 'interaction', label: '' },
@@ -46,6 +47,7 @@ export function EmbeddedTransactionList(props) {
         transactionCopy.price = Number(transactionCopy.price);
         transactionCopy.quantity = Number(transactionCopy.quantity);
         transactionCopy.local_value = Number(transactionCopy.local_value);
+        transactionCopy.value_in_account_currency = Number(transactionCopy.value_in_account_currency);
         transactionCopy.type = {
             displayValue: transactionTypeDisplay,
             comparisonKey: transaction.value_in_account_currency,
