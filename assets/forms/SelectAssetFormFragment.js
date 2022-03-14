@@ -170,9 +170,11 @@ export function SelectAssetFormFragment(props) {
                   setNewAssetOptions(null);
                   searchAssets(newValue.inputValue).then((assetSearchResult) => {
                     const newOptions = [...options];
+                    const optionIds = newOptions.map(asset => asset.id);
                     for (const asset of assetSearchResult) {
-                      if (!newOptions.includes(asset)) {
+                      if (!optionIds.includes(asset.id)) {
                         newOptions.push(asset);
+                        optionIds.push(asset.id);
                       }
                     }
                     setOptions(newOptions);
@@ -227,7 +229,7 @@ export function SelectAssetFormFragment(props) {
             if (params.inputValue !== '') {
               filtered.push({
                 inputValue: params.inputValue,
-                newOption: `Add "${params.inputValue}"`,
+                newOption: `Not finding the asset? Search "${params.inputValue}"...`,
               });
             }
 
