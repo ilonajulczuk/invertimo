@@ -80,7 +80,10 @@ export function Accounts(props) {
     let history = useHistory();
 
     let accountsById = new Map(props.accounts.map(account => [account.id, account]));
-
+    let defaultCurrency = "EUR";
+    if (props.accounts.length > 0) {
+        defaultCurrency = props.accounts[props.accounts.length - 1].currency;
+    }
     let accountId;
     let account;
     let canDelete = false;
@@ -141,7 +144,9 @@ export function Accounts(props) {
                 <h2><a href="#/accounts">Accounts</a> / add</h2>
                 <CreateAccountForm
                     handleSubmit={handleAddAccount}
-                    hasAccounts={props.accounts.length > 0} />
+                    hasAccounts={props.accounts.length > 0}
+                    defaultCurrency={defaultCurrency}
+                    />
             </Route>
             <Route path={`${path}/delete`}>
                 {accountsBase}

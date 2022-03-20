@@ -28,7 +28,7 @@ export function CreateAccountForm(props) {
     const classes = useStyles();
 
     const initialValues = {
-        currency: "EUR",
+        currency: props.defaultCurrency,
         name: "",
     };
     const onSubmit = async (values, { setErrors, resetForm }) => {
@@ -67,11 +67,11 @@ export function CreateAccountForm(props) {
             label: "£ GBP",
         },
     ];
-
     const currencyHelperText = `Main currency used by this account (some positions, e.g. stocks might trade in different currencies)`;
     return (
 
         <Formik
+            enableReinitialize
             initialValues={initialValues}
             validationSchema={validationSchema}
             onSubmit={onSubmit}
@@ -128,4 +128,5 @@ export function CreateAccountForm(props) {
 CreateAccountForm.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
     hasAccounts: PropTypes.bool.isRequired,
+    defaultCurrency: PropTypes.oneOf(["EUR", "USD", "GBP"]).isRequired,
 };

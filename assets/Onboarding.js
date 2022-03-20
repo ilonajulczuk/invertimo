@@ -61,7 +61,7 @@ AccountCard.propTypes = {
 };
 
 
-function AddAccountStep({ hasAccounts, handleAddAccount, existingAccounts }) {
+function AddAccountStep({ hasAccounts, handleAddAccount, existingAccounts, defaultCurrency }) {
 
     const classes = useStyles();
 
@@ -89,7 +89,8 @@ function AddAccountStep({ hasAccounts, handleAddAccount, existingAccounts }) {
         <h3>Create an account 👇</h3>
         <CreateAccountForm
             handleSubmit={handleAddAccount}
-            hasAccounts={hasAccounts} />
+            hasAccounts={hasAccounts}
+            defaultCurrency={defaultCurrency} />
     </>;
 
 }
@@ -98,6 +99,7 @@ AddAccountStep.propTypes = {
     hasAccounts: PropTypes.bool.isRequired,
     existingAccounts: PropTypes.array.isRequired,
     handleAddAccount: PropTypes.func.isRequired,
+    defaultCurrency: PropTypes.oneOf(["EUR", "USD", "GBP"]).isRequired,
 };
 
 
@@ -111,6 +113,11 @@ export default function Onboarding(props) {
     let numTransactions = "?";
     let hasTransactions = false;
     const hasAccounts = props.accounts.length > 0;
+    let defaultCurrency = "EUR";
+    if (props.accounts.length > 0) {
+        defaultCurrency = props.accounts[props.accounts.length - 1].currency;
+    }
+
     if (props.transactions !== null) {
         numTransactions = props.transactions.length;
         hasTransactions = numTransactions > 0;
@@ -142,7 +149,8 @@ export default function Onboarding(props) {
             next: 'transactions_intro',
             content: <AddAccountStep
                 existingAccounts={existingAccounts} hasAccounts={hasAccounts}
-                handleAddAccount={props.handleAddAccount} />,
+                handleAddAccount={props.handleAddAccount}
+                defaultCurrency={defaultCurrency} />,
             nextDisabled: !hasAccounts,
         },
         {
