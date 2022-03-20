@@ -526,6 +526,101 @@ describe('form for recording transactions', () => {
     });
 
 
+    it("submits data correctly for sell transaction with account in different currency (price not provided)", async () => {
+        expect.hasAssertions();
+
+        const accounts = [
+            {
+                id: 1,
+                nickname: "First account",
+                currency: "EUR",
+            },
+            {
+                id: 77,
+                nickname: "Another account",
+                currency: "EUR",
+            },
+        ];
+
+        const handleSubmit = jest.fn().mockReturnValue({ ok: true, data: {"id": 1} });
+
+        act(() => {
+            testingRender(
+                <MyThemeProvider>
+                    <RecordTransactionForm
+                        accounts={accounts} handleSubmit={handleSubmit} hasTransactions={false}
+                        executedAtDate={new Date("2021-08-10")}
+                        defaultAssetOptions={assetOptions}
+                    /></MyThemeProvider>,
+
+            );
+        });
+
+        await act(async () => {
+
+            let selector = document.getElementById("currency");
+            fireEvent.mouseDown(selector);
+            let listbox = await screen.findByRole('listbox');
+            fireEvent.click(within(listbox).getByText(/USD/i));
+
+            selector = document.getElementById("account");
+            fireEvent.mouseDown(selector);
+            listbox = await screen.findByRole('listbox');
+            fireEvent.click(within(listbox).getByText(/First account/i));
+
+            userEvent.type(document.getElementById("quantity"), '13');
+            userEvent.type(document.getElementById("totalValueAccountCurrency"), '12901');
+
+            fireEvent.change(document.getElementById("totalCostAccountCurrency"),
+                { target: { value: "12899" } });
+
+            userEvent.type(screen.getByLabelText(/fees/i), '2');
+
+            const radios = screen.getAllByRole('radio');
+
+            fireEvent.click(radios[1]);
+
+            // Complicated part of the asset selection, can override other fields
+            // if confirmed in the dialog.
+            const symbolAutocomplete = document.getElementById("symbol");
+            symbolAutocomplete.focus();
+            fireEvent.change(symbolAutocomplete, { target: { value: "br" } });
+            fireEvent.keyDown(symbolAutocomplete, { key: 'ArrowDown' });
+            fireEvent.keyDown(symbolAutocomplete, { key: 'Enter' });
+        });
+
+        // https://stackoverflow.com/questions/60882089/how-to-test-material-ui-autocomplete-with-react-testing-library
+        // https://stackoverflow.com/questions/55184037/react-testing-library-on-change-for-material-ui-select-component
+
+        const submitButton = document.querySelector(
+            '[data-test-id=record-transaction-button]');
+
+        expect(submitButton).not.toBeNull();
+        await act(async () => {
+            submitButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        });
+
+        for (let node of document.querySelectorAll('[aria-invalid="true"]')) {
+            console.log(node.getAttribute("aria-describedby"));
+        }
+
+        const expectedValue = {
+            account: accounts[0].id,
+            currency: "USD",
+            exchange: "USA Stocks",
+            "executed_at": new Date("2021-08-10"),
+            "asset": 30,
+            "transaction_costs": -2,
+            "quantity": -13,
+            "value_in_account_currency": "12901",
+            "total_in_account_currency": "12899",
+            "order_id": "",
+        };
+        expect(document.querySelectorAll('[aria-invalid="true"]').length).toEqual(0);
+        expect(handleSubmit).toHaveBeenCalledWith(expectedValue);
+    });
+
+
     it("submits data correctly for sell transaction with account in different currency (overridden asset fields dialog)", async () => {
         expect.hasAssertions();
 

@@ -25,16 +25,16 @@ _FAKE_TRANSACTIONS = [
 ]
 
 
-def _add_dummy_account_and_asset(user, isin):
-    account = models.Account.objects.create(
+def _add_dummy_account_and_asset(user, isin, currency=models.Currency.USD):
+    account, _ = models.Account.objects.get_or_create(
         user=user, currency=models.Currency.EUR, nickname="test account"
     )
-    exchange = models.Exchange.objects.create(name="USA stocks", country="USA")
-    asset = models.Asset.objects.create(
+    exchange, _ = models.Exchange.objects.get_or_create(name="USA stocks", country="USA")
+    asset, _ = models.Asset.objects.get_or_create(
         isin=isin,
         symbol="MOONIES",
         name="a stock",
-        currency=models.Currency.USD,
+        currency=currency,
         exchange=exchange,
         tracked=True,
     )
@@ -369,6 +369,9 @@ class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
         self.account, self.exchange, self.asset = _add_dummy_account_and_asset(
             self.user, isin=self.isin
         )
+        _, _, self.asset_in_eur = _add_dummy_account_and_asset(
+            self.user, isin=self.isin + "1", currency=models.Currency.EUR
+        )
         for transaction in _FAKE_TRANSACTIONS:
             _add_transaction(
                 self.account,
@@ -378,6 +381,20 @@ class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
                 transaction[1],
                 transaction[2],
             )
+
+        models.CurrencyExchangeRate.objects.create(
+            from_currency=models.Currency.USD,
+            to_currency=models.Currency.EUR,
+            date=datetime.date.fromisoformat("2021-05-03"),
+            value=0.84,
+        )
+
+        models.CurrencyExchangeRate.objects.create(
+            from_currency=models.Currency.EUR,
+            to_currency=models.Currency.USD,
+            date=datetime.date.fromisoformat("2021-05-03"),
+            value=1.19,
+        )
 
     def test_add_transaction_for_known_asset(self):
         response = self.client.post(
@@ -396,6 +413,38 @@ class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
             },
         )
         self.assertEqual(response.status_code, 201)
+
+    def test_add_transaction_for_known_asset_no_price(self):
+        response = self.client.post(
+            reverse(self.VIEW_NAME),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "asset": self.asset.pk,
+                "quantity": 10,
+                "transaction_costs": 0,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+                "currency": "USD",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+
+    def test_add_transaction_for_known_asset_no_price_same_currency(self):
+        response = self.client.post(
+            reverse(self.VIEW_NAME),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "asset": self.asset_in_eur.pk,
+                "quantity": 10,
+                "transaction_costs": 0,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+                "currency": "EUR",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
 
     def test_add_transaction_for_known_asset_that_doesnt_exist_fails(self):
         response = self.client.post(
@@ -495,6 +544,42 @@ class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
         )
         self.assertEqual(response.status_code, 201)
 
+    def test_add_transaction_for_new_asset_empty_price_different_currency(self):
+        response = self.client.post(
+            reverse("transaction-add-with-custom-asset"),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "currency": "USD",
+                "exchange": "USA stocks",
+                "asset_type": "Stock",
+                "symbol": "DIS",
+                "quantity": 10,
+                "transaction_costs": 0,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+
+    def test_add_transaction_for_new_asset_empty_price_same_currency(self):
+        response = self.client.post(
+            reverse("transaction-add-with-custom-asset"),
+            {
+                "executed_at": "2021-03-04T00:00:00Z",
+                "account": self.account.pk,
+                "currency": "EUR",
+                "exchange": "USA stocks",
+                "asset_type": "Stock",
+                "symbol": "DIS",
+                "quantity": 10,
+                "transaction_costs": 0,
+                "value_in_account_currency": 123.33,
+                "total_in_account_currency": 123.33,
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+
     @patch("finance.prices.collect_prices")
     @patch("finance.prices.are_crypto_prices_available")
     def test_add_transaction_for_new_crypto_asset_tracked(self, mock, _):
@@ -517,7 +602,7 @@ class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
             },
         )
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(models.Asset.objects.count(), 2)
+        self.assertEqual(models.Asset.objects.count(), 3)
         self.assertTrue(models.Asset.objects.get(symbol="ETH").tracked)
 
     @patch("finance.prices.are_crypto_prices_available")
@@ -541,7 +626,7 @@ class TestTransactionsView(testing_utils.ViewTestBase, TestCase):
             },
         )
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(models.Asset.objects.count(), 2)
+        self.assertEqual(models.Asset.objects.count(), 3)
         self.assertFalse(models.Asset.objects.get(symbol="DIS").tracked)
 
     def test_add_transaction_for_crypto_asset_bad_values(self):

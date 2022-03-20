@@ -18,7 +18,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 
 
-from finance import accounts, gains, models, stock_exchanges, tasks
+from finance import accounts, gains, models, stock_exchanges, tasks, prices
 from finance.integrations import binance_parser, degiro_parser
 from finance.models import (
     AccountEvent,
@@ -313,6 +313,29 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         context["request"] = self.request
         return context
 
+    def compute_price(self, account, to_currency, arguments):
+        price_in_account_currency = (
+                arguments["value_in_account_currency"] / arguments["quantity"]
+            )
+        from_currency = account.currency
+        if from_currency == to_currency:
+            raise serializers.ValidationError(
+                {
+                    "price": ["Price required if the asset is traded in the account currency."],
+                }
+            )
+        date = arguments["executed_at"].date()
+        exchange_rate = prices.get_closest_exchange_rate(
+            date, from_currency, to_currency
+        )
+        if exchange_rate is None:
+            raise serializers.ValidationError(
+                {
+                    "price": ["Please provide the price, no suitable exchange rate available."],
+                }
+            )
+        return price_in_account_currency * exchange_rate.value
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(
             data=request.data, context=self.get_serializer_context()
@@ -328,8 +351,14 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         arguments.pop("account")
         asset_id = arguments.pop("asset")
         arguments["asset_id"] = asset_id
+        if arguments.get("price", None) is None or arguments.get("local_value", None) is None:
+            to_currency = models.Asset.objects.get(pk=asset_id).currency
+            arguments["price"] = self.compute_price(account, to_currency, arguments)
+            arguments["local_value"] = arguments["price"] * arguments["quantity"]
         try:
-            transaction = account_repository.add_transaction_known_asset(account, **arguments)
+            transaction = account_repository.add_transaction_known_asset(
+                account, **arguments
+            )
             asset = transaction.position.asset
             if asset.tracked:
                 tasks.collect_prices.delay(asset.pk)
@@ -342,9 +371,9 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         headers = self.get_success_headers(serializer.data)
         data = serializer.data
         data["id"] = transaction.pk
-        return Response(
-            data, status=status.HTTP_201_CREATED, headers=headers
-        )
+        data["price"] = str(transaction.price)
+        data["local_value"] = str(transaction.local_value)
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(detail=False, methods=["post"])
     def add_with_custom_asset(self, request):
@@ -359,17 +388,27 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         )
         arguments = serializer.validated_data.copy()
         arguments.pop("account")
+
+        if arguments.get("price", None) is None or arguments.get("local_value", None) is None:
+            to_currency = arguments["currency"]
+            arguments["price"] = self.compute_price(account, to_currency, arguments)
+            arguments["local_value"] = arguments["price"] * arguments["quantity"]
         try:
-            account_repository.add_transaction_custom_asset(account, **arguments)
+            transaction = account_repository.add_transaction_custom_asset(account, **arguments)
         except gains.SoldBeforeBought:
             raise serializers.ValidationError(
                 {
                     "quantity": ["Can't sell asset before buying it."],
                 }
             )
+
         headers = self.get_success_headers(serializer.data)
+        data = serializer.data
+        data["id"] = transaction.pk
+        data["price"] = str(transaction.price)
+        data["local_value"] = str(transaction.local_value)
         return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+            data, status=status.HTTP_201_CREATED, headers=headers
         )
 
     def perform_destroy(self, instance):

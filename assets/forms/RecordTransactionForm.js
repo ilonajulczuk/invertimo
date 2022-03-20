@@ -51,13 +51,20 @@ function formTransactionToAPITransaction(formData) {
 
     data["transaction_costs"] = -data["fees"];
     delete data.fees;
-    const price = new Decimal(-data["price"]);
-    const quantity = new Decimal(data["quantity"]);
-    data["local_value"] = price.mul(quantity).mul(10000).round().div(10000).toString();
 
     // This value is empty if the currencies match.
     let value = data["totalValueAccountCurrency"];
     const emptyAccountCurrencyValue = value === "";
+
+    if (data["price"] === "" && !emptyAccountCurrencyValue) {
+        delete data.price;
+        delete data.local_value;
+    } else {
+        const price = new Decimal(-data["price"]);
+        const quantity = new Decimal(data["quantity"]);
+        data["local_value"] = price.mul(quantity).mul(10000).round().div(10000).toString();
+    }
+
     data["value_in_account_currency"] = (
         emptyAccountCurrencyValue ? data["local_value"] : String(-value * multiplier));
 
@@ -289,10 +296,12 @@ export function RecordTransactionForm(props) {
             .required('Trade type is required'),
         price: yup
             .number('Price needs to be a number')
-            .required('Price is required')
-            .positive()
-            .test('has-10-or-less-places', "Only up to ten decimal places are allowed",
-                matchNumberUpToTenDecimalPlaces),
+            .when(['currency', 'account'], {
+                is: (currency, accountId) => accountId ? currency == accountsById.get(accountId).currency : false,
+                then: yup.number().positive("Total value needs to be a positive number.").test('has-10-or-less-places', "Only up to ten decimal places are allowed",
+                    matchNumberUpToTenDecimalPlaces).required('Price is required if it\'s in the same currency as account currency.'),
+                otherwise: yup.number(),
+            }),
         quantity: yup
             .number()
             .positive()
@@ -437,6 +446,7 @@ export function RecordTransactionForm(props) {
                             label={sameCurrency(formikProps.values, accountsById) ? "Price" : `Price in ${toSymbol(formikProps.values.currency)}`}
                             name="price"
                             type="number"
+                            formHelperText={sameCurrency(formikProps.values, accountsById) ? "" : `Price is optional as it's different than account currency (if not provided we will use currency conversion rate)`}
                             InputLabelProps={{
                                 shrink: true,
                             }}
