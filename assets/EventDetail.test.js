@@ -10,6 +10,7 @@ import { EventDetail } from "./EventDetail.js";
 import { MemoryRouter } from "react-router-dom";
 let container = null;
 
+
 describe('event detail tests', () => {
 
     beforeEach(() => {
