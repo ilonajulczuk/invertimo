@@ -184,7 +184,9 @@ export default function Onboarding(props) {
                     <h3>Recording transactions</h3>
                     <p>You currently have {numTransactions} transactions recorded.</p>
                     <h4>Integrations</h4>
-                    <p>If you use Degiro, follow <a href="#/transactions/import/degiro">these steps</a>. We are working on adding more integrations!</p>
+                    <p>If you use Degiro, follow <a href="#/transactions/import/degiro">these steps</a>.</p>
+                    <p>If you use Binance, follow <a href="#/transactions/import/binance">these steps</a>.</p>
+                    <p> We are working on adding more integrations!</p>
                     <h4>Manual recording</h4>
                     <p>You can always record some transactions with
                         a form below.</p>
