@@ -94,3 +94,10 @@ class TestPrices(TestCase):
         self.assertEqual(rate.from_currency, self.from_currency)
         self.assertEqual(rate.to_currency, self.to_currency)
         self.assertEqual(rate.value, decimal.Decimal("0.8"))
+
+    def test_generating_currency_pairs(self):
+        symbol_to_currencies = prices.generate_symbol_to_currency_pairs(["EUR", "GBP", "USD"])
+        self.assertEqual(len(symbol_to_currencies), 6)
+
+        all_symbol_to_currencies = prices.generate_symbol_to_currency_pairs(prices.currencies)
+        self.assertEqual(len(all_symbol_to_currencies), len(prices.currencies) * (len(prices.currencies) - 1))

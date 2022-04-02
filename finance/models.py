@@ -19,6 +19,11 @@ class Currency(models.IntegerChoices):
     GBP = 2, _("GBP")
     USD = 3, _("USD")
     GBX = 4, _("GBX")
+    HKD = 5, _("HKD")
+    SGD = 6, _("SGD")
+    JPY = 7, _("JPY")
+    CAD = 8, _("CAD")
+    PLN = 9, _("PLN")
 
 
 def currency_enum_from_string(currency: str) -> Currency:

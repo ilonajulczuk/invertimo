@@ -1,12 +1,13 @@
-from typing import Optional
-from django.db.models.base import ModelState
-import requests
-import logging
 import datetime
 import decimal
+import itertools
+import logging
+from typing import Optional
 
-
+import requests
 from django.conf import settings
+from django.db.models.base import ModelState
+
 from finance import models
 
 logger = logging.getLogger(__name__)
@@ -55,6 +56,19 @@ symbol_to_currency_pair = {
     },
 }
 
+currencies = ["EUR", "USD", "GBP", "GBX", "HKD", "SGD", "JPY", "CAD", "PLN"]
+
+
+def generate_symbol_to_currency_pairs(currencies):
+    pairs = itertools.permutations(currencies, 2)
+    symbol_to_currency_pairs = {}
+    for from_currency, to_currency in pairs:
+        symbol_to_currency_pairs[from_currency + to_currency] = {
+            "from_currency": models.Currency[from_currency],
+            "to_currency": models.Currency[to_currency],
+        }
+    return symbol_to_currency_pairs
+
 
 def get_closest_exchange_rate(
     date: datetime.date, from_currency: models.Currency, to_currency: models.Currency
@@ -69,9 +83,13 @@ def get_closest_exchange_rate(
 
 
 def collect_exchange_rates():
+    symbol_to_currency_pair = generate_symbol_to_currency_pairs(currencies)
+
     for symbol, pair in symbol_to_currency_pair.items():
         from_currency = pair["from_currency"]
         to_currency = pair["to_currency"]
+        if to_currency == models.Currency.GBX:
+            continue
         from_date = "2020-01-01"
         last_record = (
             models.CurrencyExchangeRate.objects.filter(

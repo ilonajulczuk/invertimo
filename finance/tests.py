@@ -696,6 +696,86 @@ VWCE_SEARCH_BY_ISIN_RESULTS = [
     },
 ]
 
+UNSUPPORTED_CURRENCY_RESULTS = [
+    {
+        "Code": "0002",
+        "Exchange": "HK",
+        "Name": "CLP Holdings Limited",
+        "Type": "Common Stock",
+        "Country": "Hong Kong",
+        "Currency": "FFF",
+        "ISIN": "HK0002007356",
+        "previousClose": 76.9,
+        "previousCloseDate": "2022-04-01",
+    },
+    {
+        "Code": "CLPHF",
+        "Exchange": "US",
+        "Name": "CLP Holdings Limited",
+        "Type": "Common Stock",
+        "Country": "USA",
+        "Currency": "FFF",
+        "ISIN": "HK0002007356",
+        "previousClose": 9.55,
+        "previousCloseDate": "2022-04-01",
+    },
+]
+
+UNSUPPORTED_EXCHANGE_RESULTS = [
+    {
+        "Code": "0002",
+        "Exchange": "TA",
+        "Name": "CLP Holdings Limited",
+        "Type": "Common Stock",
+        "Country": "Hong Kong",
+        "Currency": "USD",
+        "ISIN": "HK0002007356",
+        "previousClose": 76.9,
+        "previousCloseDate": "2022-04-01",
+    },
+    {
+        "Code": "CLPHF",
+        "Exchange": "TA",
+        "Name": "CLP Holdings Limited",
+        "Type": "Common Stock",
+        "Country": "USD",
+        "Currency": "USD",
+        "ISIN": "HK0002007356",
+        "previousClose": 9.55,
+        "previousCloseDate": "2022-04-01",
+    },
+]
+
+UNSUPPORTED_EXCHANGE_AND_CURRENCY_RESULTS = [
+    {
+        "Code": "ABRA",
+        "Name": "Abra Information Technologies",
+        "Country": "Israel",
+        "Exchange": "TA",
+        "Currency": "ILS",
+        "Type": "Common Stock",
+        "Isin": "IL0011016669",
+    },
+    {
+        "Code": "ACCL",
+        "Name": "ACCL",
+        "Country": "Israel",
+        "Exchange": "TA",
+        "Currency": "ILS",
+        "Type": "Common Stock",
+        "Isin": None,
+    },
+    {
+        "Code": "ACKR",
+        "Name": "ACKR",
+        "Country": "Israel",
+        "Exchange": "TA",
+        "Currency": "ILS",
+        "Type": "Common Stock",
+        "Isin": None,
+    },
+]
+
 
 class TestAssetSearch(TestCase):
     # This fixture provides data about 65 different exchanges,
@@ -723,7 +803,7 @@ class TestAssetSearch(TestCase):
                 currency=models.Currency.USD,
             ).exists()
         )
-        self.assertEqual(len(assets), 1)
+        self.assertEqual(len(assets), 2)
 
     @patch("finance.stock_exchanges.query_asset")
     def test_searching_stock_assets(self, mock):
@@ -737,12 +817,38 @@ class TestAssetSearch(TestCase):
         assets = stock_exchanges.search_and_create_assets("Vtsax")
         self.assertEqual(len(assets), 1)
 
-
     @patch("finance.stock_exchanges.query_asset")
     def test_searching_fund_assets_by_isin(self, mock):
         mock.return_value = VWCE_SEARCH_BY_ISIN_RESULTS
         assets = stock_exchanges.search_and_create_assets("IE00BK5BQT80")
-        self.assertEqual(len(assets), 4)
+        self.assertEqual(len(assets), 5)
         for asset in assets:
             self.assertEqual(asset.isin, "IE00BK5BQT80")
+            self.assertEqual(asset.asset_type, models.AssetType.FUND)
+
+    @patch("finance.stock_exchanges.query_asset")
+    def test_searching_unsupported_currency(self, mock):
+        mock.return_value = UNSUPPORTED_CURRENCY_RESULTS
+        assets = stock_exchanges.search_and_create_assets("HK0002007356")
+        self.assertEqual(len(assets), 0)
+        for asset in assets:
+            self.assertEqual(asset.isin, "HK0002007356")
+            self.assertEqual(asset.asset_type, models.AssetType.FUND)
+
+    @patch("finance.stock_exchanges.query_asset")
+    def test_searching_unsupported_exchange(self, mock):
+        mock.return_value = UNSUPPORTED_EXCHANGE_RESULTS
+        assets = stock_exchanges.search_and_create_assets("HK0002007356")
+        self.assertEqual(len(assets), 0)
+        for asset in assets:
+            self.assertEqual(asset.isin, "HK0002007356")
+            self.assertEqual(asset.asset_type, models.AssetType.FUND)
+
+    @patch("finance.stock_exchanges.query_asset")
+    def test_searching_unsupported_exchange_and_currency(self, mock):
+        mock.return_value = UNSUPPORTED_EXCHANGE_AND_CURRENCY_RESULTS
+        assets = stock_exchanges.search_and_create_assets("IL0011016669")
+        self.assertEqual(len(assets), 0)
+        for asset in assets:
+            self.assertEqual(asset.isin, "IL0011016669")
             self.assertEqual(asset.asset_type, models.AssetType.FUND)

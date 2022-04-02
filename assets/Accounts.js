@@ -15,7 +15,7 @@ import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 
-import { toSymbol } from './currencies.js';
+import { accountCurrencyValues, toSymbol } from './currencies.js';
 import { DeleteDialog } from './forms/DeleteDialog.js';
 import { CreateAccountForm } from './forms/CreateAccountForm.js';
 
@@ -172,7 +172,7 @@ Accounts.propTypes = {
     accounts: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.number.isRequired,
         nickname: PropTypes.string.isRequired,
-        currency: PropTypes.oneOf(['EUR', 'GBP', 'USD']),
+        currency: PropTypes.oneOf(accountCurrencyValues),
         positions_count: PropTypes.number.isRequired,
         transactions_count: PropTypes.number.isRequired,
         events_count: PropTypes.number.isRequired,

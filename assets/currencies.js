@@ -1,9 +1,12 @@
 
 
 export const currencyValues = [
-    "EUR", "USD", "GBP", "GBX",
+    "EUR", "USD", "GBP", "GBX", "HKD", "SGD", "JPY", "CAD", "PLN"
 ];
 
+export const accountCurrencyValues = [
+    "EUR", "USD", "GBP", "HKD", "SGD", "JPY", "CAD", "PLN"
+];
 
 export const CURRENCY_TO_SYMBOL = new Map(
     [
@@ -11,6 +14,11 @@ export const CURRENCY_TO_SYMBOL = new Map(
         ["EUR", "€"],
         ["GBP", "£"],
         ["GBX", "GBX"],
+        ["HKD", "HK$"],
+        ["SGD", "S$"],
+        ["JPY", "¥"],
+        ["CAD", "C$"],
+        ["PLN", "zł"],
     ]
 );
 

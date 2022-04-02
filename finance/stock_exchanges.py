@@ -3,9 +3,13 @@ import requests
 from finance import models
 from finance.assets import AssetRepository
 
+import logging
+
 from typing import Any, Dict, Optional
 from django.conf import settings
 
+
+logger = logging.getLogger(__name__)
 
 _REFERENCE_TO_OPERATING_MIC_SIMPLIFIED_MAPPING: Dict[str, str] = {
     "NSY": "XNYS",
@@ -17,7 +21,9 @@ _REFERENCE_TO_OPERATING_MIC_SIMPLIFIED_MAPPING: Dict[str, str] = {
 
 OTHER_OR_NA_EXCHANGE_NAME = "Other / NA"
 
-SUPPORTED_EXCHANGE_CODES = ["US", "XETRA", "MI", "LSE"]
+SUPPORTED_EXCHANGE_CODES = ["US", "XETRA", "MI", "LSE",
+                            "MC", "PA", "AS", "F",
+                            "HK", "SG", "CN", "WAR"]
 
 
 class ExchangeRepository:
@@ -142,7 +148,7 @@ def get_or_create_asset(
                 )
 
                 return asset
-            print(
+            logging.warn(
                 f"failed to find stock data for isin: {isin}, exchange: {exchange}, exchange_code: {exchange_code}"
             )
         else:
@@ -161,9 +167,8 @@ def get_or_create_asset(
                     asset_type=models.AssetType.STOCK,
                 )
                 return asset
-            print(
-                f"failed to find stock data (there were assets but no exchange match) for isin: {isin}, exchange: {exchange}, exchange_code: {exchange_code}"
-            )
+            logging.warn(f"failed to find stock data (there were assets but no exchange match) for isin: {isin}, exchange: {exchange}, exchange_code: {exchange_code}")
+
 
 
 def query_asset(isin: str):
@@ -185,7 +190,7 @@ def _to_asset_type(asset_type_raw: str) -> Optional[models.AssetType]:
 def _to_currency(currency_raw: str) -> Optional[models.Currency]:
     try:
         return models.currency_enum_from_string(currency_raw)
-    except KeyError:
+    except ValueError:
         return
 
 

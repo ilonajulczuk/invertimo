@@ -8,6 +8,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 
+
 export function DeleteDialog({ open, handleCancel, handleDelete, message, title, canDelete }) {
 
     return (
