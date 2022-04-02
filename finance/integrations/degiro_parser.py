@@ -2,6 +2,7 @@ import datetime
 import decimal
 from typing import Tuple
 
+import re
 import pandas as pd
 from django.db import transaction
 
@@ -112,6 +113,18 @@ def _import_transactions_from_file(account, filename_or_file, import_all_assets)
     successful_records = []
     try:
         transactions_data = pd.read_csv(filename_or_file)
+
+        # If data is in the same format, but the column names are different
+        # (e.g. different languages, test and try to map by changing headers).
+        data_in_reference_format = pd.read_csv("./finance/transactions_example_latest.csv")
+        data_column_list = list(transactions_data.columns)
+        reference_data_column_list = list(data_in_reference_format.columns)
+        if data_column_list != reference_data_column_list:
+            if len(data_column_list) == len(reference_data_column_list):
+                first_column_val = transactions_data[data_column_list[0]].iloc[0]
+                if re.match(r'[0-9]{2}-[0-9]{2}-[0-9]{4}', first_column_val):
+                    transactions_data.columns = data_in_reference_format.columns
+
         transactions_data["Price currency"] = transactions_data["Unnamed: 8"]
         transactions_data["Local value currency"] = transactions_data["Unnamed: 10"]
         transactions_data["Value currency"] = transactions_data["Unnamed: 12"]

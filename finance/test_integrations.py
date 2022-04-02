@@ -409,6 +409,19 @@ class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
         self.assertEqual(len(data[0]["records"]), 0)
         self.assertEqual(data[0]["status"], models.ImportStatus.FAILURE.label)
 
+    def test_invalid_data_format_different_column_names_but_same_format(self):
+        with open("./finance/transactions_example_latest_renamed.csv", "rb") as fp:
+            response = self.client.post(
+                self.URL, {"account": self.account.id, "transaction_file": fp}
+            )
+        self.assertEqual(response.status_code, 201)
+
+        response = self.client.get(self.URL)
+        data = response.json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(len(data[0]["records"]), 6)
+        self.assertEqual(data[0]["status"], models.ImportStatus.SUCCESS.label)
+
     @patch("finance.stock_exchanges.query_asset")
     def test_transactions_latest_to_oldest_uploads_correctly(self, query_asset_mock):
         # This makes sure that the transactions from the file are sorted correctly
