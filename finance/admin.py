@@ -8,6 +8,9 @@ from .models import (
     Position,
     Asset,
     Transaction,
+    TransactionImport,
+    TransactionImportRecord,
+    EventImportRecord,
 )
 
 admin.site.register(Account)
@@ -17,3 +20,6 @@ admin.site.register(ExchangeIdentifier)
 admin.site.register(Position)
 admin.site.register(Asset)
 admin.site.register(Transaction)
+admin.site.register(TransactionImport)
+admin.site.register(TransactionImportRecord)
+admin.site.register(EventImportRecord)

@@ -17,6 +17,7 @@ _REFERENCE_TO_OPERATING_MIC_SIMPLIFIED_MAPPING: Dict[str, str] = {
     "XET": "XETR",
     "LSE": "XLON",
     "MIL": "XMIL",  # Milan.
+    "MAD": "BMEX",
 }
 
 OTHER_OR_NA_EXCHANGE_NAME = "Other / NA"
@@ -34,15 +35,16 @@ class ExchangeRepository:
                 identifiers__id_type=models.ExchangeIDType.MIC,
             )
         except Exception as e:
-            print(e)
             # Try mapping by exchange reference (relevant to degiro).
-            simplified_mic = _REFERENCE_TO_OPERATING_MIC_SIMPLIFIED_MAPPING[
-                exchange_reference
-            ]
-            return models.Exchange.objects.get(
-                identifiers__value=simplified_mic,
-                identifiers__id_type=models.ExchangeIDType.MIC,
-            )
+            simplified_mic = _REFERENCE_TO_OPERATING_MIC_SIMPLIFIED_MAPPING.get(
+                exchange_reference, None)
+            try:
+                return models.Exchange.objects.get(
+                    identifiers__value=simplified_mic,
+                    identifiers__id_type=models.ExchangeIDType.MIC,
+                )
+            except:
+                raise ValueError(f"Couldn't map exchange {exchange_mic} {exchange_reference} to known exchanges.")
 
     def get_by_name(self, exchange_name: str) -> models.Exchange:
         if exchange_name == OTHER_OR_NA_EXCHANGE_NAME:

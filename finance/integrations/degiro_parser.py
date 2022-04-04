@@ -9,6 +9,8 @@ from django.db import transaction
 from finance import accounts, models, stock_exchanges
 from finance.gains import SoldBeforeBought
 
+import logging
+logger = logging.getLogger(__name__)
 
 class CurrencyMismatch(ValueError):
     pass
@@ -56,12 +58,16 @@ def import_transaction(
     local_currency = transaction_record["Local value currency"]
     product = transaction_record["Product"]
 
+
     if models.currency_enum_from_string(account_currency) != account.currency:
         raise CurrencyMismatch("Currency of import didn't match the account")
     exchange_mic = transaction_record["Venue"]
     exchange_ref = transaction_record["Reference"]
-    exchange = stock_exchanges.ExchangeRepository().get(exchange_mic, exchange_ref)
-
+    try:
+        exchange = stock_exchanges.ExchangeRepository().get(exchange_mic, exchange_ref)
+    except Exception as e:
+        logger.error(e)
+        raise e
     def to_decimal(pd_f):
         return decimal.Decimal(pd_f.astype(str))
 
@@ -179,6 +185,7 @@ def _import_transactions_from_file(account, filename_or_file, import_all_assets)
                 }
             )
         except Exception as e:
+            logger.warn(e)
             failed_records.append(
                 {
                     "record": transaction_record,
