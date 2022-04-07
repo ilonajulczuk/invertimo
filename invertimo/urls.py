@@ -46,6 +46,11 @@ router.register(r"integrations/binance/transactions", BinanceUploadViewSet, base
 
 router.register(r"transaction-imports", TransactionImportViewSet, basename="transaction-imports")
 
+# Used for testing sentry.io integration.
+def trigger_error(request):
+    division_by_zero = 1 / 0
+
+
 urlpatterns = [
     path("", views.index_view, name="index"),
     path("admin/", admin.site.urls),
@@ -65,6 +70,7 @@ urlpatterns = [
         name="api-assets",
     ),
     path("", include("social_django.urls", namespace="social")),
+    path('sentry-debug/', trigger_error),
 ]
 
 

@@ -315,13 +315,15 @@ class TransactionsViewSet(viewsets.ModelViewSet):
 
     def compute_price(self, account, to_currency, arguments):
         price_in_account_currency = (
-                arguments["value_in_account_currency"] / arguments["quantity"]
-            )
+            arguments["value_in_account_currency"] / arguments["quantity"]
+        )
         from_currency = account.currency
         if from_currency == to_currency:
             raise serializers.ValidationError(
                 {
-                    "price": ["Price required if the asset is traded in the account currency."],
+                    "price": [
+                        "Price required if the asset is traded in the account currency."
+                    ],
                 }
             )
         date = arguments["executed_at"].date()
@@ -331,7 +333,9 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         if exchange_rate is None:
             raise serializers.ValidationError(
                 {
-                    "price": ["Please provide the price, no suitable exchange rate available."],
+                    "price": [
+                        "Please provide the price, no suitable exchange rate available."
+                    ],
                 }
             )
         return price_in_account_currency * exchange_rate.value
@@ -351,7 +355,10 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         arguments.pop("account")
         asset_id = arguments.pop("asset")
         arguments["asset_id"] = asset_id
-        if arguments.get("price", None) is None or arguments.get("local_value", None) is None:
+        if (
+            arguments.get("price", None) is None
+            or arguments.get("local_value", None) is None
+        ):
             to_currency = models.Asset.objects.get(pk=asset_id).currency
             arguments["price"] = self.compute_price(account, to_currency, arguments)
             arguments["local_value"] = arguments["price"] * arguments["quantity"]
@@ -389,12 +396,17 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         arguments = serializer.validated_data.copy()
         arguments.pop("account")
 
-        if arguments.get("price", None) is None or arguments.get("local_value", None) is None:
+        if (
+            arguments.get("price", None) is None
+            or arguments.get("local_value", None) is None
+        ):
             to_currency = arguments["currency"]
             arguments["price"] = self.compute_price(account, to_currency, arguments)
             arguments["local_value"] = arguments["price"] * arguments["quantity"]
         try:
-            transaction = account_repository.add_transaction_custom_asset(account, **arguments)
+            transaction = account_repository.add_transaction_custom_asset(
+                account, **arguments
+            )
         except gains.SoldBeforeBought:
             raise serializers.ValidationError(
                 {
@@ -407,9 +419,7 @@ class TransactionsViewSet(viewsets.ModelViewSet):
         data["id"] = transaction.pk
         data["price"] = str(transaction.price)
         data["local_value"] = str(transaction.local_value)
-        return Response(
-            data, status=status.HTTP_201_CREATED, headers=headers
-        )
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_destroy(self, instance):
         account_repository = accounts.AccountRepository()
@@ -628,7 +638,6 @@ class DegiroUploadViewSet(
         self.request.user
 
         arguments = serializer.validated_data.copy()
-
         try:
             account_repository = accounts.AccountRepository()
             account = account_repository.get(
