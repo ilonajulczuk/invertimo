@@ -17,19 +17,37 @@ _REFERENCE_TO_OPERATING_MIC_SIMPLIFIED_MAPPING: Dict[str, str] = {
     "XET": "XETR",
     "LSE": "XLON",
     "MIL": "XMIL",  # Milan.
-    "MAD": "BMEX",
+    "MAD": "BMEX",  # Madrid.
+    "EAM": "XAMS",  # Amsterdam.
+    "FRA": "XFRA",  # Frankfurt.
 }
 
 OTHER_OR_NA_EXCHANGE_NAME = "Other / NA"
 
-SUPPORTED_EXCHANGE_CODES = ["US", "XETRA", "MI", "LSE",
-                            "MC", "PA", "AS", "F",
-                            "HK", "SG", "CN", "WAR"]
+SUPPORTED_EXCHANGE_CODES = [
+    "US",
+    "XETRA",
+    "MI",
+    "LSE",
+    "MC",
+    "PA",
+    "AS",
+    "F",
+    "HK",
+    "SG",
+    "CN",
+    "WAR",
+]
 
 
 class ExchangeRepository:
     def get(self, exchange_mic, exchange_reference):
         try:
+            if exchange_reference == "DEG":
+                exchange, _ = models.Exchange.objects.get_or_create(
+                    name=OTHER_OR_NA_EXCHANGE_NAME
+                )
+                return exchange
             return models.Exchange.objects.get(
                 identifiers__value=exchange_mic,
                 identifiers__id_type=models.ExchangeIDType.MIC,
@@ -37,14 +55,17 @@ class ExchangeRepository:
         except Exception as e:
             # Try mapping by exchange reference (relevant to degiro).
             simplified_mic = _REFERENCE_TO_OPERATING_MIC_SIMPLIFIED_MAPPING.get(
-                exchange_reference, None)
+                exchange_reference, None
+            )
             try:
                 return models.Exchange.objects.get(
                     identifiers__value=simplified_mic,
                     identifiers__id_type=models.ExchangeIDType.MIC,
                 )
             except:
-                raise ValueError(f"Couldn't map exchange {exchange_mic} {exchange_reference} to known exchanges.")
+                raise ValueError(
+                    f"Couldn't map exchange {exchange_mic} {exchange_reference} to known exchanges."
+                )
 
     def get_by_name(self, exchange_name: str) -> models.Exchange:
         if exchange_name == OTHER_OR_NA_EXCHANGE_NAME:
@@ -111,7 +132,12 @@ def get_or_create_asset(
     asset = repository.get(isin)
     if asset:
         return asset
-    exchange_code = exchange.identifiers.get(id_type=models.ExchangeIDType.CODE).value
+    if exchange.name != OTHER_OR_NA_EXCHANGE_NAME:
+        exchange_code = exchange.identifiers.get(
+            id_type=models.ExchangeIDType.CODE
+        ).value
+    else:
+        exchange_code = ""
     asset_records = query_asset(isin)
     for record in asset_records:
         if record["Exchange"] == exchange_code:
@@ -136,7 +162,9 @@ def get_or_create_asset(
         if len(asset_records):
             record = asset_records[0]
             asset_type_raw = record["Type"]
-            currency = models.currency_enum_from_string(asset_defaults["local_currency"])
+            currency = models.currency_enum_from_string(
+                asset_defaults["local_currency"]
+            )
             if add_untracked_if_not_found:
                 asset = repository.add(
                     isin=isin,
@@ -146,7 +174,7 @@ def get_or_create_asset(
                     name=record["Name"],
                     tracked=False,
                     user=user,
-                    asset_type=_to_asset_type(asset_type_raw)
+                    asset_type=_to_asset_type(asset_type_raw),
                 )
 
                 return asset
@@ -169,8 +197,9 @@ def get_or_create_asset(
                     asset_type=models.AssetType.STOCK,
                 )
                 return asset
-            logging.warn(f"failed to find stock data (there were assets but no exchange match) for isin: {isin}, exchange: {exchange}, exchange_code: {exchange_code}")
-
+            logging.warn(
+                f"failed to find stock data (there were assets but no exchange match) for isin: {isin}, exchange: {exchange}, exchange_code: {exchange_code}"
+            )
 
 
 def query_asset(isin: str):

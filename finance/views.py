@@ -637,7 +637,7 @@ class DegiroUploadViewSet(
         assert isinstance(self.request.user, User)
         self.request.user
 
-        arguments = serializer.validated_data.copy()
+        arguments = serializer.validated_data.copy()    
         try:
             account_repository = accounts.AccountRepository()
             account = account_repository.get(

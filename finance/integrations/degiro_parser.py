@@ -110,7 +110,12 @@ def _transform_to_datetime(transaction_record):
         time = transaction_record["Time"]
         return datetime.datetime.strptime(f"{year}-{month}-{day} {time}Z", _DATE_FORMAT)
     except:
-        return None
+        try:
+            day, month, year_end_digits = date.split(".")
+            time = transaction_record["Time"]
+            return datetime.datetime.strptime(f"20{year_end_digits}-{month}-{day} {time}Z", _DATE_FORMAT)
+        except:
+            return None
 
 
 @transaction.atomic()
@@ -128,7 +133,7 @@ def _import_transactions_from_file(account, filename_or_file, import_all_assets)
         if data_column_list != reference_data_column_list:
             if len(data_column_list) == len(reference_data_column_list):
                 first_column_val = transactions_data[data_column_list[0]].iloc[0]
-                if re.match(r'[0-9]{2}-[0-9]{2}-[0-9]{4}', first_column_val):
+                if re.match(r'[0-9]{2}-[0-9]{2}-[0-9]{4}', first_column_val) or re.match(r'[0-9]{2}\.[0-9]{2}\.[0-9]{2}', first_column_val):
                     transactions_data.columns = data_in_reference_format.columns
 
         transactions_data["Price currency"] = transactions_data["Unnamed: 8"]
