@@ -34,7 +34,7 @@ export function EmbeddedTransactionList(props) {
             comparisonKey: date,
         };
         let transactionTypeDisplay = null;
-        if (transaction.value_in_account_currency < 0) {
+        if (transaction.quantity >= 0) {
             transactionTypeDisplay = (
                 <div className="trade-type trade-type-buy">Buy</div>
             );
@@ -123,11 +123,11 @@ export function TransactionList(props) {
         let transactionTypeDisplay = null;
         if (transaction.value_in_account_currency < 0) {
             transactionTypeDisplay = (
-                <div className="trade-type trade-type-buy">BUY</div>
+                <div className="trade-type trade-type-buy">Buy</div>
             );
         } else {
             transactionTypeDisplay = (
-                <div className="trade-type trade-type-sell">SELL</div>
+                <div className="trade-type trade-type-sell">Sell</div>
             );
         }
         transactionCopy.transaction_costs = Number(transactionCopy.transaction_costs);

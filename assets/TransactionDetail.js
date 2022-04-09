@@ -75,7 +75,7 @@ export function TransactionDetail(props) {
     let account = accountsById.get(transaction.position.account);
 
     let transactionTypeDisplay = null;
-    if (transaction.value_in_account_currency < 0) {
+    if (transaction.quantity >= 0) {
         transactionTypeDisplay = (
             <div className="trade-type trade-type-buy">Buy</div>
         );
