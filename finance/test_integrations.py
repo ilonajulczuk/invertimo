@@ -534,6 +534,83 @@ class TestBinanceParser(TestCase):
         transaction_import = models.TransactionImport.objects.last()
         self.assertEqual(transaction_import.event_records.count(), 4)
 
+
+    @patch("finance.prices.get_crypto_usd_price_at_date")
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_importing_binance_data_dates_slightly_offset(self, mock, crypto_price_mock):
+        mock.return_value = False
+        crypto_price_mock.return_value = decimal.Decimal("100")
+
+        account_balance = decimal.Decimal("-96.8")
+        base_num_of_transactions = 7
+        account = models.Account.objects.create(
+            user=User.objects.all()[0], nickname="test"
+        )
+        account = models.Account.objects.get(nickname="test")
+
+        _add_dummy_exchange_rates()
+
+        transaction_import = binance_parser.import_transactions_from_file(
+            account, "./finance/binance_transaction_sample_dates_slight_offset.csv"
+        )
+        failed_records = transaction_import.records.filter(successful=False)
+        self.assertEqual(len(failed_records), 0)
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        account = models.Account.objects.get(nickname="test")
+        self.assertAlmostEqual(account.balance, account_balance)
+
+        # 4 in the new account, 30 from the old fixture.
+        self.assertEqual(models.Position.objects.count(), 34)
+
+        # Import the same transactions again and make
+        # sure that they aren't double recorded.
+        account = models.Account.objects.get(nickname="test")
+        transaction_import = binance_parser.import_transactions_from_file(
+            account, "./finance/binance_transaction_sample_dates_slight_offset.csv"
+        )
+        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
+        self.assertEqual(models.Position.objects.count(), 34)
+
+
+    @patch("finance.prices.get_crypto_usd_price_at_date")
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_importing_binance_data_odd_transaction_records(self, mock, crypto_price_mock):
+        mock.return_value = False
+        crypto_price_mock.return_value = decimal.Decimal("100")
+
+        account = models.Account.objects.create(
+            user=User.objects.all()[0], nickname="test"
+        )
+        account = models.Account.objects.get(nickname="test")
+
+        _add_dummy_exchange_rates()
+
+        with self.assertRaises(binance_parser.InvalidFormat):
+            binance_parser.import_transactions_from_file(
+                account, "./finance/binance_transaction_sample_odd.csv"
+            )
+        self.assertEqual(models.TransactionImport.objects.last().status,
+                         models.ImportStatus.FAILURE)
+
+
+    @patch("finance.prices.get_crypto_usd_price_at_date")
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_importing_binance_data_mismatched_dates(self, mock, crypto_price_mock):
+        mock.return_value = False
+        crypto_price_mock.return_value = decimal.Decimal("100")
+        account = models.Account.objects.create(
+            user=User.objects.all()[0], nickname="test"
+        )
+
+        _add_dummy_exchange_rates()
+
+        with self.assertRaises(binance_parser.InvalidFormat):
+            binance_parser.import_transactions_from_file(
+                account, "./finance/binance_transaction_sample_mismatched_dates.csv"
+            )
+        self.assertEqual(models.TransactionImport.objects.last().status,
+                         models.ImportStatus.FAILURE)
+
     @patch("finance.prices.get_crypto_usd_price_at_date")
     @patch("finance.prices.are_crypto_prices_available")
     def test_importing_binance_data_fiat_doesnt_match_account_currency(
@@ -643,6 +720,7 @@ class TestBinanceParser(TestCase):
         self.assertEqual(models.TransactionImport.objects.count(), 2)
         transaction_import = models.TransactionImport.objects.last()
         self.assertEqual(transaction_import.event_records.count(), 9)
+
 
     @patch("finance.prices.collect_prices")
     @patch("finance.prices.get_crypto_usd_price_at_date")
@@ -801,6 +879,32 @@ class TestBinanceTransactionImportView(testing_utils.ViewTestBase, TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(models.Transaction.objects.count(), 13)
         self.assertEqual(models.AccountEvent.objects.count(), 9)
+
+        response = self.client.get("/api/transaction-imports/")
+        self.assertEqual(response.status_code, 200)
+
+        transaction_import_id = models.TransactionImport.objects.first().id
+        response = self.client.get(f"/api/transaction-imports/{transaction_import_id}/")
+        self.assertEqual(response.status_code, 200)
+
+    @patch("finance.prices.get_crypto_usd_price_at_date")
+    @patch("finance.prices.are_crypto_prices_available")
+    def test_bad_files_return_errors(self, mock, crypto_price_mock):
+        mock.return_value = False
+        crypto_price_mock.return_value = decimal.Decimal("100")
+
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(models.Transaction.objects.count(), 0)
+        with open("./finance/binance_transaction_sample_odd.csv", "rb") as fp:
+            response = self.client.post(
+                self.URL, {"account": self.account.id, "transaction_file": fp}
+            )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(models.Transaction.objects.count(), 0)
+        self.assertEqual(models.AccountEvent.objects.count(), 0)
 
         response = self.client.get("/api/transaction-imports/")
         self.assertEqual(response.status_code, 200)

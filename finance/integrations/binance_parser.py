@@ -107,12 +107,26 @@ def _import_history_from_file(account, filename_or_file):
         transaction_half_records = sorted_data[
             sorted_data["Operation"] == "Transaction Related"
         ]
+        if (len(transaction_half_records) % 2 == 1):
+            raise InvalidFormat("Expected even number of Transaction Related records")
 
-        transaction_half_record_pairs = defaultdict(list)
-        for half_record in transaction_half_records.iloc:
-            transaction_half_record_pairs[half_record["UTC_Time"]].append(half_record)
+        transaction_half_record_pairs = []
+        current_pair = []
+        for i, half_record in enumerate(transaction_half_records.iloc):
+            if i % 2 == 0:
+                current_pair.append(half_record)
+            else:
+                current_pair.append(half_record)
+                transaction_half_record_pairs.append(current_pair)
+                # If the dates are too much apart then, there is probably a problem somewhere!
+                # If they are the part of the same transaction, make sure than they are less than 30 seconds apart.
+                first_date = datetime.datetime.fromisoformat(current_pair[0]['UTC_Time'])
+                second_date = datetime.datetime.fromisoformat(half_record['UTC_Time'])
+                if abs(first_date - second_date) > datetime.timedelta(seconds=30):
+                    raise InvalidFormat("Transaction records likely mismatched, times more than 30 seconds apart")
+                current_pair = []
 
-        for half_records in transaction_half_record_pairs.values():
+        for half_records in transaction_half_record_pairs:
 
             try:
                 fiat_record, token_record = pairs_to_fiat_and_token(half_records)
@@ -374,7 +388,7 @@ def import_income_transactions(account: models.Account, records: pd.DataFrame):
             # In binance, ETH is exchanged for BETH, but it's actually ETH.
             symbol = "ETH"
         else:
-            raise ValueError("Unsupported Operation")
+            raise InvalidFormat(f"Unsupported Operation: '{record['Operation']}'")
 
         try:
             price = prices.get_crypto_usd_price_at_date(symbol, date=executed_at_date)
