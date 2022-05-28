@@ -8,7 +8,6 @@ import {
     Redirect,
 } from "react-router-dom";
 
-import Icon from '@mui/material/Icon';
 import Button from '@mui/material/Button';
 
 import makeStyles from '@mui/styles/makeStyles';
@@ -25,7 +24,8 @@ import { toSymbol } from './currencies.js';
 import { ErrorBoundary } from './error_utils.js';
 import { Accounts } from './Accounts.js';
 import AccountValues from './AccountValues';
-import SplitButtonNav from './components/SplitButtonNav';
+import RecordButton from './components/RecordButton';
+import ImportButton from './components/ImportButton';
 
 
 const PositionList = React.lazy(() => import('./PositionList'));
@@ -102,14 +102,6 @@ export function divideByAccount(accounts, positions) {
     return positionsByAccount;
 }
 
-function IconWithText({icon, text}) {
-    return <><Icon sx={{marginRight: "10px"}}>{icon}</Icon>{text}</>;
-}
-
-IconWithText.propTypes = {
-    icon: PropTypes.string.isRequired,
-    text: PropTypes.string.isRequired,
-};
 
 export function PortfolioOverview(props) {
     let accounts = props.accounts;
@@ -125,24 +117,15 @@ export function PortfolioOverview(props) {
         );
     });
 
-    const recordOptions = [
-        { label: <IconWithText icon="create" text="Record transaction"/>, link: "/transactions/record" },
-        { label: <IconWithText icon="paid" text="Record dividend"/>, link: "/events/record_dividend" },
-        { label: <IconWithText icon="sync_alt" text="Record transfer"/>, link: "/events/record_transfer" },
-        { label: <IconWithText icon="savings" text="Record crypto income"/>, link: "/events/record_crypto_income" },
 
-    ];
-    const importOptions = [
-        { label: <IconWithText icon="sync" text="Import from degiro"/>, link: "/transactions/import/degiro" },
-        { label: <IconWithText icon="sync" text="Import from binance"/>, link: "/transactions/import/binance" },
-    ];
     return (
         <div className="portfolio-overview">
             <div className="quick-actions">
                 <span className="card-label">Quick actions</span>
                 <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                    <SplitButtonNav options={recordOptions} color="secondary" />
-                    <SplitButtonNav options={importOptions} color="secondary" />
+                    <RecordButton />
+                    <ImportButton />
+
                     <Button
                         href="#/accounts"
                         variant="contained"
@@ -360,12 +343,13 @@ export default class Portfolio extends React.Component {
                     transactions => {
                         this.setState({ "transactions": transactions });
                     });
+                    this.apiClient.getEvents().then(
+                        events => {
+                            this.setState({ "events": events });
+                        }
+                    );
             });
-        this.apiClient.getEvents().then(
-            events => {
-                this.setState({ "events": events });
-            }
-        );
+
     }
 
     render() {
@@ -424,13 +408,13 @@ export default class Portfolio extends React.Component {
         // If the accounts are loaded, but there is nothing there, start an onboarding wizard.
         const newUser = this.state.accounts.length == 0;
 
-        let numTransactions = 0;
+        let positionsCount = 0;
         if (!newUser) {
             for (let account of this.state.accounts) {
-                numTransactions += account.transactions_count;
+                positionsCount += account.positions_count;
             }
         }
-        const noTransactions = numTransactions == 0;
+        const noTransactions = positionsCount == 0;
 
         let redirectOrDisplay;
         if (newUser) {

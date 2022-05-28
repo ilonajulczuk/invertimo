@@ -603,7 +603,6 @@ class CurrencyQuerySerializer(FromToDatesSerializer):
 
 class AccountSerializer(serializers.ModelSerializer[Account]):
     positions_count = serializers.IntegerField()
-    transactions_count = serializers.IntegerField()
     events_count = serializers.IntegerField()
     currency = CurrencyField()
 
@@ -617,7 +616,6 @@ class AccountSerializer(serializers.ModelSerializer[Account]):
             "balance",
             "last_modified",
             "positions_count",
-            "transactions_count",
             "events_count",
         ]
 
@@ -656,7 +654,6 @@ class AccountEditSerializer(serializers.ModelSerializer[Account]):
 class AccountWithValuesSerializer(serializers.ModelSerializer[Account]):
 
     positions_count = serializers.IntegerField()
-    transactions_count = serializers.IntegerField()
     events_count = serializers.IntegerField()
     currency = CurrencyField()
     values = serializers.SerializerMethodField()
@@ -671,7 +668,6 @@ class AccountWithValuesSerializer(serializers.ModelSerializer[Account]):
             "balance",
             "last_modified",
             "positions_count",
-            "transactions_count",
             "events_count",
             "values",
         ]

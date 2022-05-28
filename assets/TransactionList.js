@@ -11,6 +11,7 @@ import { PositionLink } from './components/PositionLink.js';
 import './transaction_list.css';
 
 import { roundToTwoDecimalString } from './forms/utils.js';
+import ImportButton from './components/ImportButton.js';
 
 export function EmbeddedTransactionList(props) {
 
@@ -191,22 +192,7 @@ export function TransactionList(props) {
                         <Icon>create</Icon>
                         Record transaction
                     </Button>
-                    <Button
-                        href="#/transactions/import/degiro"
-                        variant="contained"
-                        color="secondary"
-                    >
-                        <Icon>sync</Icon>
-                        Import from degiro
-                    </Button>
-                    <Button
-                        href="#/transactions/import/binance"
-                        variant="contained"
-                        color="secondary"
-                    >
-                        <Icon>sync</Icon>
-                        Import from binance
-                    </Button>
+                    <ImportButton />
                 </div>
 
             </div>

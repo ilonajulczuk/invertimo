@@ -32,6 +32,9 @@ SITENAME = os.environ.get("SITENAME", "invertimo.com")
 if "SITENAME" in os.environ:
     ALLOWED_HOSTS.append(os.environ["SITENAME"])
 
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': lambda _request: DEBUG
+}
 
 # Application definition
 

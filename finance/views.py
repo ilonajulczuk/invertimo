@@ -66,7 +66,6 @@ class AccountsViewSet(viewsets.ModelViewSet):
         assert isinstance(self.request.user, User)
         queryset = models.Account.objects.filter(user=self.request.user).annotate(
             positions_count=Count("positions", distinct=True),
-            transactions_count=Count("positions__transactions", distinct=True),
             events_count=Count("events", distinct=True),
         )
         return queryset
@@ -637,7 +636,7 @@ class DegiroUploadViewSet(
         assert isinstance(self.request.user, User)
         self.request.user
 
-        arguments = serializer.validated_data.copy()    
+        arguments = serializer.validated_data.copy()
         try:
             account_repository = accounts.AccountRepository()
             account = account_repository.get(

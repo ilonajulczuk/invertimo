@@ -167,12 +167,12 @@ export class APIClient {
     }
 
     async getPositions() {
-        let url = this.baseUrl + '/positions/?limit=50';
+        let url = this.baseUrl + '/positions/?limit=200';
         return fetchAllResults(url);
     }
 
     async getTransactions() {
-        let url = this.baseUrl + '/transactions/?limit=100';
+        let url = this.baseUrl + '/transactions/?limit=300';
         return fetchAllResults(url);
     }
 
@@ -222,7 +222,7 @@ export class APIClient {
     }
 
     async getEvents() {
-        let url = this.baseUrl + '/account-events/?limit=50';
+        let url = this.baseUrl + '/account-events/?limit=300';
         return fetchAllResults(url);
     }
 
