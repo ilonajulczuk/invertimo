@@ -394,7 +394,7 @@ def import_income_transactions(account: models.Account, records: pd.DataFrame):
             price = prices.get_crypto_usd_price_at_date(symbol, date=executed_at_date)
 
             fiat_value_usd = -quantity * price
-            fiat_value = _convert_usd_to_account_currency(
+            fiat_value = convert_usd_to_account_currency(
                 fiat_value_usd, account, executed_at_date
             )
 
@@ -435,14 +435,14 @@ def import_income_transactions(account: models.Account, records: pd.DataFrame):
     return successful_records, failed_records
 
 
-def _convert_usd_to_account_currency(
+def convert_usd_to_account_currency(
     value: decimal.Decimal, account: models.Account, date: datetime.date
 ) -> decimal.Decimal:
     if account.currency == models.Currency.USD:
         return value
 
-    from_currency = account.currency
-    to_currency = models.Currency.USD
+    from_currency = models.Currency.USD
+    to_currency = account.currency
     exchange_rate = prices.get_closest_exchange_rate(date, from_currency, to_currency)
     if exchange_rate is None:
         raise CurrencyMismatch(

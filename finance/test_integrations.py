@@ -838,6 +838,26 @@ class TestBinanceParser(TestCase):
         self.assertEqual(successful_event_records.count(), 4)
         self.assertAlmostEqual(account.balance, account_balance)
 
+    def test_convert_usd_to_account_currency(self):
+        _add_dummy_exchange_rates()
+
+        date = '2021-10-14'
+
+        account_eur = models.Account.objects.create(
+            user=User.objects.all()[0], nickname="test_eur", currency=models.Currency.EUR
+        )
+        account_gbp = models.Account.objects.create(
+            user=User.objects.all()[0], nickname="test_gbp", currency=models.Currency.GBP
+        )
+        value = decimal.Decimal(10)
+        value_eur = binance_parser.convert_usd_to_account_currency(value, account_eur, date)
+
+        self.assertEqual(value_eur, decimal.Decimal(9))
+
+        # No exchange rates for GBP, sorry!
+        with self.assertRaises(binance_parser.CurrencyMismatch):
+            binance_parser.convert_usd_to_account_currency(value, account_gbp, date)
+
 
 class TestBinanceTransactionImportView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/integrations/binance/transactions/"
