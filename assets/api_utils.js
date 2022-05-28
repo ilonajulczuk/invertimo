@@ -283,6 +283,10 @@ export function getTransactionImportResult(importId) {
     return fetchDetailResult(url);
 }
 
+export function getTransactionImportResults() {
+    return fetchAllResults(baseUrl + '/transaction-imports/?limit=50');
+}
+
 export function getCurrencyExchangeRates(fromCurrency, toCurrency, fromDate, toDate) {
     let url = baseUrl + `/currencies/?from_currency=${fromCurrency}&to_currency=${toCurrency}&limit=50`;
     if (fromDate) {

@@ -53,6 +53,7 @@ from finance.serializers import (
     TransactionImportSerializer,
     AssetSearchSerializer,
     TransactionSerializer,
+    SimpleTransactionImportSerializer,
 )
 
 
@@ -608,6 +609,7 @@ class DegiroUploadViewSet(
 ):
     model = TransactionImport
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = LimitOffsetPagination
 
     def get_queryset(self) -> QuerySet[models.TransactionImport]:
         assert isinstance(self.request.user, User)
@@ -676,6 +678,8 @@ class BinanceUploadViewSet(
 ):
     model = TransactionImport
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = LimitOffsetPagination
+
 
     def get_queryset(self) -> QuerySet[models.TransactionImport]:
         assert isinstance(self.request.user, User)
@@ -741,12 +745,23 @@ class TransactionImportViewSet(
     model = TransactionImport
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = TransactionImportSerializer
+    pagination_class = LimitOffsetPagination
 
     def get_queryset(self) -> QuerySet[models.TransactionImport]:
         assert isinstance(self.request.user, User)
-        queryset = (
+        if self.action == "list":
+            queryset = models.TransactionImport.objects.filter(account__user=self.request.user)
+        else:
+            queryset = (
             models.TransactionImport.objects.filter(account__user=self.request.user)
             .prefetch_related("event_records__event")
             .prefetch_related("records")
-        )
+            )
         return queryset
+
+    def get_serializer_class(
+        self,
+    ) -> Type[Union[TransactionImportSerializer, SimpleTransactionImportSerializer]]:
+        if self.action in ("list"):
+            return SimpleTransactionImportSerializer
+        return TransactionImportSerializer

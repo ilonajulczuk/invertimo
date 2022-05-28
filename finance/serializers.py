@@ -269,6 +269,33 @@ class TransactionImportSerializer(serializers.ModelSerializer[TransactionImport]
         return models.Account.objects.filter(user=request.user)
 
 
+class SimpleTransactionImportSerializer(serializers.ModelSerializer[TransactionImport]):
+    status = ImportStatusField()
+    integration = IntegrationTypeField()
+
+    class Meta:
+        model = TransactionImport
+        fields = [
+            "id",
+            "account",
+            "created_at",
+            "status",
+            "integration",
+        ]
+
+    def get_extra_kwargs(self):
+        kwargs = super().get_extra_kwargs()
+        kwargs["account"] = kwargs.get("account", {})
+        kwargs["account"]["queryset"] = self.get_account_queryset()
+        return kwargs
+
+    def get_account_queryset(self) -> QuerySet[models.Account]:
+        request = self.context.get("request")
+        assert isinstance(request, Request)
+        assert isinstance(request.user, User)
+        return models.Account.objects.filter(user=request.user)
+
+
 class PositionSerializer(serializers.ModelSerializer[Position]):
     asset = AssetSerializer()
     latest_price = serializers.DecimalField(max_digits=20, decimal_places=10)

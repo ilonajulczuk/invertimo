@@ -28,9 +28,9 @@ export function EmbeddedTransactionList(props) {
 
     const transactions = props.transactions.map(transaction => {
         // TODO: display currencies.
-        let transactionCopy = { ...transaction };
-        let date = new Date(transactionCopy.executed_at);
-        transactionCopy.executed_at = {
+        let record = { ...transaction };
+        let date = new Date(record.executed_at);
+        record.executed_at = {
             displayValue: date.toLocaleDateString(),
             comparisonKey: date,
         };
@@ -44,16 +44,16 @@ export function EmbeddedTransactionList(props) {
                 <div className="trade-type trade-type-sell">Sell</div>
             );
         }
-        transactionCopy.transaction_costs = Number(transactionCopy.transaction_costs);
-        transactionCopy.price = Number(transactionCopy.price);
-        transactionCopy.quantity = Number(transactionCopy.quantity);
-        transactionCopy.local_value = Number(transactionCopy.local_value);
-        transactionCopy.value_in_account_currency = Number(transactionCopy.value_in_account_currency);
-        transactionCopy.type = {
+        record.transaction_costs = Number(record.transaction_costs);
+        record.price = Number(record.price);
+        record.quantity = Number(record.quantity);
+        record.local_value = Number(record.local_value);
+        record.value_in_account_currency = Number(record.value_in_account_currency);
+        record.type = {
             displayValue: transactionTypeDisplay,
             comparisonKey: transaction.value_in_account_currency,
         };
-        transactionCopy.interaction = {
+        record.interaction = {
             displayValue: <div className="column-stack">
                 <Button
                     href={"#/transactions/" + transaction.id}
@@ -62,7 +62,7 @@ export function EmbeddedTransactionList(props) {
             </div>
         };
 
-        return transactionCopy;
+        return record;
     });
     return (
         <ErrorBoundary>

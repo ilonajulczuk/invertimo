@@ -33,19 +33,19 @@ export function TransactionImportDetail() {
             <div className='header-with-buttons'>
                 <h2>
 
-                <a href="../#transactions/">Transactions</a> / imports / {importId}
+                    <a href="../#transactions/">Transactions</a> / <a href="../#transactions/imports">imports</a> / {importId}
                 </h2>
             </div>
             {
                 importResult ? <TransactionImportResult importResult={importResult} /> :
-                 (error ? error.message : "Loading...")
+                    (error ? error.message : "Loading...")
             }
 
 
         </div>
 
     );
-        }
+}
 
 TransactionImportDetail.propTypes = {
 };

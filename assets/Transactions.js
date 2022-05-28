@@ -11,6 +11,7 @@ import { TransactionImportDetail } from './TransactionImportDetail.js';
 import ImportTransactionsFromDegiroForm from './forms/ImportTransactionsFromDegiroForm.js';
 import ImportTransactionsFromBinanceForm from './forms/ImportTransactionsFromBinanceForm.js';
 import { TransactionList } from './TransactionList';
+import TransactionImportList from './TransactionImportList.js';
 import { TransactionDetail } from './TransactionDetail.js';
 import { useQuery } from './routing.js';
 
@@ -92,6 +93,7 @@ export default function Transactions(props) {
                     loadingBlock}
             </Route>
 
+
             <Route path={`${path}/import/degiro`}>
                 <h2><a href="#/transactions/">Transactions</a> / import / degiro</h2>
                 <p>
@@ -119,10 +121,13 @@ export default function Transactions(props) {
                     handleSubmit={props.handleUploadBinanceTransactions}
                 />
             </Route>
+
             <Route path={`${path}/imports/:importId`}>
                 <TransactionImportDetail />
             </Route>
-
+            <Route path={`${path}/imports`}>
+                <TransactionImportList />
+            </Route>
             <Route path={`${path}/:transactionId`}>
                 {props.transactions ?
                     <TransactionDetail
