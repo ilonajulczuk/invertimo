@@ -739,6 +739,7 @@ class BinanceUploadViewSet(
 class TransactionImportViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
+    mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
 
@@ -765,3 +766,18 @@ class TransactionImportViewSet(
         if self.action in ("list"):
             return SimpleTransactionImportSerializer
         return TransactionImportSerializer
+
+    def perform_destroy(self, instance):
+        account_repository = accounts.AccountRepository()
+        try:
+            account_repository.delete_transaction_import(instance)
+        except gains.SoldBeforeBought:
+            raise serializers.ValidationError(
+                {
+                    "quantity": ["Can't sell asset before buying it."],
+                }
+            )
+        except accounts.CantModifyTransactionWithEvent:
+            raise serializers.ValidationError(
+                "Can't delete a transaction associated with an event, without deleting the event first."
+            )

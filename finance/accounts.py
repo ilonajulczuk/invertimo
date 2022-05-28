@@ -485,3 +485,19 @@ class AccountRepository:
         account.save()
 
         return event, created
+
+    @transaction.atomic
+    def delete_transaction_import(self, transaction_import: models.TransactionImport):
+        for event_record in transaction_import.event_records.order_by('-transaction__executed_at').all():
+            print("removing event record for event", event_record.event)
+            if event_record.created_new:
+                self.delete_event(event_record.event)
+            event_record.delete()
+
+        for transaction_record in transaction_import.records.order_by('-transaction__executed_at').all():
+            print("removing transaction record for transaction", transaction_record.transaction)
+            if transaction_record.created_new:
+                self.delete_transaction(transaction=transaction_record.transaction)
+            transaction_record.delete()
+
+        transaction_import.delete()

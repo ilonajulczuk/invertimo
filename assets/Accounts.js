@@ -49,7 +49,7 @@ function AccountCard(props) {
                     Cash balance: {totalCash} {currencySymbol}
                 </Typography>
                 <Typography variant="body1" component="p">
-                    # <a href="#/transactions">transactions</a>: {account.transactions_count}
+                    # <a href="#/positions">positions</a>: {account.positions_count}
                 </Typography>
                 <Typography variant="body1" component="p">
                     # <a href="#/events">events</a>: {account.events_count}
@@ -66,7 +66,6 @@ AccountCard.propTypes = {
         nickname: PropTypes.string.isRequired,
         currency: PropTypes.oneOf(['EUR', 'GBP', 'USD']),
         positions_count: PropTypes.number.isRequired,
-        transactions_count: PropTypes.number.isRequired,
         events_count: PropTypes.number.isRequired,
         balance: PropTypes.string.isRequired,
     }),
