@@ -1,3 +1,5 @@
+from django.utils.functional import cached_property
+import functools
 import requests
 
 from finance import models
@@ -41,6 +43,8 @@ SUPPORTED_EXCHANGE_CODES = [
 
 
 class ExchangeRepository:
+
+    @functools.lru_cache(maxsize=10)
     def get(self, exchange_mic, exchange_reference):
         try:
             if exchange_reference == "DEG":
@@ -67,6 +71,7 @@ class ExchangeRepository:
                     f"Couldn't map exchange {exchange_mic} {exchange_reference} to known exchanges."
                 )
 
+    @functools.lru_cache(maxsize=10)
     def get_by_name(self, exchange_name: str) -> models.Exchange:
         if exchange_name == OTHER_OR_NA_EXCHANGE_NAME:
             # If it doesn't exist, create it and later reuse it.
@@ -78,6 +83,7 @@ class ExchangeRepository:
             name=exchange_name,
         )
 
+    @functools.lru_cache(maxsize=10)
     def get_by_code(self, exchange_code):
         return models.Exchange.objects.get(
             identifiers__value=exchange_code,

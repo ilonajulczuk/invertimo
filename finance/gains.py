@@ -17,6 +17,7 @@ def update_lots(position, transaction=None):
     If the transactions are added out of order,
     we recreate the lots for simplicity.
     """
+    return
     # We can either recreate all the lots or just add new ones
     # and update the sold ones.
     if (

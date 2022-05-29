@@ -1,13 +1,13 @@
 import datetime
 import decimal
 from typing import Optional, Tuple, Union
-
+import functools
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Count
 
 from django.utils.dateparse import parse_datetime
-from pandas.core.algorithms import mode
+from django.utils.functional import cached_property
 from finance import models, prices, gains, stock_exchanges, assets
 
 
@@ -24,6 +24,13 @@ class CantModifyTransactionWithEvent(ValueError):
 
 
 class AccountRepository:
+
+    def __init__(self, recompute_lots=True):
+        self.recompute_lots = recompute_lots
+        self.updated_positions = set()
+        self.exchanges_to_asset_repos = dict()
+        self.exchange_repository = stock_exchanges.ExchangeRepository()
+
     def get(self, user: User, id: int) -> models.Account:
         return models.Account.objects.get(user=user, id=id)
 
@@ -64,6 +71,10 @@ class AccountRepository:
 
         serializer.save()
 
+    def update_lots(self):
+        for position in self.updated_positions:
+            gains.update_lots(position)
+
     @transaction.atomic
     def _add_transaction(
         self,
@@ -102,8 +113,9 @@ class AccountRepository:
                 models.PriceHistory.objects.create(
                     asset=position.asset, value=price, date=executed_at.date()
                 )
-
-            gains.update_lots(position, transaction)
+            if self.recompute_lots:
+                gains.update_lots(position, transaction)
+            self.updated_positions.add(position)
         return transaction, created
 
     @transaction.atomic
@@ -201,7 +213,7 @@ class AccountRepository:
         order_id: Optional[str] = None,
     ) -> models.Transaction:
 
-        exchange_entity = stock_exchanges.ExchangeRepository().get_by_name(exchange)
+        exchange_entity = self.exchange_repository.get_by_name(exchange)
         tracked = False
         if asset_type == models.AssetType.CRYPTO:
             tracked = prices.are_crypto_prices_available(symbol)
@@ -233,6 +245,15 @@ class AccountRepository:
         )
         return transaction
 
+    def get_asset_repository(self, exchange):
+        if exchange.id in self.exchanges_to_asset_repos:
+            return self.exchanges_to_asset_repos[exchange.id]
+        else:
+            asset_repo = assets.AssetRepository(exchange=exchange)
+            self.exchanges_to_asset_repos[exchange.id] = asset_repo
+            return asset_repo
+
+
     @transaction.atomic
     def add_transaction_crypto_asset(
         self,
@@ -248,10 +269,10 @@ class AccountRepository:
         order_id: Optional[str] = None,
     ):
 
-        na_exchange = stock_exchanges.ExchangeRepository().get_by_name(
+        na_exchange = self.exchange_repository.get_by_name(
             stock_exchanges.OTHER_OR_NA_EXCHANGE_NAME
         )
-        asset_repository = assets.AssetRepository(exchange=na_exchange)
+        asset_repository = self.get_asset_repository(exchange=na_exchange)
         user = account.user
         asset = asset_repository.add_crypto(
             symbol=symbol, user=user,
@@ -359,6 +380,7 @@ class AccountRepository:
         if transaction:
             self.delete_transaction(transaction)
 
+    # @functools.lru_cache(maxsize=10)
     def _get_or_create_position(
         self,
         account: models.Account,
@@ -381,7 +403,7 @@ class AccountRepository:
             return None
 
     def _get_or_create_position_for_asset(self, account: models.Account, asset_id: int):
-        positions = models.Position.objects.filter(account=account, asset__pk=asset_id)
+        positions = models.Position.objects.filter(account=account, asset__pk=asset_id).select_related('asset')
         if positions:
             return positions[0]
         asset = models.Asset.objects.get(pk=asset_id)
@@ -402,7 +424,9 @@ class AccountRepository:
         account.balance -= transaction.total_in_account_currency
         account.save()
         transaction.delete()
-        gains.update_lots(position)
+        if self.recompute_lots:
+            gains.update_lots(position)
+        self.updated_positions.add(position)
         position.quantity_history.cache_clear()
         position.value_history.cache_clear()
 
@@ -439,7 +463,11 @@ class AccountRepository:
         position.save()
         account.save()
         transaction.save()
-        gains.update_lots(position)
+
+        if self.recompute_lots:
+            gains.update_lots(position)
+        self.updated_positions.add(position)
+
         position.quantity_history.cache_clear()
         position.value_history.cache_clear()
 

@@ -613,8 +613,12 @@ class DegiroUploadViewSet(
 
     def get_queryset(self) -> QuerySet[models.TransactionImport]:
         assert isinstance(self.request.user, User)
-        queryset = models.TransactionImport.objects.filter(
-            account__user=self.request.user, integration=IntegrationType.DEGIRO
+        queryset = (
+            models.TransactionImport.objects.filter(
+                account__user=self.request.user, integration=IntegrationType.DEGIRO
+            )
+            .prefetch_related("event_records__event")
+            .prefetch_related("records")
         )
         return queryset
 
@@ -680,11 +684,15 @@ class BinanceUploadViewSet(
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = LimitOffsetPagination
 
-
     def get_queryset(self) -> QuerySet[models.TransactionImport]:
         assert isinstance(self.request.user, User)
-        queryset = models.TransactionImport.objects.filter(
-            account__user=self.request.user, integration=IntegrationType.BINANCE_CSV
+
+        queryset = (
+            models.TransactionImport.objects.filter(
+                integration=IntegrationType.BINANCE_CSV, account__user=self.request.user
+            )
+            .prefetch_related("event_records__event")
+            .prefetch_related("records")
         )
         return queryset
 
@@ -733,7 +741,7 @@ class BinanceUploadViewSet(
         serializer = TransactionImportSerializer(
             instance=transaction_import, context=self.get_serializer_context()
         )
-        return Response(status=status.HTTP_201_CREATED, data=serializer.data)
+        return Response(status=status.HTTP_201_CREATED, data="all good!") #serializer.data)
 
 
 class TransactionImportViewSet(
@@ -751,12 +759,14 @@ class TransactionImportViewSet(
     def get_queryset(self) -> QuerySet[models.TransactionImport]:
         assert isinstance(self.request.user, User)
         if self.action == "list":
-            queryset = models.TransactionImport.objects.filter(account__user=self.request.user)
+            queryset = models.TransactionImport.objects.filter(
+                account__user=self.request.user
+            )
         else:
             queryset = (
-            models.TransactionImport.objects.filter(account__user=self.request.user)
-            .prefetch_related("event_records__event")
-            .prefetch_related("records")
+                models.TransactionImport.objects.filter(account__user=self.request.user)
+                .prefetch_related("event_records__event")
+                .prefetch_related("records")
             )
         return queryset
 

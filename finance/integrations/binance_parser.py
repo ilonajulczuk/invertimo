@@ -1,6 +1,7 @@
 import decimal
 import datetime
 from typing import Tuple
+from django.db.models.expressions import F
 
 
 import pandas as pd
@@ -14,6 +15,20 @@ from finance.gains import SoldBeforeBought
 from finance.integrations.degiro_parser import CurrencyMismatch
 from finance import prices
 
+
+# Turns out that the current implementation is very slow!
+# Let's make it faster!
+# What is the problem? There are thousands of problems,
+# They are unnecessary SQL queries scattered all over the place
+# and lots of unnecessary work.
+# Let's eliminate them 1 by 1.
+# AccountRepository ones:
+# Lookup always repeats query even if we know about the value.
+# Probably many, many queries have this problem.
+# Lots are recomputed unnecessarily for all intermediate transactions.
+# Exchange lookups as well, likely doesn't change!
+# Prices and exchange rates:
+# Could be prefetched all in batch so we don't check it 800 times.
 
 BINANCE_SUPPORTED_OPERATIONS = [
     "POS savings interest",
@@ -80,6 +95,8 @@ def _import_history_from_file(account, filename_or_file):
     failed_records = []
     successful_records = []
 
+    account_repository = accounts.AccountRepository(recompute_lots=False)
+
     try:
         transactions_data = pd.read_csv(filename_or_file)
         for column in REQUIRED_TRANSACTION_COLUMNS:
@@ -126,11 +143,12 @@ def _import_history_from_file(account, filename_or_file):
                     raise InvalidFormat("Transaction records likely mismatched, times more than 30 seconds apart")
                 current_pair = []
 
+
         for half_records in transaction_half_record_pairs:
 
             try:
                 fiat_record, token_record = pairs_to_fiat_and_token(half_records)
-                transaction, created, raw_record = import_transaction(
+                transaction, created, raw_record = import_transaction(account_repository,
                     account, fiat_record, token_record
                 )
                 successful_records.append(
@@ -157,6 +175,7 @@ def _import_history_from_file(account, filename_or_file):
                         "issue_type": models.ImportIssueType.UNKNOWN_FAILURE,
                     }
                 )
+        account_repository.update_lots()
 
     except pd.errors.ParserError as e:
         raise InvalidFormat("Failed to parse csv", e)
@@ -245,7 +264,7 @@ def _parse_utc_datetime(datetime_raw):
 
 
 def import_fiat_transfers(account, records):
-    account_repository = accounts.AccountRepository()
+    account_repository = accounts.AccountRepository(recompute_lots=False)
     successful_records = []
 
     for record in records.iloc:
@@ -290,6 +309,7 @@ def import_fiat_transfers(account, records):
 
 
 def import_transaction(
+    account_repository: accounts.AccountRepository,
     account: models.Account,
     fiat_record: pd.Series,
     token_record: pd.Series,
@@ -333,7 +353,7 @@ def import_transaction(
         price = decimal.Decimal(-fiat_value_usd / quantity)
 
     return (
-        *accounts.AccountRepository().add_transaction_crypto_asset(
+        *account_repository.add_transaction_crypto_asset(
             account,
             symbol,
             executed_at,
@@ -369,6 +389,7 @@ def pairs_to_fiat_and_token(half_records):
 
 @transaction.atomic
 def import_income_transactions(account: models.Account, records: pd.DataFrame):
+    account_repository = accounts.AccountRepository(recompute_lots=False)
     successful_records = []
     failed_records = []
 
@@ -398,7 +419,7 @@ def import_income_transactions(account: models.Account, records: pd.DataFrame):
                 fiat_value_usd, account, executed_at_date
             )
 
-            event, created = accounts.AccountRepository().add_crypto_income_event(
+            event, created = account_repository.add_crypto_income_event(
                 account,
                 symbol,
                 executed_at,
@@ -432,6 +453,7 @@ def import_income_transactions(account: models.Account, records: pd.DataFrame):
                     "issue_type": models.ImportIssueType.UNKNOWN_FAILURE,
                 }
             )
+    account_repository.update_lots()
     return successful_records, failed_records
 
 
