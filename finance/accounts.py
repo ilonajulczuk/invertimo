@@ -1,7 +1,7 @@
 import datetime
 import decimal
 from typing import Optional, Tuple, Union
-
+from collections import defaultdict
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Count
@@ -24,6 +24,13 @@ class CantModifyTransactionWithEvent(ValueError):
 
 
 class AccountRepository:
+    def __init__(self, recompute_lots=True, batch_related_changes=False):
+        self.recompute_lots = recompute_lots
+        self.batch_related_changes = batch_related_changes
+        self.updated_positions = set()
+        self.position_to_quantity_change = defaultdict(int)
+        self.account_to_quantity_change = defaultdict(int)
+
     def get(self, user: User, id: int) -> models.Account:
         return models.Account.objects.get(user=user, id=id)
 
@@ -64,6 +71,10 @@ class AccountRepository:
 
         serializer.save()
 
+    def update_lots(self):
+        for position in self.updated_positions:
+            gains.update_lots(position)
+
     @transaction.atomic
     def _add_transaction(
         self,
@@ -102,8 +113,10 @@ class AccountRepository:
                 models.PriceHistory.objects.create(
                     asset=position.asset, value=price, date=executed_at.date()
                 )
+            if self.recompute_lots:
+                gains.update_lots(position, transaction)
+            self.updated_positions.add(position)
 
-            gains.update_lots(position, transaction)
         return transaction, created
 
     @transaction.atomic
@@ -254,7 +267,8 @@ class AccountRepository:
         asset_repository = assets.AssetRepository(exchange=na_exchange)
         user = account.user
         asset = asset_repository.add_crypto(
-            symbol=symbol, user=user,
+            symbol=symbol,
+            user=user,
         )
         position = self._get_or_create_position_for_asset(account, asset.pk)
 
@@ -349,9 +363,12 @@ class AccountRepository:
                         f"{position_currency} and {account_currency}"
                     )
                 balance_change *= exchange_rate.value
-        account.balance -= balance_change
 
-        account.save()
+        if not self.batch_related_changes:
+            account.balance -= balance_change
+            account.save()
+        else:
+            self.account_to_quantity_change[account] -= balance_change
         transaction = event.transaction
 
         event.delete()
@@ -373,7 +390,11 @@ class AccountRepository:
         if positions:
             return positions[0]
         asset = stock_exchanges.get_or_create_asset(
-            isin, exchange, asset_defaults, add_untracked_if_not_found=import_all_assets, user=account.user,
+            isin,
+            exchange,
+            asset_defaults,
+            add_untracked_if_not_found=import_all_assets,
+            user=account.user,
         )
         if asset:
             return models.Position.objects.create(account=account, asset=asset)
@@ -397,12 +418,23 @@ class AccountRepository:
             )
 
         # This assumes no splits and merges support.
-        position.quantity -= transaction.quantity
-        position.save()
-        account.balance -= transaction.total_in_account_currency
-        account.save()
+        if not self.batch_related_changes:
+            position.quantity -= transaction.quantity
+            position.save()
+        else:
+            self.position_to_quantity_change[position] -= transaction.quantity
+
+
+        if not self.batch_related_changes:
+            account.balance -= transaction.total_in_account_currency
+            account.save()
+        else:
+            self.account_to_quantity_change[account] -= transaction.total_in_account_currency
+
         transaction.delete()
-        gains.update_lots(position)
+        if self.recompute_lots:
+            gains.update_lots(position)
+        self.updated_positions.add(position)
         position.quantity_history.cache_clear()
         position.value_history.cache_clear()
 
@@ -439,7 +471,9 @@ class AccountRepository:
         position.save()
         account.save()
         transaction.save()
-        gains.update_lots(position)
+        if self.recompute_lots:
+            gains.update_lots(position)
+        self.updated_positions.add(position)
         position.quantity_history.cache_clear()
         position.value_history.cache_clear()
 
@@ -488,16 +522,34 @@ class AccountRepository:
 
     @transaction.atomic
     def delete_transaction_import(self, transaction_import: models.TransactionImport):
-        for event_record in transaction_import.event_records.order_by('-transaction__executed_at').all():
+        for event_record in transaction_import.event_records.order_by(
+            "-transaction__executed_at"
+        ).prefetch_related('event').prefetch_related('transaction').prefetch_related('event__transaction').all():
             print("removing event record for event", event_record.event)
             if event_record.created_new:
                 self.delete_event(event_record.event)
-            event_record.delete()
 
-        for transaction_record in transaction_import.records.order_by('-transaction__executed_at').all():
-            print("removing transaction record for transaction", transaction_record.transaction)
+        transaction_import.event_records.all().delete()
+
+        for transaction_record in transaction_import.records.order_by(
+            "-transaction__executed_at"
+        ).prefetch_related('transaction').all():
+            print(
+                "removing transaction record for transaction",
+                transaction_record.transaction,
+            )
             if transaction_record.created_new:
                 self.delete_transaction(transaction=transaction_record.transaction)
-            transaction_record.delete()
-
+        transaction_import.records.all().delete()
         transaction_import.delete()
+        positions = []
+        for position, quantity_change in self.position_to_quantity_change.items():
+            position.quantity += quantity_change
+            positions.append(position)
+        models.Position.objects.bulk_update(positions, ['quantity'])
+
+        accounts = []
+        for account, quantity_change in self.account_to_quantity_change.items():
+            account.balance += quantity_change
+            accounts.append(account)
+        models.Account.objects.bulk_update(accounts, ['balance'])

@@ -3,6 +3,7 @@ import decimal
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
+from django.core import validators
 from django.db.models import Sum
 from django.test import TestCase
 
@@ -727,16 +728,16 @@ class TestBinanceParser(TestCase):
         mock.return_value = False
         crypto_price_mock.return_value = decimal.Decimal("100")
 
-        account_balance = decimal.Decimal("299.16000")
-        num_of_income_events = 5
-        base_num_of_transactions = 8 + num_of_income_events
+        account_balance = decimal.Decimal("-80.0")
+        num_of_income_events = 1
+        base_num_of_transactions = 1 + num_of_income_events
         account = models.Account.objects.create(
             user=User.objects.all()[0], nickname="test"
         )
         _add_dummy_exchange_rates()
 
         first_import = binance_parser.import_transactions_from_file(
-            account, "./finance/binance_transaction_sample_with_income.csv"
+            account, "./finance/binance_transaction_sample_with_income_mini.csv"
         )
         failed_records = first_import.records.filter(successful=False)
         self.assertEqual(failed_records.count(), 0)
@@ -747,30 +748,17 @@ class TestBinanceParser(TestCase):
 
         self.assertAlmostEqual(account.balance, account_balance)
 
-        # 2 in the new account, 30 from the old fixture.
-        self.assertEqual(models.Position.objects.count(), 35)
+        # 1 in the new account, 30 from the old fixture.
+        self.assertEqual(models.Position.objects.count(), 31)
 
-        # Import the same transactions again and make
-        # sure that they aren't double recorded.
-        account = models.Account.objects.get(nickname="test")
-        second_import = binance_parser.import_transactions_from_file(
-            account, "./finance/binance_transaction_sample_with_income.csv"
-        )
-        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
-        self.assertEqual(models.Position.objects.count(), 35)
-        account = models.Account.objects.get(nickname="test")
+        self.assertEqual(first_import.event_records.count(), 1)
 
-        self.assertAlmostEqual(account.balance, account_balance)
-        self.assertEqual(models.TransactionImport.objects.count(), 2)
-        self.assertEqual(second_import.event_records.count(), 9)
+        self.assertEqual(models.TransactionImportRecord.objects.count(), 1)
+        account_repository = accounts.AccountRepository(recompute_lots=False, batch_related_changes=True)
 
-        self.assertEqual(models.TransactionImportRecord.objects.count(), 16)
-        account_repository = accounts.AccountRepository()
-        account_repository.delete_transaction_import(second_import)
-        self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
-        self.assertEqual(models.TransactionImportRecord.objects.count(), 8)
-
-        account_repository.delete_transaction_import(first_import)
+        # TODO: bring it down to something like 6.
+        with self.assertNumQueries(48):
+            account_repository.delete_transaction_import(first_import)
         self.assertEqual(models.Transaction.objects.count(), 0)
         self.assertEqual(models.TransactionImportRecord.objects.count(), 0)
 

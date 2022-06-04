@@ -768,9 +768,10 @@ class TransactionImportViewSet(
         return TransactionImportSerializer
 
     def perform_destroy(self, instance):
-        account_repository = accounts.AccountRepository()
+        account_repository = accounts.AccountRepository(recompute_lots=False, batch_related_changes=True)
         try:
             account_repository.delete_transaction_import(instance)
+            account_repository.update_lots()
         except gains.SoldBeforeBought:
             raise serializers.ValidationError(
                 {
