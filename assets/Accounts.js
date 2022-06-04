@@ -91,7 +91,8 @@ export function Accounts(props) {
         accountId = match.params.accountId;
         account = accountsById.get(Number(accountId));
         if (account) {
-            canDelete = account.transactions_count === 0 && account.events_count === 0;
+            // TODO: check for transactions being present.
+            canDelete = account.events_count === 0;
         }
     }
 
@@ -173,7 +174,6 @@ Accounts.propTypes = {
         nickname: PropTypes.string.isRequired,
         currency: PropTypes.oneOf(accountCurrencyValues),
         positions_count: PropTypes.number.isRequired,
-        transactions_count: PropTypes.number.isRequired,
         events_count: PropTypes.number.isRequired,
         balance: PropTypes.string.isRequired,
     })),
