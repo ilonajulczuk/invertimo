@@ -1,4 +1,7 @@
 User_ID,UTC_Time,Account,Operation,Coin,Change,Remark
 139221274,2021-11-29 09:56:38,Spot,Transaction Related,DOT,2.53024468,
 139221274,2021-11-29 09:56:38,Spot,Transaction Related,EUR,-80,
+139221274,2021-11-29 09:57:28,Spot,Transaction Related,EUR,-115,
+139221274,2021-11-29 09:57:28,Spot,Transaction Related,ETH,0.03015547,
 139221274,2022-01-04 00:50:06,Spot,POS savings interest,DOT,0.01416702,
+139221274,2021-10-14 09:35:57,Spot,Savings Interest,DOT,0.00061872,

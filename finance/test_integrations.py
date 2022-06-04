@@ -7,7 +7,15 @@ from django.core import validators
 from django.db.models import Sum
 from django.test import TestCase
 
-from finance import models, prices, testing_utils, utils, tasks, stock_exchanges, accounts
+from finance import (
+    models,
+    prices,
+    testing_utils,
+    utils,
+    tasks,
+    stock_exchanges,
+    accounts,
+)
 from finance.integrations import binance_parser, degiro_parser
 
 
@@ -231,14 +239,10 @@ class TestDegiroParser(TestCase):
         self.assertAlmostEqual(total_value, account_balance)
 
         fund = models.Asset.objects.get(isin="IE00BF4RFH31")
-        self.assertEqual(
-            fund.currency, models.Currency.EUR
-        )
+        self.assertEqual(fund.currency, models.Currency.EUR)
         self.assertTrue(fund.tracked)
         stock = models.Asset.objects.get(isin="US1912161007")
-        self.assertEqual(
-            stock.currency, models.Currency.USD
-        )
+        self.assertEqual(stock.currency, models.Currency.USD)
         self.assertTrue(stock.tracked)
 
     @patch("finance.stock_exchanges.query_asset")
@@ -253,6 +257,7 @@ class TestDegiroParser(TestCase):
             user=None,
         )
         self.assertEqual(asset.currency, models.Currency.GBP)
+
 
 class TestDegiroTransactionImportView(testing_utils.ViewTestBase, TestCase):
     URL = "/api/integrations/degiro/transactions/"
@@ -535,10 +540,11 @@ class TestBinanceParser(TestCase):
         transaction_import = models.TransactionImport.objects.last()
         self.assertEqual(transaction_import.event_records.count(), 4)
 
-
     @patch("finance.prices.get_crypto_usd_price_at_date")
     @patch("finance.prices.are_crypto_prices_available")
-    def test_importing_binance_data_dates_slightly_offset(self, mock, crypto_price_mock):
+    def test_importing_binance_data_dates_slightly_offset(
+        self, mock, crypto_price_mock
+    ):
         mock.return_value = False
         crypto_price_mock.return_value = decimal.Decimal("100")
 
@@ -572,10 +578,11 @@ class TestBinanceParser(TestCase):
         self.assertEqual(models.Transaction.objects.count(), base_num_of_transactions)
         self.assertEqual(models.Position.objects.count(), 34)
 
-
     @patch("finance.prices.get_crypto_usd_price_at_date")
     @patch("finance.prices.are_crypto_prices_available")
-    def test_importing_binance_data_odd_transaction_records(self, mock, crypto_price_mock):
+    def test_importing_binance_data_odd_transaction_records(
+        self, mock, crypto_price_mock
+    ):
         mock.return_value = False
         crypto_price_mock.return_value = decimal.Decimal("100")
 
@@ -590,9 +597,9 @@ class TestBinanceParser(TestCase):
             binance_parser.import_transactions_from_file(
                 account, "./finance/binance_transaction_sample_odd.csv"
             )
-        self.assertEqual(models.TransactionImport.objects.last().status,
-                         models.ImportStatus.FAILURE)
-
+        self.assertEqual(
+            models.TransactionImport.objects.last().status, models.ImportStatus.FAILURE
+        )
 
     @patch("finance.prices.get_crypto_usd_price_at_date")
     @patch("finance.prices.are_crypto_prices_available")
@@ -609,8 +616,9 @@ class TestBinanceParser(TestCase):
             binance_parser.import_transactions_from_file(
                 account, "./finance/binance_transaction_sample_mismatched_dates.csv"
             )
-        self.assertEqual(models.TransactionImport.objects.last().status,
-                         models.ImportStatus.FAILURE)
+        self.assertEqual(
+            models.TransactionImport.objects.last().status, models.ImportStatus.FAILURE
+        )
 
     @patch("finance.prices.get_crypto_usd_price_at_date")
     @patch("finance.prices.are_crypto_prices_available")
@@ -721,16 +729,15 @@ class TestBinanceParser(TestCase):
         self.assertEqual(models.TransactionImport.objects.count(), 2)
         self.assertEqual(transaction_import.event_records.count(), 9)
 
-
     @patch("finance.prices.get_crypto_usd_price_at_date")
     @patch("finance.prices.are_crypto_prices_available")
     def test_importing_with_income_and_deleting_import(self, mock, crypto_price_mock):
         mock.return_value = False
         crypto_price_mock.return_value = decimal.Decimal("100")
 
-        account_balance = decimal.Decimal("-80.0")
-        num_of_income_events = 1
-        base_num_of_transactions = 1 + num_of_income_events
+        account_balance = decimal.Decimal("-195.0")
+        num_of_income_events = 2
+        base_num_of_transactions = 2 + num_of_income_events
         account = models.Account.objects.create(
             user=User.objects.all()[0], nickname="test"
         )
@@ -748,19 +755,33 @@ class TestBinanceParser(TestCase):
 
         self.assertAlmostEqual(account.balance, account_balance)
 
-        # 1 in the new account, 30 from the old fixture.
-        self.assertEqual(models.Position.objects.count(), 31)
+        # 2 in the new account, 30 from the old fixture.
+        self.assertEqual(models.Position.objects.count(), 32)
 
-        self.assertEqual(first_import.event_records.count(), 1)
+        self.assertEqual(first_import.event_records.count(), 2)
 
-        self.assertEqual(models.TransactionImportRecord.objects.count(), 1)
-        account_repository = accounts.AccountRepository(recompute_lots=False, batch_related_changes=True)
+        self.assertEqual(models.TransactionImportRecord.objects.count(), 2)
+        account_repository = accounts.AccountRepository(
+            recompute_lots=False,
+            batch_related_changes=True,
+        )
 
         # TODO: bring it down to something like 6.
-        with self.assertNumQueries(48):
+        with self.assertNumQueries(22):
             account_repository.delete_transaction_import(first_import)
+            account_repository.update_lots()
         self.assertEqual(models.Transaction.objects.count(), 0)
         self.assertEqual(models.TransactionImportRecord.objects.count(), 0)
+
+        self.assertEqual(models.Account.objects.first().balance, 0)
+
+        eth = models.Asset.objects.get(name="ETH")
+        dot = models.Asset.objects.get(name="DOT")
+
+        eth_position = models.Position.objects.get(asset=eth, account=account)
+        dot_position = models.Position.objects.get(asset=dot, account=account)
+        self.assertEqual(eth_position.quantity, 0)
+        self.assertEqual(dot_position.quantity, 0)
 
     @patch("finance.prices.collect_prices")
     @patch("finance.prices.get_crypto_usd_price_at_date")
@@ -881,16 +902,22 @@ class TestBinanceParser(TestCase):
     def test_convert_usd_to_account_currency(self):
         _add_dummy_exchange_rates()
 
-        date = '2021-10-14'
+        date = "2021-10-14"
 
         account_eur = models.Account.objects.create(
-            user=User.objects.all()[0], nickname="test_eur", currency=models.Currency.EUR
+            user=User.objects.all()[0],
+            nickname="test_eur",
+            currency=models.Currency.EUR,
         )
         account_gbp = models.Account.objects.create(
-            user=User.objects.all()[0], nickname="test_gbp", currency=models.Currency.GBP
+            user=User.objects.all()[0],
+            nickname="test_gbp",
+            currency=models.Currency.GBP,
         )
         value = decimal.Decimal(10)
-        value_eur = binance_parser.convert_usd_to_account_currency(value, account_eur, date)
+        value_eur = binance_parser.convert_usd_to_account_currency(
+            value, account_eur, date
+        )
 
         self.assertEqual(value_eur, decimal.Decimal(9))
 

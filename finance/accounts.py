@@ -7,7 +7,6 @@ from django.db import transaction
 from django.db.models import Count
 
 from django.utils.dateparse import parse_datetime
-from pandas.core.algorithms import mode
 from finance import models, prices, gains, stock_exchanges, assets
 
 
@@ -409,27 +408,33 @@ class AccountRepository:
         return models.Position.objects.create(account=account, asset=asset)
 
     @transaction.atomic
-    def delete_transaction(self, transaction: models.Transaction) -> None:
-        position = transaction.position
-        account = position.account
-        if transaction.events.count():
+    def delete_transaction(
+        self, transaction: models.Transaction, skip_events_check=False
+    ) -> None:
+
+        if not skip_events_check and transaction.events.count():
             raise CantModifyTransactionWithEvent(
                 "Can't delete a transaction associated with an event, without deleting the event first."
             )
 
+        position = transaction.position
+        account = position.account
         # This assumes no splits and merges support.
         if not self.batch_related_changes:
             position.quantity -= transaction.quantity
             position.save()
         else:
-            self.position_to_quantity_change[position] -= transaction.quantity
-
+            self.position_to_quantity_change[
+                transaction.position
+            ] -= transaction.quantity
 
         if not self.batch_related_changes:
             account.balance -= transaction.total_in_account_currency
             account.save()
         else:
-            self.account_to_quantity_change[account] -= transaction.total_in_account_currency
+            self.account_to_quantity_change[
+                position.account
+            ] -= transaction.total_in_account_currency
 
         transaction.delete()
         if self.recompute_lots:
@@ -522,34 +527,73 @@ class AccountRepository:
 
     @transaction.atomic
     def delete_transaction_import(self, transaction_import: models.TransactionImport):
-        for event_record in transaction_import.event_records.order_by(
-            "-transaction__executed_at"
-        ).prefetch_related('event').prefetch_related('transaction').prefetch_related('event__transaction').all():
-            print("removing event record for event", event_record.event)
-            if event_record.created_new:
-                self.delete_event(event_record.event)
 
-        transaction_import.event_records.all().delete()
+        for event_record in (
+            transaction_import.event_records.order_by("-transaction__executed_at")
+            .filter(created_new=True)
+            .select_related("event")
+            .filter(transaction=None)
+        ):
+            self.delete_event(event_record.event)
 
-        for transaction_record in transaction_import.records.order_by(
-            "-transaction__executed_at"
-        ).prefetch_related('transaction').all():
-            print(
-                "removing transaction record for transaction",
-                transaction_record.transaction,
+        position_ids_to_updates = defaultdict(int)
+        events_to_delete = []
+        transactions_to_delete = []
+        account_total_change = 0
+
+        for event_record in (
+            transaction_import.event_records.order_by("-transaction__executed_at")
+            .filter(created_new=True)
+            .select_related("event")
+            .exclude(transaction=None)
+            .select_related("transaction")
+            .select_related("event__transaction")
+            .values(
+                "event__id",
+                "transaction__id",
+                "transaction__position__id",
+                "transaction__quantity",
             )
-            if transaction_record.created_new:
-                self.delete_transaction(transaction=transaction_record.transaction)
-        transaction_import.records.all().delete()
-        transaction_import.delete()
-        positions = []
-        for position, quantity_change in self.position_to_quantity_change.items():
-            position.quantity += quantity_change
-            positions.append(position)
-        models.Position.objects.bulk_update(positions, ['quantity'])
+        ):
+            events_to_delete.append(event_record["event__id"])
+            transactions_to_delete.append(event_record["transaction__id"])
+            position_ids_to_updates[
+                event_record["transaction__position__id"]
+            ] -= event_record["transaction__quantity"]
 
-        accounts = []
-        for account, quantity_change in self.account_to_quantity_change.items():
-            account.balance += quantity_change
-            accounts.append(account)
-        models.Account.objects.bulk_update(accounts, ['balance'])
+        for transaction_record in (
+            transaction_import.records.annotate(
+                event_count=Count("transaction__events")
+            )
+            .filter(event_count__gte=0)
+            .order_by("-transaction__executed_at")
+            .filter(created_new=True)
+            .values(
+                "transaction__id",
+                "transaction__position__id",
+                "transaction__quantity",
+                "transaction__total_in_account_currency",
+            )
+        ):
+            transactions_to_delete.append(transaction_record["transaction__id"])
+            position_ids_to_updates[
+                transaction_record["transaction__position__id"]
+            ] -= transaction_record["transaction__quantity"]
+            account_total_change -= transaction_record[
+                "transaction__total_in_account_currency"
+            ]
+
+        transaction_import.account.balance += account_total_change
+        transaction_import.account.save()
+        transaction_import.delete()
+        models.Transaction.objects.filter(id__in=transactions_to_delete).delete()
+        models.AccountEvent.objects.filter(id__in=events_to_delete).delete()
+
+        positions = models.Position.objects.filter(
+            id__in=position_ids_to_updates.keys()
+        )
+        updated_positions = []
+        for position in positions:
+            position.quantity += position_ids_to_updates[position.id]
+            updated_positions.append(position)
+        models.Position.objects.bulk_update(updated_positions, ["quantity"])
